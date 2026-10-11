@@ -1442,6 +1442,26 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
 }
 
 </style>
+
+<style>
+/* Teacher dashboard: today's live duty agenda */
+.today-agenda{width:100%;max-width:760px;margin:22px auto 0;text-align:left;background:rgba(255,255,255,.94);border:1px solid #d8e9e2;border-radius:18px;overflow:hidden;box-shadow:0 8px 22px rgba(7,92,81,.08)}
+.today-agenda-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 18px;background:linear-gradient(110deg,#e9f8f0,#eef8ff);border-bottom:1px solid #dcebe5}
+.today-agenda-kicker{font-size:10px;letter-spacing:1.2px;font-weight:900;color:#078c55}
+.today-agenda-head h3{margin:4px 0 3px;font-size:22px;color:#075c51}
+.today-agenda-head p{margin:0;color:#64748b;font-size:12px}
+.today-agenda-badge{background:#078c55;color:#fff;border-radius:999px;padding:7px 11px;font-size:10px;font-weight:900;white-space:nowrap}
+.today-agenda-items{display:grid;gap:0}
+.today-agenda-item{display:grid;grid-template-columns:92px minmax(0,1fr);gap:12px;padding:15px 17px;border-bottom:1px solid #edf2f0}
+.today-agenda-item:last-child{border-bottom:0}
+.today-agenda-time{align-self:start;background:#e7f7ef;color:#087c60;border-radius:11px;padding:10px 7px;text-align:center;font-weight:900;font-size:13px;line-height:1.35}
+.today-agenda-type{display:inline-block;margin-bottom:5px;border-radius:999px;padding:4px 8px;background:#eaf2ff;color:#1d5eb5;font-size:10px;font-weight:900}
+.today-agenda-type.exam{background:#fff1df;color:#a45b00}.today-agenda-type.duty{background:#f2eaff;color:#6b35b5}
+.today-agenda-item h4{margin:0 0 5px;color:#17324d;font-size:16px;line-height:1.35}
+.today-agenda-meta{display:flex;gap:6px 12px;flex-wrap:wrap;color:#64748b;font-size:12px;line-height:1.5}
+.today-agenda-empty{padding:22px 16px;text-align:center;color:#64748b;font-size:13px;line-height:1.5}
+@media(max-width:760px){.today-agenda{margin-top:18px;border-radius:15px}.today-agenda-head{padding:14px}.today-agenda-head h3{font-size:20px}.today-agenda-item{grid-template-columns:78px minmax(0,1fr);gap:10px;padding:13px}.today-agenda-time{font-size:12px}.today-agenda-item h4{font-size:15px}}
+</style>
 </head>
 <body>
 <script>
@@ -1568,47 +1588,32 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
       <div class="teacher-subject-placeholder">No subscribed subject yet</div>
     </div>
 
-    <button type="button" class="dashboard-profile-subscription-card" onclick="openSubjectSubscription()" aria-label="Open Subject Subscription">
-      <span class="subscription-card-title">
-        <span class="subscription-card-icon">💳</span>
-        <span>Subject Subscription</span>
-      </span>
-      <p>Select a subject, choose one or more classes, then subscribe for <strong>one full year.</strong></p>
-    </button>
+    <section class="today-agenda" aria-live="polite">
+      <div class="today-agenda-head">
+        <div><span class="today-agenda-kicker">YOUR DAILY SCHEDULE</span><h3>📅 My Duty Today</h3><p id="todayAgendaDate"></p></div>
+        <span class="today-agenda-badge">TODAY</span>
+      </div>
+      <div id="todayAgendaItems" class="today-agenda-items">
+        <div class="today-agenda-empty">Loading your teaching and examination duties…</div>
+      </div>
+    </section>
   </div>
-  <div class="dashboard-intro">
-    
-    
+  <div class="dashboard-intro" aria-hidden="true" style="display:none!important">
+    <!-- Keep the existing selectors in the DOM for compatibility with lesson and assessment tools. -->
     <div class="dashboard-filters filters">
       <div class="filter dashboard-subject-filter-top">
-        <label>SUBJECT</label>
-        <select id="dashboardSubjectFilter" onchange="applyDashboardSubjectFilter()">
-          <option value="">All Subscribed Subjects</option>
-        </select>
+        <label>SUBJECT</label><select id="dashboardSubjectFilter" onchange="applyDashboardSubjectFilter()"><option value="">All Subscribed Subjects</option></select>
       </div>
       <div class="dashboard-filter-row">
-        <div class="filter">
-          <label>CLASS</label>
-          <select id="classSelect">
-            <option value="Primary 1">Primary 1</option>
-            <option value="Primary 2">Primary 2</option>
-            <option value="Primary 3">Primary 3</option>
-            <option value="Primary 4">Primary 4</option>
-            <option value="Primary 5" selected>Primary 5</option>
-            <option value="Primary 6">Primary 6</option>
-          </select>
-        </div>
-        <div class="filter">
-          <label>TERM</label>
-          <select id="termSelect">
-            <option value="First Term">First Term</option>
-            <option value="Second Term">Second Term</option>
-            <option value="Third Term">Third Term</option>
-          </select>
-        </div>
+        <div class="filter"><label>CLASS</label><select id="classSelect">
+          <option value="Primary 1">Primary 1</option><option value="Primary 2">Primary 2</option><option value="Primary 3">Primary 3</option><option value="Primary 4">Primary 4</option><option value="Primary 5" selected>Primary 5</option><option value="Primary 6">Primary 6</option>
+        </select></div>
+        <div class="filter"><label>TERM</label><select id="termSelect">
+          <option value="First Term">First Term</option><option value="Second Term">Second Term</option><option value="Third Term">Third Term</option>
+        </select></div>
       </div>
     </div>
-  </div>
+  </div>  </div>
 </section>
 
 
@@ -4974,17 +4979,88 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   }
   window.loadTeacherAcademicSession=loadTeacherAcademicSession;
 
+
+  function renderTeacherTodayAgenda(){
+    const host=document.getElementById('todayAgendaItems');
+    const dateLabel=document.getElementById('todayAgendaDate');
+    if(!host)return;
+    const now=new Date();
+    const todayISO=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
+    const weekday=now.toLocaleDateString('en-GB',{weekday:'long'});
+    if(dateLabel)dateLabel.textContent=now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    const items=[];
+    function dateMatches(raw,allowWeekday){
+      const value=String(raw||'').trim();
+      if(!value)return false;
+      if(allowWeekday && new RegExp('\\b'+weekday+'\\b','i').test(value))return true;
+      if(value.includes(todayISO))return true;
+      const dmy=value.match(/\b(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})\b/);
+      if(dmy){
+        const day=Number(dmy[1]),month=Number(dmy[2]),year=Number(dmy[3]);
+        if(day===now.getDate()&&month===now.getMonth()+1&&year===now.getFullYear())return true;
+        if(Number(dmy[1])===now.getMonth()+1&&Number(dmy[2])===now.getDate()&&year===now.getFullYear())return true;
+      }
+      const parsed=new Date(value);
+      return !Number.isNaN(parsed.getTime())&&parsed.getFullYear()===now.getFullYear()&&parsed.getMonth()===now.getMonth()&&parsed.getDate()===now.getDate();
+    }
+    function readRows(bodyId,kind){
+      const body=document.getElementById(bodyId);if(!body)return;
+      [...body.querySelectorAll('tr')].forEach(tr=>{
+        const cells=[...tr.querySelectorAll('td')].map(td=>(td.innerText||td.textContent||'').trim());
+        if(cells.length<4||!cells[0]||tr.querySelector('td.empty'))return;
+        const rawDate=cells[0];
+        if(!dateMatches(rawDate,kind==='lesson'))return;
+        const time=cells[1]&&cells[1]!=='—'?cells[1]:'Time not specified';
+        const cls=cells[2]&&cells[2]!=='—'?cells[2]:'';
+        const subject=cells[3]&&cells[3]!=='—'?cells[3]:'Scheduled duty';
+        const venue=cells[4]&&cells[4]!=='—'?cells[4]:'';
+        const dutyText=cells[5]||'';
+        const isDuty=kind==='duty';
+        const isExam=kind==='exam'||isDuty;
+        items.push({kind:isDuty?'duty':isExam?'exam':'lesson',time,cls,subject,venue,
+          title:isDuty?(subject||'Invigilation Duty'):isExam?(subject||'Examination'):(subject||'Teaching Period'),
+          extra:isDuty?'Invigilation':isExam?'Examination':'Teaching'});
+      });
+    }
+    readRows('teacherTimetableRows','lesson');
+    readRows('teacherExamTimetableRows','exam');
+    readRows('teacherInvigilationRows','duty');
+    const rank={lesson:0,exam:1,duty:2};
+    items.sort((a,b)=>{
+      const ta=(a.time.match(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i)||[]);
+      const tb=(b.time.match(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i)||[]);
+      const mins=x=>{let h=Number(x[1]||99),m=Number(x[2]||0);if((x[3]||'').toLowerCase()==='pm'&&h<12)h+=12;if((x[3]||'').toLowerCase()==='am'&&h===12)h=0;return h*60+m};
+      return mins(ta)-mins(tb)||rank[a.kind]-rank[b.kind];
+    });
+    if(!items.length){
+      host.innerHTML='<div class="today-agenda-empty">You have no teaching periods, examinations, or invigilation duties scheduled for today. Your agenda will update automatically as the timetable changes.</div>';
+      return;
+    }
+    host.replaceChildren();
+    items.forEach(item=>{
+      const row=document.createElement('article');row.className='today-agenda-item';
+      const time=document.createElement('div');time.className='today-agenda-time';time.textContent=item.time;
+      const content=document.createElement('div');
+      const tag=document.createElement('span');tag.className='today-agenda-type'+(item.kind==='exam'?' exam':item.kind==='duty'?' duty':'');tag.textContent=item.extra;
+      const title=document.createElement('h4');title.textContent=item.title;
+      const meta=document.createElement('div');meta.className='today-agenda-meta';
+      [[item.cls?'Class: '+item.cls:'',item.venue?'Venue: '+item.venue:'',item.kind==='duty'?'Invigilation duty':''].filter(Boolean)].flat().forEach(textValue=>{const span=document.createElement('span');span.textContent=textValue;meta.append(span)});
+      content.append(tag,title,meta);row.append(time,content);host.append(row);
+    });
+  }
+  window.renderTeacherTodayAgenda=renderTeacherTodayAgenda;
+
   async function loadTeacherTimetables(){
     const lessonBody=document.getElementById('teacherTimetableRows'),examBody=document.getElementById('teacherExamTimetableRows'),dutyBody=document.getElementById('teacherInvigilationRows');
     if(!lessonBody||!examBody)return;
     const user=auth.currentUser;
-    if(!user){setTimetableMessage('teacherTimetableMessage','Sign in to view your timetable.',true);return;}
+    if(!user){setTimetableMessage('teacherTimetableMessage','Sign in to view your timetable.',true);renderTeacherTodayAgenda();return;}
     try{
       if(!activeTeacherConnection||activeTeacherConnection.status!=='connected')await refreshTeacherSchoolConnection();
       const rec=activeTeacherConnection;
-      if(!rec||rec.status!=='connected'||!rec.schoolId){setTimetableMessage('teacherTimetableMessage','Connect to your school and wait for registrar approval to view your timetable.');setTimetableMessage('teacherExamTimetableMessage','Your examination timetable will appear after your school connection is approved.');lessonBody.innerHTML='<tr><td colspan="6" class="empty">No approved school connection.</td></tr>';examBody.innerHTML='<tr><td colspan="7" class="empty">No approved school connection.</td></tr>';if(dutyBody)dutyBody.innerHTML=examBody.innerHTML;return;}
+      if(!rec||rec.status!=='connected'||!rec.schoolId){setTimetableMessage('teacherTimetableMessage','Connect to your school and wait for registrar approval to view your timetable.');setTimetableMessage('teacherExamTimetableMessage','Your examination timetable will appear after your school connection is approved.');lessonBody.innerHTML='<tr><td colspan="6" class="empty">No approved school connection.</td></tr>';examBody.innerHTML='<tr><td colspan="7" class="empty">No approved school connection.</td></tr>';if(dutyBody)dutyBody.innerHTML=examBody.innerHTML;renderTeacherTodayAgenda();return;}
       const pairs=Array.isArray(rec.assignedTeachingAssignments)?rec.assignedTeachingAssignments:[];
-      if(!pairs.length){setTimetableMessage('teacherTimetableMessage','The registrar has not assigned class–subject combinations to your account yet.');setTimetableMessage('teacherExamTimetableMessage','No assigned class–subject combinations are available yet.');lessonBody.innerHTML='<tr><td colspan="6" class="empty">No teaching assignments.</td></tr>';examBody.innerHTML='<tr><td colspan="7" class="empty">No assigned exams.</td></tr>';if(dutyBody)dutyBody.innerHTML=examBody.innerHTML;return;}
+      if(!pairs.length){setTimetableMessage('teacherTimetableMessage','The registrar has not assigned class–subject combinations to your account yet.');setTimetableMessage('teacherExamTimetableMessage','No assigned class–subject combinations are available yet.');lessonBody.innerHTML='<tr><td colspan="6" class="empty">No teaching assignments.</td></tr>';examBody.innerHTML='<tr><td colspan="7" class="empty">No assigned exams.</td></tr>';if(dutyBody)dutyBody.innerHTML=examBody.innerHTML;renderTeacherTodayAgenda();return;}
       setTimetableMessage('teacherTimetableMessage','Loading your …');setTimetableMessage('teacherExamTimetableMessage','Loading your assigned examination timetable…');
       const lessonRef=collection(db,'schools',rec.schoolId,'timetable');
       const examRef=collection(db,'schools',rec.schoolId,'examTimetable');
@@ -5010,7 +5086,8 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       appendExamRows(examBody,subjectExams,'No examinations scheduled for your teaching subjects.');
       appendExamRows(dutyBody,invigilationExams,'No invigilation duties assigned to you.');
       setTimetableMessage('teacherTimetableMessage',lessonRows.length+' timetable entr'+(lessonRows.length===1?'y':'ies')+' matching your assigned classes and subjects.');setTimetableMessage('teacherExamTimetableMessage',examRows.length+' examination entr'+(examRows.length===1?'y':'ies')+' matching your assignments or invigilation duties.');
-    }catch(e){console.error('Teacher timetable load failed:',e);setTimetableMessage('teacherTimetableMessage','Could not load timetable. Check Firestore rules for the school timetable.',true);setTimetableMessage('teacherExamTimetableMessage','Could not load exam timetable. Check Firestore rules for the school exam timetable.',true);lessonBody.innerHTML='<tr><td colspan="6" class="empty">Timetable unavailable.</td></tr>';examBody.innerHTML='<tr><td colspan="7" class="empty">Exam timetable unavailable.</td></tr>';if(dutyBody)dutyBody.innerHTML=examBody.innerHTML;}
+      renderTeacherTodayAgenda();
+    }catch(e){console.error('Teacher timetable load failed:',e);setTimetableMessage('teacherTimetableMessage','Could not load timetable. Check Firestore rules for the school timetable.',true);setTimetableMessage('teacherExamTimetableMessage','Could not load exam timetable. Check Firestore rules for the school exam timetable.',true);lessonBody.innerHTML='<tr><td colspan="6" class="empty">Timetable unavailable.</td></tr>';examBody.innerHTML='<tr><td colspan="7" class="empty">Exam timetable unavailable.</td></tr>';if(dutyBody)dutyBody.innerHTML=examBody.innerHTML;renderTeacherTodayAgenda();}
   }
   window.loadTeacherTimetables=loadTeacherTimetables;
 
