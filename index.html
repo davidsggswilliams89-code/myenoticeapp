@@ -5051,6 +5051,23 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
 }
 </style>
 
+<style>
+/* Compact First/Second/Third C.A score table on mobile; no other tables affected. */
+.ca-score-tablewrap{width:100%;overflow-x:hidden}
+.ca-score-table{width:100%;min-width:0!important;table-layout:fixed}
+.ca-score-table th,.ca-score-table td{padding:9px 5px;overflow-wrap:anywhere}
+.ca-score-table th:nth-child(1),.ca-score-table td:nth-child(1){width:34px}
+.ca-score-table th:nth-child(2),.ca-score-table td:nth-child(2){width:82px}
+.ca-score-table th:nth-child(4),.ca-score-table td:nth-child(4){width:82px}
+.ca-score-table .ca-score-input{display:block;width:62px;max-width:100%;min-width:0;box-sizing:border-box;padding:7px 4px;border:1px solid #cbd6e2;border-radius:7px;text-align:center;background:#fff}
+@media(max-width:760px){
+  .ca-score-table th,.ca-score-table td{padding:8px 4px;font-size:12px}
+  .ca-score-table th:nth-child(2),.ca-score-table td:nth-child(2){width:76px}
+  .ca-score-table th:nth-child(4),.ca-score-table td:nth-child(4){width:72px}
+  .ca-score-table .ca-score-input{width:58px}
+}
+</style>
+
 <script id="ca-exam-filtered-handlers">
 /* C.A & Examination handlers: always use the current Subject + Class + Term scope. */
 (function(){
@@ -5076,8 +5093,8 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     const suffix=n===1?"st":n===2?"nd":"rd";
     const rows=caRows();
     showModal(`📝 ${n}${suffix} C.A Record`,`${caHeader()}
-      <div class="tablewrap"><table><thead><tr><th>S/N</th><th>Admission No.</th><th>Student</th><th>Score /10</th></tr></thead><tbody>
-      ${rows.length?rows.map(({s,index},i)=>`<tr><td>${i+1}</td><td>${s[0]??""}</td><td>${s[1]??""}</td><td><input data-student-index="${index}" style="width:75px;padding:7px" type="number" min="0" max="10" value="${caExamScore(s,n+2)}"></td></tr>`).join(""):caEmpty()}
+      <div class="tablewrap ca-score-tablewrap"><table class="ca-score-table"><thead><tr><th>S/N</th><th>Admission No.</th><th>Student</th><th>Score /10</th></tr></thead><tbody>
+      ${rows.length?rows.map(({s,index},i)=>`<tr><td>${i+1}</td><td>${s[0]??""}</td><td>${s[1]??""}</td><td><input class="ca-score-input" data-student-index="${index}" type="number" min="0" max="10" value="${caExamScore(s,n+2)}"></td></tr>`).join(""):caEmpty()}
       </tbody></table></div>`);
   };
   window.openExam = function(){
