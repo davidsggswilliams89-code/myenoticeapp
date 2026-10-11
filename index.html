@@ -5183,6 +5183,84 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
 })();
 </script>
 
+
+<script>
+/* Students section only: populate class filter from the signed-in teacher's registrar assignments. */
+(function(){
+  function getStudentRecords(){
+    return typeof students !== "undefined" && Array.isArray(students) ? students : [];
+  }
+  function getStudentClassInfo(s){
+    return typeof studentInfo === "function" ? studentInfo(s) : {className:s.className||s.class||"",photo:s.photo||""};
+  }
+  function studentAssignedClassOptions(){
+    var connected = typeof window.teacherIsSchoolConnected === "function" && window.teacherIsSchoolConnected();
+    var values = [];
+    if (connected) {
+      values = typeof window.teacherAssignedClasses === "function" ? window.teacherAssignedClasses() : [];
+    } else {
+      values = getStudentRecords().map(function(s){
+        return getStudentClassInfo(s).className || "";
+      }).filter(Boolean);
+    }
+    var unique = Array.from(new Set(values.map(function(v){ return String(v).trim(); }).filter(Boolean)));
+    unique.sort(function(a,b){
+      var na = parseInt(a.replace(/\D/g,""),10), nb = parseInt(b.replace(/\D/g,""),10);
+      return (Number.isFinite(na)?na:999) - (Number.isFinite(nb)?nb:999) || a.localeCompare(b);
+    });
+    return unique;
+  }
+
+  window.refreshStudentClassFilter = function(){
+    var select = document.getElementById("studentClassFilter");
+    if(!select) return;
+    var previous = select.value;
+    var classes = studentAssignedClassOptions();
+    select.replaceChildren();
+    select.add(new Option("All assigned classes", ""));
+    classes.forEach(function(cls){ select.add(new Option(cls, cls)); });
+    select.value = classes.includes(previous) ? previous : "";
+    select.disabled = classes.length === 0;
+    if(!classes.length){
+      select.replaceChildren();
+      select.add(new Option("No assigned classes", ""));
+    }
+  };
+
+  window.renderStudents = function(){
+    var body = document.getElementById("studentsBody");
+    if(!body) return;
+    window.refreshStudentClassFilter();
+    var select = document.getElementById("studentClassFilter");
+    var filter = select ? select.value : "";
+    var connected = typeof window.teacherIsSchoolConnected === "function" && window.teacherIsSchoolConnected();
+    var allowed = connected && typeof window.teacherAssignedClasses === "function" ? window.teacherAssignedClasses() : [];
+    var list = getStudentRecords();
+    var records = list.map(function(s,index){ return {s:s,index:index,info:getStudentClassInfo(s)}; })
+      .filter(function(item){
+        var cls = item.info.className || "";
+        if(connected && !allowed.includes(cls)) return false;
+        return !filter || cls === filter;
+      });
+    var count = document.getElementById("studentCount");
+    if(count) count.textContent = records.length + " Student" + (records.length === 1 ? "" : "s");
+    body.innerHTML = records.map(function(item,i){
+      var s=item.s, info=item.info;
+      var photo=info.photo ? '<img src="'+String(info.photo).replace(/"/g,'&quot;')+'" alt="Student photo" style="width:42px;height:52px;object-fit:cover;border-radius:6px">' : '—';
+      return '<tr><td>'+(i+1)+'</td><td>'+photo+'</td><td>'+(s[0]||"")+'</td><td>'+(s[1]||"")+'</td><td>'+(s[2]||"")+'</td><td>'+(info.className||"")+'</td><td><button class="btn blue" onclick="viewStudentResult('+item.index+')">View</button> <button class="btn green" onclick="editStudent('+item.index+')">Edit</button> <button class="btn red" onclick="deleteStudent('+item.index+')">Delete</button></td></tr>';
+    }).join("") || '<tr><td colspan="7" class="empty">'+(connected && !allowed.length ? 'No classes have been assigned to this teacher by the registrar yet.' : (filter ? 'No students found in '+filter+'.' : 'No students found in your assigned classes.'))+'</td></tr>';
+  };
+
+  document.addEventListener("DOMContentLoaded", function(){
+    window.refreshStudentClassFilter();
+    var select = document.getElementById("studentClassFilter");
+    if(select) select.addEventListener("change", window.renderStudents);
+  });
+  window.addEventListener("teacherAssignmentsUpdated", function(){ window.refreshStudentClassFilter(); window.renderStudents(); });
+  window.addEventListener("teacherAccountContextChanged", function(){ window.refreshStudentClassFilter(); window.renderStudents(); });
+})();
+</script>
+
 </body>
 </html>
 <style>
