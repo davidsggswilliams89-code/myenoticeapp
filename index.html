@@ -2394,24 +2394,55 @@ function teacherIsSchoolConnected(){const r=window.activeTeacherConnection||null
 function teacherAssignedPairs(){const r=window.activeTeacherConnection||{};return Array.isArray(r.assignedTeachingAssignments)?r.assignedTeachingAssignments:[];}
 function teacherAssignedClasses(){const pairs=teacherAssignedPairs(),fromPairs=pairs.map(a=>a.className||a.class).filter(Boolean),r=window.activeTeacherConnection||{},legacy=Array.isArray(r.assignedClasses)?r.assignedClasses:(r.assignedClass?[r.assignedClass]:[]);return [...new Set(fromPairs.length?fromPairs:legacy)];}
 function teacherAssignedSubjectsForClass(cls){const p=teacherAssignedPairs().filter(a=>(a.className||a.class)===cls).map(a=>a.subject).filter(Boolean);if(p.length)return [...new Set(p)];const r=window.activeTeacherConnection||{};return Array.isArray(r.assignedSubjects)?r.assignedSubjects:[];}
+function teacherLessonAssignmentPairs(){
+ const r=window.activeTeacherConnection||{};
+ let pairs=Array.isArray(r.assignedTeachingAssignments)?r.assignedTeachingAssignments.slice():[];
+ if(!pairs.length&&Array.isArray(r.assignedPairKeys))pairs=r.assignedPairKeys.map(key=>{const parts=String(key).split('::');return parts.length>=2?{className:parts[0],subject:parts.slice(1).join('::')}:null;}).filter(Boolean);
+ return pairs.map(a=>({...a,className:String(a.className||a.class||a.classLevel||'').trim(),subject:String(a.subject||a.subjectName||a.courseName||'').trim(),subjectId:String(a.subjectUuid||a.subjectUUID||a.subjectUID||a.subjectUid||a.subjectId||a.subjectID||'').trim()})).filter(a=>a.className&&a.subject);
+}
+function teacherLessonAssignedSubjects(){
+ const pairs=teacherLessonAssignmentPairs(),out=[];
+ pairs.forEach(a=>{if(!out.some(x=>x.name.toLowerCase()===a.subject.toLowerCase()||(x.id&&a.subjectId&&x.id===a.subjectId)))out.push({name:a.subject,id:a.subjectId});});
+ if(!out.length){const r=window.activeTeacherConnection||{};(Array.isArray(r.assignedSubjects)?r.assignedSubjects:[]).forEach(x=>{const name=String(typeof x==='string'?x:(x.subject||x.name||x.subjectName||'')).trim();const id=typeof x==='object'?String(x.subjectUuid||x.subjectUUID||x.subjectUid||x.subjectId||x.uuid||x.id||''):'';if(name&&!out.some(y=>y.name.toLowerCase()===name.toLowerCase()))out.push({name,id});});}
+ return out;
+}
+function teacherLessonClassesForSubject(subject){return [...new Set(teacherLessonAssignmentPairs().filter(a=>a.subject.toLowerCase()===String(subject||'').trim().toLowerCase()).map(a=>a.className))];}
+function refreshLessonAssignedFilters(){
+ if(!teacherIsSchoolConnected())return;
+ const subjectEl=document.getElementById('lessonLibrarySubject'),classEl=document.getElementById('lessonLibraryClass');
+ if(!subjectEl||!classEl)return;
+ const oldSubject=subjectEl.value,oldClass=classEl.value,subjects=teacherLessonAssignedSubjects();
+ subjectEl.replaceChildren(new Option('Select Assigned Subject',''));
+ subjects.forEach(x=>{const o=new Option(x.name,x.name);o.dataset.subjectId=x.id||'';subjectEl.add(o);});
+ subjectEl.value=subjects.some(x=>x.name===oldSubject)?oldSubject:(subjects.length===1?subjects[0].name:'');
+ const allowed=teacherLessonClassesForSubject(subjectEl.value);
+ classEl.replaceChildren(new Option('Select Assigned Class',''));
+ allowed.forEach(cls=>classEl.add(new Option(cls,cls)));
+ classEl.value=allowed.includes(oldClass)?oldClass:(allowed.length?allowed[0]:'');
+ classEl.disabled=allowed.length<=1;
+ subjectEl.title=subjects.length?'Only subjects assigned by the Registrar are available.':'No Registrar-assigned subjects found for this lecturer.';
+ classEl.title=subjectEl.value?'Only classes assigned to the selected subject are available.':'Select an assigned subject first.';
+ if(typeof window.refreshCurriculumFromSource==='function')window.refreshCurriculumFromSource();
+}
 function applyAssignedClassFilters(){
  if(!teacherIsSchoolConnected())return;
  const classes=teacherAssignedClasses();
  const setOptions=(el,values,placeholder)=>{if(!el)return;const old=el.value;el.replaceChildren();if(placeholder!==null)el.add(new Option(placeholder,""));values.forEach(v=>el.add(new Option(v,v)));if(values.includes(old))el.value=old;else if(values.length)el.value=values[0];el.disabled=values.length<=1;};
  setOptions(document.getElementById("classSelect"),classes,null);
  setOptions(document.getElementById("attendanceClassFilter"),classes,null);
- setOptions(document.getElementById("lessonLibraryClass"),classes,null);
  const cls=document.getElementById("classSelect")?.value||classes[0]||"";
  setOptions(document.getElementById("dashboardSubjectFilter"),cls?teacherAssignedSubjectsForClass(cls):[],"All Assigned Subjects");
- const lcls=document.getElementById("lessonLibraryClass")?.value||classes[0]||"";
- setOptions(document.getElementById("lessonLibrarySubject"),lcls?teacherAssignedSubjectsForClass(lcls):[],"Select Assigned Subject");
+ refreshLessonAssignedFilters();
  if(typeof window.updateDashboard==="function")window.updateDashboard();
  if(typeof window.renderStudents==="function")window.renderStudents();
  if(typeof window.renderAttendance==="function")window.renderAttendance();
 }
-window.teacherIsSchoolConnected=teacherIsSchoolConnected;window.teacherAssignedClasses=teacherAssignedClasses;window.teacherAssignedSubjectsForClass=teacherAssignedSubjectsForClass;window.applyAssignedClassFilters=applyAssignedClassFilters;
+window.teacherIsSchoolConnected=teacherIsSchoolConnected;window.teacherAssignedClasses=teacherAssignedClasses;window.teacherAssignedSubjectsForClass=teacherAssignedSubjectsForClass;window.teacherLessonAssignedSubjects=teacherLessonAssignedSubjects;window.teacherLessonClassesForSubject=teacherLessonClassesForSubject;window.refreshLessonAssignedFilters=refreshLessonAssignedFilters;window.applyAssignedClassFilters=applyAssignedClassFilters;
 document.getElementById("classSelect")?.addEventListener("change",()=>{if(teacherIsSchoolConnected())applyAssignedClassFilters();if(typeof window.renderStudents==="function")window.renderStudents();});
-document.getElementById("lessonLibraryClass")?.addEventListener("change",()=>{if(teacherIsSchoolConnected())applyAssignedClassFilters();});
+document.getElementById("lessonLibrarySubject")?.addEventListener("change",()=>{if(teacherIsSchoolConnected())refreshLessonAssignedFilters();});
+document.getElementById("lessonLibraryClass")?.addEventListener("change",()=>{if(teacherIsSchoolConnected()&&typeof window.refreshCurriculumFromSource==='function')window.refreshCurriculumFromSource();});
+window.addEventListener('teacherAssignmentsUpdated',()=>{if(teacherIsSchoolConnected())refreshLessonAssignedFilters();});
+window.addEventListener('teacherAccountContextChanged',()=>{if(teacherIsSchoolConnected())refreshLessonAssignedFilters();});
 
 function visibleStudentRecords(){const selected=document.getElementById("classSelect")?.value||"",connected=teacherIsSchoolConnected(),allowed=connected?teacherAssignedClasses():[];return students.map((s,index)=>({s,index})).filter(x=>{const cls=studentInfo(x.s).className;if(connected&&!allowed.includes(cls))return false;return !selected||cls===selected;});}
 function selectedDashboardClass(){return document.getElementById("classSelect")?.value||"Primary 5";}
@@ -3201,6 +3232,10 @@ renderCurriculum();renderStudents();renderResults();
     const cls=document.getElementById('classSelect'),term=document.getElementById('termSelect');
     function syncSubjectOptions(){
       if(!librarySubject)return;
+      if(typeof window.teacherIsSchoolConnected==='function'&&window.teacherIsSchoolConnected()){
+        if(typeof window.refreshLessonAssignedFilters==='function')window.refreshLessonAssignedFilters();
+        return;
+      }
       const current=librarySubject.value;
       const info=assignmentInfo();
       const assigned=info.subjects||[];
@@ -3211,7 +3246,7 @@ renderCurriculum();renderStudents();renderResults();
       else if(all.includes('Basic Science & Technology')) librarySubject.value='Basic Science & Technology';
     }
     syncSubjectOptions();
-    if(cls && libraryClass){cls.addEventListener('change',function(){if(Array.from(libraryClass.options).some(o=>o.value===cls.value))libraryClass.value=cls.value;syncSubjectOptions();refreshCurriculumFromSource()})}
+    if(cls && libraryClass){cls.addEventListener('change',function(){if(Array.from(libraryClass.options).some(o=>o.value===cls.value))libraryClass.value=cls.value;if(!(typeof window.teacherIsSchoolConnected==='function'&&window.teacherIsSchoolConnected()))syncSubjectOptions();refreshCurriculumFromSource()})}
     if(term && libraryTerm){term.addEventListener('change',function(){if(Array.from(libraryTerm.options).some(o=>o.value===term.value))libraryTerm.value=term.value;refreshCurriculumFromSource()})}
     window.addEventListener('teacherAssignmentsUpdated',function(){syncSubjectOptions();refreshCurriculumFromSource();});
   });
