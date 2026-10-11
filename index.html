@@ -1747,7 +1747,7 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
 <div id="studentsView" class="section-view" style="display:none">
   <div class="section-title">
     <h2>Students</h2>
-    <p>Add, manage and view students. Added students will appear in C.A, Examination and Results.</p>
+    
   </div>
 
 
@@ -2424,7 +2424,7 @@ window.loadStudentsFromFirestore=async function(){
    const docs=new Map();snaps.forEach(s=>s.docs.forEach(d=>docs.set(d.id,d)));
    students=[...docs.values()].map(d=>{const x=d.data()||{};return [x.admissionNumber||x.admissionNo||"",x.name||x.studentName||x.fullName||"",x.gender||"",Number(x.ca1||0),Number(x.ca2||0),Number(x.ca3||0),Number(x.exam||0),{phone:x.parentPhone||x.parentGuardianPhone||x.phone||"",dob:x.dob||x.dateOfBirth||"",className:x.className||x.class||x.classLevel||"",guardian:x.guardian||x.parentGuardianName||x.parentName||"",address:x.address||x.parentAddress||"",photo:x.photo||x.studentPhoto||""},{schoolStudentId:d.id,firestoreId:"",assessmentScopes:x.assessmentRecords||{}}];}).filter(s=>classes.includes(studentInfo(s).className));
    applyAssignedClassFilters();if(typeof window.refreshStudentViews==="function")window.refreshStudentViews();if(typeof window.renderAttendance==="function")window.renderAttendance();
-   const note=document.getElementById("studentFirebaseSourceNote");if(note){note.textContent="Connected school register: "+students.length+" official student record"+(students.length===1?"":"s")+" loaded for your assigned classes.";note.style.display="";note.style.background="#f3faf7";note.style.borderColor="#cfe4dd";note.style.color="#35505f";}
+   const note=document.getElementById("studentFirebaseSourceNote");if(note){note.textContent="";note.style.display="none";}
    return {ok:true,count:students.length,source:"school-register"};
   }
   const snap=await window.firebaseFirestoreFns.getDocs(window.firebaseFirestoreFns.collection(db,"teachers",uid,"students"));
