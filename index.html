@@ -467,6 +467,13 @@ button{cursor:pointer;border:0}
 </style>
 
 <style>
+/* Lesson-section subscription: show registrar-unassigned classes, but keep them disabled. */
+.subscription-class-grid .assignment-check.is-unassigned{opacity:.48;background:#f1f4f6;border-color:#d7dee3;cursor:not-allowed;color:#7b8794}
+.subscription-class-grid .assignment-check input:disabled{cursor:not-allowed;accent-color:#b8c2cc}
+#subscriptionSelectAllClasses:disabled{opacity:.45;cursor:not-allowed}
+</style>
+
+<style>
 /* All navigation buttons are directly visible; swipe horizontally on small screens. */
 .topnav-header{
   justify-content:flex-start !important;
@@ -4098,17 +4105,93 @@ window.viewStudentResult=function(index){
 <script>
 (function(){
   const subjects=['English Studies','Mathematics','Basic Science & Technology','Social Studies','Civic Education','Computer Studies','Agricultural Science','Physical & Health Education','Religious Studies','Home Economics','Cultural & Creative Arts','Basic Technology','French','Hausa','Yoruba','Igbo','Security Education','Christian Religious Studies','Islamic Religious Studies'];
+  const classesAll=['Primary 1','Primary 2','Primary 3','Primary 4','Primary 5','Primary 6'];
   const fee=1000, SUB_KEY='teacherSubscriptions', ASSIGN_KEY='teacherTeachingAssignments';
   function scopedKey(base){return base+'_'+(window.firebaseTeacherUID||'unauthenticated')}
-  function isRegistrarConnected(){return typeof window.teacherIsSchoolConnected==='function'&&window.teacherIsSchoolConnected()}
+  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+  function isRegistrarConnected(){
+    if(!(typeof window.teacherIsSchoolConnected==='function'&&window.teacherIsSchoolConnected()))return false;
+    const r=window.activeTeacherConnection||{},uid=window.firebaseTeacherUID||'';
+    return !r.teacherUid||!uid||r.teacherUid===uid;
+  }
+  function assignmentPairs(){
+    const r=window.activeTeacherConnection||{};
+    let pairs=Array.isArray(r.assignedTeachingAssignments)?r.assignedTeachingAssignments.slice():[];
+    // Older registrar membership records may contain assignment pair keys rather than full objects.
+    if(!pairs.length&&Array.isArray(r.assignedPairKeys)){
+      pairs=r.assignedPairKeys.map(key=>{
+        const parts=String(key).split('::');
+        return parts.length>=2?{className:parts[0],subject:parts.slice(1).join('::')}:null;
+      }).filter(Boolean);
+    }
+    return pairs.map(a=>({
+      ...a,
+      className:String(a.className||a.class||a.classLevel||'').trim(),
+      subject:String(a.subject||a.subjectName||a.courseName||'').trim(),
+      subjectId:String(a.subjectUuid||a.subjectUUID||a.subjectUID||a.subjectUid||a.subjectId||a.subjectID||'').trim()
+    })).filter(a=>a.className&&a.subject);
+  }
+  function assignedSubjectOptions(){
+    const r=window.activeTeacherConnection||{},pairs=assignmentPairs(),list=[];
+    pairs.forEach(a=>{
+      const key=a.subjectId||a.subject.toLowerCase();
+      if(!list.some(x=>x.key===key||x.name.toLowerCase()===a.subject.toLowerCase()))list.push({key,name:a.subject,id:a.subjectId});
+    });
+    if(!list.length){
+      (Array.isArray(r.assignedSubjects)?r.assignedSubjects:[]).forEach(x=>{
+        const name=typeof x==='string'?x:String(x.subject||x.name||x.subjectName||'');
+        const id=typeof x==='object'?String(x.subjectUuid||x.subjectUUID||x.subjectUid||x.subjectId||x.uuid||x.id||''):'';
+        if(name.trim()&&!list.some(y=>y.name.toLowerCase()===name.trim().toLowerCase()))list.push({key:id||name.trim().toLowerCase(),name:name.trim(),id});
+      });
+    }
+    return list;
+  }
+  function selectedSubjectInfo(){
+    const el=document.getElementById('subscriptionSubjectSelect'),opt=el?.selectedOptions?.[0];
+    return {key:el?.value||'',name:opt?.dataset?.subjectName||opt?.textContent?.trim()||'',id:opt?.dataset?.subjectId||''};
+  }
+  function pairsForSubject(info){
+    if(!info.name)return [];
+    return assignmentPairs().filter(a=>(info.id&&a.subjectId===info.id)||a.subject.toLowerCase()===info.name.toLowerCase());
+  }
   function readSubs(){try{const x=JSON.parse(localStorage.getItem(scopedKey(SUB_KEY))||'[]');return Array.isArray(x)?x:[]}catch(e){return[]}}
   function writeSubs(v){localStorage.setItem(scopedKey(SUB_KEY),JSON.stringify(v))}
   function activeSubs(){return readSubs().filter(x=>x.status==='Active')}
-  function isActive(s){return activeSubs().some(x=>String(x.subject).toLowerCase()===String(s).toLowerCase())}
-  function getActive(s){return activeSubs().find(x=>String(x.subject).toLowerCase()===String(s).toLowerCase())}
+  function isActive(s,id=''){return activeSubs().some(x=>(id&&x.subjectId&&String(x.subjectId)===String(id))||String(x.subject).toLowerCase()===String(s).toLowerCase())}
+  function getActive(s,id=''){return activeSubs().find(x=>(id&&x.subjectId&&String(x.subjectId)===String(id))||String(x.subject).toLowerCase()===String(s).toLowerCase())}
 
+  function renderSubscriptionSubjectOptions(){
+    const el=document.getElementById('subscriptionSubjectSelect');if(!el)return;
+    const old=selectedSubjectInfo();
+    const connected=isRegistrarConnected();
+    const options=connected?assignedSubjectOptions():subjects.map(name=>({key:name,name,id:''}));
+    el.replaceChildren();el.add(new Option('Select a subject',''));
+    options.forEach(x=>{const o=new Option(x.name,x.key);o.dataset.subjectName=x.name;o.dataset.subjectId=x.id||'';el.add(o)});
+    const match=options.find(x=>x.key===old.key||x.name.toLowerCase()===old.name.toLowerCase());
+    if(match)el.value=match.key;
+    else el.value='';
+    if(connected&&!options.length)el.title='No registrar-assigned subjects were found for this lecturer.';
+    else el.removeAttribute('title');
+  }
+  function renderSubscriptionClasses(){
+    const host=document.getElementById('subscriptionClassChoices');if(!host)return;
+    const connected=isRegistrarConnected(),info=selectedSubjectInfo();
+    const allowed=connected?new Set(pairsForSubject(info).map(a=>a.className)):new Set(classesAll);
+    host.replaceChildren();
+    classesAll.forEach(cls=>{
+      const label=document.createElement('label');label.className='assignment-check';
+      const input=document.createElement('input');input.type='checkbox';input.value=cls;
+      const enabled=!connected||allowed.has(cls);input.disabled=!enabled;
+      if(!enabled)label.classList.add('is-unassigned');
+      const span=document.createElement('span');span.textContent=cls+(connected&&!enabled?' · Not assigned':'');
+      label.append(input,span);host.append(label);
+      input.addEventListener('change',updateSubscriptionPage);
+    });
+    const all=document.getElementById('subscriptionSelectAllClasses');
+    if(all){all.disabled=connected&&!allowed.size;all.textContent='Select All';}
+  }
   function syncAssignments(){
-    // Registrar assignments are authoritative for school-connected accounts.
+    // Registrar assignments remain authoritative for school-connected accounts.
     if(isRegistrarConnected()){
       window.dispatchEvent(new Event('teacherAssignmentsUpdated'));
       return;
@@ -4122,121 +4205,67 @@ window.viewStudentResult=function(index){
   function populateDashboardSubjectFilter(){
     const el=document.getElementById('dashboardSubjectFilter'); if(!el)return;
     if(isRegistrarConnected()){if(typeof window.applyAssignedClassFilters==='function')window.applyAssignedClassFilters();return;}
-    const current=el.value;
-    el.innerHTML='<option value="">All Subscribed Subjects</option>';
+    const current=el.value;el.innerHTML='<option value="">All Subscribed Subjects</option>';
     activeSubs().forEach(s=>{const o=document.createElement('option');o.value=s.subject;o.textContent=s.subject;el.appendChild(o)});
     if(Array.from(el.options).some(o=>o.value===current))el.value=current;
   }
-
   function populateDashboardClassFilter(){
     const el=document.getElementById('classSelect'); if(!el)return;
     if(isRegistrarConnected()){if(typeof window.applyAssignedClassFilters==='function')window.applyAssignedClassFilters();return;}
-    const classes=[];
-    activeSubs().forEach(s=>(s.classes||[]).forEach(c=>{if(!classes.includes(c))classes.push(c)}));
-    const available=classes.length?classes:['Primary 1','Primary 2','Primary 3','Primary 4','Primary 5','Primary 6'];
-    const current=el.value;
+    const classes=[];activeSubs().forEach(s=>(s.classes||[]).forEach(c=>{if(!classes.includes(c))classes.push(c)}));
+    const available=classes.length?classes:classesAll,current=el.value;
     el.innerHTML=available.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
-    if(available.includes(current))el.value=current;
-    else if(available.includes('Primary 5'))el.value='Primary 5';
+    if(available.includes(current))el.value=current;else if(available.includes('Primary 5'))el.value='Primary 5';
   }
-
   function renderDashboardSubscriptions(){
-    const host=document.getElementById('dashboardSubscribedSubjects');
-    const legacy=document.getElementById('dashboardTeacherSubjects');
-    if(!host)return;
-    const list=activeSubs(), filter=document.getElementById('dashboardSubjectFilter')?.value||'';
-    const shown=filter?list.filter(s=>s.subject===filter):list;
-    host.innerHTML=shown.length
-      ?shown.map(s=>'<div class="dashboard-subject-row">'+esc(s.subject)+'</div>').join('')
-      :'<div class="dashboard-subject-empty">No subscribed subject yet.</div>';
+    const host=document.getElementById('dashboardSubscribedSubjects'),legacy=document.getElementById('dashboardTeacherSubjects');if(!host)return;
+    const list=activeSubs(),filter=document.getElementById('dashboardSubjectFilter')?.value||'',shown=filter?list.filter(s=>s.subject===filter):list;
+    host.innerHTML=shown.length?shown.map(s=>'<div class="dashboard-subject-row">'+esc(s.subject)+'</div>').join(''):'<div class="dashboard-subject-empty">No subscribed subject yet.</div>';
     if(legacy)legacy.innerHTML=list.length?list.map(s=>'<div class="teacher-subject">'+esc(s.subject)+'</div>').join(''):'<div class="teacher-subject-placeholder">No subscribed subject yet</div>';
   }
-
-  window.applyDashboardSubjectFilter=function(){
-    renderDashboardSubscriptions();
-    const s=document.getElementById('dashboardSubjectFilter')?.value||'';
-    const ls=document.getElementById('lessonLibrarySubject');
-    if(ls&&s)ls.value=s;
-    if(typeof window.updateLessonLibrary==='function')window.updateLessonLibrary();
-  };
+  window.applyDashboardSubjectFilter=function(){renderDashboardSubscriptions();const s=document.getElementById('dashboardSubjectFilter')?.value||'',ls=document.getElementById('lessonLibrarySubject');if(ls&&s)ls.value=s;if(typeof window.updateLessonLibrary==='function')window.updateLessonLibrary();};
 
   window.updateSubscriptionPage=function(){
-    const sub=document.getElementById('subscriptionSubjectSelect')?.value||'';
-    const record=getActive(sub);
-    const classes=Array.from(document.querySelectorAll('#subscriptionClassChoices input:checked')).map(x=>x.value);
-    const btn=document.getElementById('subscriptionMainAction');
-    const summary=document.getElementById('subscriptionSelectionSummary');
-    const msg=document.getElementById('subscriptionAlreadyMessage');
-    const msgText=document.getElementById('subscriptionAlreadyText');
+    const info=selectedSubjectInfo(),sub=info.name,record=getActive(sub,info.id);
+    const checks=Array.from(document.querySelectorAll('#subscriptionClassChoices input:checked'));
+    const classes=checks.map(x=>x.value),btn=document.getElementById('subscriptionMainAction'),summary=document.getElementById('subscriptionSelectionSummary'),msg=document.getElementById('subscriptionAlreadyMessage'),msgText=document.getElementById('subscriptionAlreadyText');
     if(summary){
-      summary.textContent=!sub?'Select a subject and at least one class.':
-        record?'Already subscribed: '+(record.classes||[]).join(' • '):
-        classes.length?classes.join(' • '):'Select at least one class.';
+      summary.textContent=!sub?'Select a subject and at least one assigned class.':record?'Already subscribed: '+(record.classes||[]).join(' • '):classes.length?classes.join(' • '):'Select at least one assigned class.';
     }
-    if(btn){
-      btn.classList.toggle('already',!!record);
-      btn.textContent=record?'✓ ALREADY SUBSCRIBED — SAVE CLASSES':'SUBSCRIBE NOW — ₦1,000 / YEAR';
-    }
-    if(msg){msg.style.display=record?'flex':'none'}
-    if(msgText&&sub)msgText.textContent='You already have an active yearly subscription for '+sub+'.';
+    if(btn){btn.classList.toggle('already',!!record);btn.textContent=record?'✓ ALREADY SUBSCRIBED — SAVE CLASSES':'SUBSCRIBE NOW — ₦1,000 / YEAR';btn.disabled=!sub||!classes.length;}
+    if(msg)msg.style.display=record?'flex':'none';if(msgText&&sub)msgText.textContent='You already have an active yearly subscription for '+sub+'.';
   };
 
   window.startSubscription=function(){
-    if(isRegistrarConnected()){alert('Your school connection is active. Your classes and subjects are managed by the registrar, so independent teaching assignments cannot be changed here.');return;}
-    const sub=document.getElementById('subscriptionSubjectSelect')?.value||'';
-    const classes=Array.from(document.querySelectorAll('#subscriptionClassChoices input:checked')).map(x=>x.value);
+    const info=selectedSubjectInfo(),sub=info.name;
+    const checks=Array.from(document.querySelectorAll('#subscriptionClassChoices input:checked'));
+    let classes=checks.map(x=>x.value);
     if(!sub){alert('Please select a subject.');return}
-    if(!classes.length){alert('Please select at least one class.');return}
-
-    const subs=readSubs(), existing=subs.find(x=>String(x.subject).toLowerCase()===sub.toLowerCase()&&x.status==='Active');
-    if(existing){
-      existing.classes=Array.from(new Set((existing.classes||[]).concat(classes)));
-      writeSubs(subs);
-      syncAssignments(); populateDashboardSubjectFilter(); populateDashboardClassFilter(); renderDashboardSubscriptions(); updateSubscriptionPage();
-      alert(sub+' is already subscribed. The selected classes have been saved.');
-      return;
+    if(!classes.length){alert('Please select at least one assigned class.');return}
+    if(isRegistrarConnected()){
+      const allowed=new Set(pairsForSubject(info).map(a=>a.className));
+      classes=classes.filter(c=>allowed.has(c));
+      if(!classes.length){alert('No selected class is assigned to this subject by the registrar.');return}
     }
-
-    // Frontend stage: simulate an active subscription. Real payment verification
-    // will replace this activation when the payment gateway is connected.
-    subs.push({subject:sub,classes:Array.from(new Set(classes)),amount:fee,duration:'1 Year',status:'Active',createdAt:new Date().toISOString(),expiresAt:new Date(Date.now()+365*86400000).toISOString()});
-    writeSubs(subs);
-    syncAssignments(); populateDashboardSubjectFilter(); populateDashboardClassFilter(); renderDashboardSubscriptions(); updateSubscriptionPage();
+    const subs=readSubs(),existing=subs.find(x=>((info.id&&x.subjectId&&String(x.subjectId)===String(info.id))||String(x.subject).toLowerCase()===sub.toLowerCase())&&x.status==='Active');
+    if(existing){existing.subject=sub;existing.subjectId=info.id||existing.subjectId||'';existing.classes=Array.from(new Set((existing.classes||[]).filter(c=>!isRegistrarConnected()||pairsForSubject(info).some(a=>a.className===c)).concat(classes)));writeSubs(subs);syncAssignments();populateDashboardSubjectFilter();populateDashboardClassFilter();renderDashboardSubscriptions();updateSubscriptionPage();alert(sub+' is already subscribed. The selected assigned classes have been saved.');return}
+    // Existing frontend subscription activation is retained; payment-gateway verification is still separate.
+    subs.push({subject:sub,subjectId:info.id||'',classes:Array.from(new Set(classes)),amount:fee,duration:'1 Year',status:'Active',schoolId:isRegistrarConnected()?(window.activeTeacherConnection?.schoolId||''):'',teacherUid:window.firebaseTeacherUID||'',createdAt:new Date().toISOString(),expiresAt:new Date(Date.now()+365*86400000).toISOString()});
+    writeSubs(subs);syncAssignments();populateDashboardSubjectFilter();populateDashboardClassFilter();renderDashboardSubscriptions();updateSubscriptionPage();
     alert('Subscription successful: '+sub+'\nClasses: '+classes.join(', ')+'\n₦'+fee.toLocaleString()+' for 1 year.');
   };
 
-  window.openSubjectSubscription=function(){
-    const target=document.querySelectorAll('.topnav-item')[4]||null;
-    showSection('profileView',target);
-    const profilePage=document.querySelector('#profileView .teacher-profile-page');
-    const subscription=document.getElementById('subscriptionView');
-    if(profilePage) profilePage.style.display='block';
-    if(subscription) subscription.style.display='block';
-    updateSubscriptionPage();
-    window.scrollTo({top:0,behavior:'smooth'});
-  };
-
+  window.openSubjectSubscription=function(){const target=document.querySelectorAll('.topnav-item')[4]||null;showSection('profileView',target);const profilePage=document.querySelector('#profileView .teacher-profile-page'),subscription=document.getElementById('subscriptionView');if(profilePage)profilePage.style.display='block';if(subscription)subscription.style.display='block';renderSubscriptionSubjectOptions();renderSubscriptionClasses();updateSubscriptionPage();window.scrollTo({top:0,behavior:'smooth'});};
   window.openTeachingAssignment=window.openSubjectSubscription;
   window.closeProfileAssignment=function(){openTeacherProfile()};
-
+  const subjectSelect=document.getElementById('subscriptionSubjectSelect');
+  if(subjectSelect)subjectSelect.addEventListener('change',function(){renderSubscriptionClasses();updateSubscriptionPage()});
   const all=document.getElementById('subscriptionSelectAllClasses');
-  if(all)all.addEventListener('click',function(){
-    const checks=Array.from(document.querySelectorAll('#subscriptionClassChoices input'));
-    const checked=checks.length&&checks.every(x=>x.checked);
-    checks.forEach(x=>x.checked=!checked);
-    all.textContent=checked?'Select All':'Clear All';
-    updateSubscriptionPage();
-  });
-  document.querySelectorAll('#subscriptionClassChoices input').forEach(x=>x.addEventListener('change',updateSubscriptionPage));
-
-  window.loadTeachingAssignments=function(){syncAssignments();populateDashboardSubjectFilter();populateDashboardClassFilter();renderDashboardSubscriptions()};
-
-  function esc(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
-
-  document.addEventListener('DOMContentLoaded',function(){
-    syncAssignments();populateDashboardSubjectFilter();populateDashboardClassFilter();renderDashboardSubscriptions();updateSubscriptionPage();
-  });
-  syncAssignments();populateDashboardSubjectFilter();populateDashboardClassFilter();renderDashboardSubscriptions();
+  if(all)all.addEventListener('click',function(){const checks=Array.from(document.querySelectorAll('#subscriptionClassChoices input:not(:disabled)'));const checked=checks.length&&checks.every(x=>x.checked);checks.forEach(x=>x.checked=!checked);all.textContent=checked?'Select All':'Clear All';updateSubscriptionPage()});
+  window.loadTeachingAssignments=function(){renderSubscriptionSubjectOptions();renderSubscriptionClasses();syncAssignments();populateDashboardSubjectFilter();populateDashboardClassFilter();renderDashboardSubscriptions();updateSubscriptionPage()};
+  window.addEventListener('teacherAccountContextChanged',function(){renderSubscriptionSubjectOptions();renderSubscriptionClasses();updateSubscriptionPage()});
+  document.addEventListener('DOMContentLoaded',function(){renderSubscriptionSubjectOptions();renderSubscriptionClasses();syncAssignments();populateDashboardSubjectFilter();populateDashboardClassFilter();renderDashboardSubscriptions();updateSubscriptionPage()});
+  renderSubscriptionSubjectOptions();renderSubscriptionClasses();syncAssignments();populateDashboardSubjectFilter();populateDashboardClassFilter();renderDashboardSubscriptions();
 })();
 document.addEventListener("DOMContentLoaded",loadTeacherSettings);
 </script>
