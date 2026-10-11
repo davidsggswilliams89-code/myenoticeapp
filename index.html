@@ -1365,6 +1365,36 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
 .attendance-toolbar .attendance-refresh{height:34px;min-height:34px;padding:0 10px;font-size:11px;font-weight:800;border-radius:8px;white-space:nowrap;line-height:1}
 @media(max-width:480px){.attendance-toolbar{padding:10px 9px;gap:6px}.attendance-toolbar b{font-size:12px}.attendance-toolbar small{font-size:10px}.attendance-filter-label select{max-width:105px;font-size:11px}.attendance-toolbar .attendance-refresh{padding:0 7px;font-size:10px}}
 </style>
+
+/* Compact Examination Record columns only; keep all other tables unchanged */
+#modalBody .exam-record-table{
+  width:100% !important;
+  min-width:0 !important;
+  table-layout:fixed !important;
+}
+#modalBody .exam-record-table th,
+#modalBody .exam-record-table td{
+  padding:9px 6px;
+  overflow-wrap:anywhere;
+}
+#modalBody .exam-record-table th:nth-child(1),
+#modalBody .exam-record-table td:nth-child(1){width:9%}
+#modalBody .exam-record-table th:nth-child(2),
+#modalBody .exam-record-table td:nth-child(2){width:23%}
+#modalBody .exam-record-table th:nth-child(3),
+#modalBody .exam-record-table td:nth-child(3){width:43%}
+#modalBody .exam-record-table th:nth-child(4),
+#modalBody .exam-record-table td:nth-child(4){width:25%}
+#modalBody .exam-record-table input[type="number"]{
+  width:100% !important;
+  max-width:68px;
+  box-sizing:border-box;
+}
+@media(max-width:760px){
+  #modalBody .exam-record-table th,
+  #modalBody .exam-record-table td{padding:8px 4px;font-size:12px}
+}
+
 </head>
 <body>
 <script>
@@ -3086,7 +3116,7 @@ function openExam(){
       <div class="meta-item"><b>Date:</b> ${new Date().toLocaleDateString()}</div>
       <div class="meta-item"><b>Teacher name:</b> ${teacherFullName()}</div>
     </div>
-    <div class="tablewrap"><table><thead><tr><th>S/N</th><th>Admission No.</th><th>Student</th><th>Exam /70</th></tr></thead><tbody>
+    <div class="tablewrap exam-record-table-wrap"><table class="exam-record-table"><thead><tr><th>S/N</th><th>Admission No.</th><th>Student</th><th>Exam /70</th></tr></thead><tbody>
     ${caExamVisibleRecords().map((x,i)=>{const s=x.s;return `<tr><td>${i+1}</td><td>${s[0]}</td><td>${s[1]}</td><td><input data-student-index="${x.index}" style="width:75px;padding:7px" type="number" min="0" max="70" value="${caExamScore(s,6)}"></td></tr>`;}).join("")}
     </tbody></table></div>`);
 }
@@ -3933,7 +3963,7 @@ window.viewStudentResult=function(index){
         <div class="meta-item"><b>Date:</b> ${new Date().toLocaleDateString()}</div>
         <div class="meta-item"><b>Teacher name:</b> ${teacherFullName()}</div>
       </div>
-      ${records.length?`<div class="tablewrap"><table><thead><tr><th>S/N</th><th>Admission No.</th><th>Student</th><th>Exam /70</th></tr></thead><tbody>
+      ${records.length?`<div class="tablewrap exam-record-table-wrap"><table class="exam-record-table"><thead><tr><th>S/N</th><th>Admission No.</th><th>Student</th><th>Exam /70</th></tr></thead><tbody>
       ${records.map(function(item,i){var s=item.s;return `<tr><td>${i+1}</td><td>${s[0]}</td><td>${s[1]}</td><td><input data-student-index="${item.index}" style="width:75px;padding:7px" type="number" min="0" max="70" value="${s[6]}"></td></tr>`}).join("")}
       </tbody></table></div>`:`<div class="empty">No students have been added to ${selectedDashboardClass()} yet.</div>`}`);
   };
@@ -5102,7 +5132,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     currentAssessmentType={kind:"exam"};
     const rows=caRows();
     showModal("📋 Examination Record",`${caHeader()}
-      <div class="tablewrap"><table><thead><tr><th>S/N</th><th>Admission No.</th><th>Student</th><th>Exam /70</th></tr></thead><tbody>
+      <div class="tablewrap exam-record-table-wrap"><table class="exam-record-table"><thead><tr><th>S/N</th><th>Admission No.</th><th>Student</th><th>Exam /70</th></tr></thead><tbody>
       ${rows.length?rows.map(({s,index},i)=>`<tr><td>${i+1}</td><td>${s[0]??""}</td><td>${s[1]??""}</td><td><input data-student-index="${index}" style="width:75px;padding:7px" type="number" min="0" max="70" value="${caExamScore(s,6)}"></td></tr>`).join(""):caEmpty()}
       </tbody></table></div>`);
   };
