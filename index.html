@@ -2126,7 +2126,7 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
       <p><b>Current Status:</b> <span id="teacherAcademicCurrentStatus" class="status-pill current">—</span></p>
     </div>
     <div class="info-card">
-      <h3>First Term</h3>
+      <h3 id="teacherAcademicTermHeading">Current Term</h3>
       <p><b>Resumption:</b> <span id="teacherAcademicResumption">—</span></p>
       <p><b>Examination:</b> <span id="teacherAcademicExamination">—</span></p>
       <p><b>Term Ends:</b> <span id="teacherAcademicTermEnd">—</span></p>
@@ -2134,16 +2134,9 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
   </div>
   <div class="card" style="margin-top:14px">
     <div class="cardhead"><h3>Academic Calendar</h3></div>
-    <div class="calendar-list" style="padding:12px">
-      <div class="calendar-item"><div class="calendar-date">TERM<small>START</small></div><div><b>First Term Resumption</b><p>School date to be entered.</p></div></div>
-      <div class="calendar-item"><div class="calendar-date">BREAK<small>MID-TERM</small></div><div><b>Mid-Term Break</b><p>School date to be entered.</p></div></div>
-      <div class="calendar-item"><div class="calendar-date">EXAM<small>START</small></div><div><b>First Term Examination</b><p>Examination start date to be entered.</p></div></div>
-      <div class="calendar-item"><div class="calendar-date">TERM<small>END</small></div><div><b>First Term Closing</b><p>Term closing date to be entered.</p></div></div>
+    <div id="teacherAcademicCalendarList" class="calendar-list" style="padding:12px">
+      <div class="empty">Loading academic calendar from the registrar…</div>
     </div>
-  </div>
-  <div class="card">
-    <div class="cardhead"><h3>Public Holidays</h3><span class="status-pill">School Calendar</span></div>
-    <div id="teacherAcademicHolidays" class="empty">Public holidays will appear here when published by the registrar.</div>
   </div>
 </div>
 
@@ -4932,27 +4925,52 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   }
   async function loadTeacherAcademicSession(){
     const rec=window.activeTeacherConnection||activeTeacherConnection;
-    const eventsBox=document.getElementById('teacherAcademicEvents'),holidaysBox=document.getElementById('teacherAcademicHolidays');
+    const eventsBox=document.getElementById('teacherAcademicEvents');
+    const calendarBox=document.getElementById('teacherAcademicCalendarList');
     if(!rec||!['connected','approved','active'].includes(String(rec.status||'').toLowerCase())||!rec.schoolId){
       setAcademicText('teacherAcademicSession','Connect to a school first','');
       setAcademicText('teacherAcademicCurrentTerm','—','');setAcademicText('teacherAcademicCurrentStatus','—','');
       if(eventsBox)eventsBox.innerHTML='<div class="empty">Connect to a school to view its published calendar.</div>';
-      if(holidaysBox)holidaysBox.textContent='Connect to a school to view public holidays.';return;
+      if(calendarBox)calendarBox.innerHTML='<div class="empty">Connect to your school to view academic dates published by the registrar.</div>';
+      return;
     }
     try{
       const snap=await getDoc(doc(db,'schools',rec.schoolId));
       if(!snap.exists())throw new Error('The connected school record was not found.');
-      const school=snap.data()||{},ac=school.academicCalendar||{},dates=school.termDates||ac.termDates||{};
+      const school=snap.data()||{},ac=school.academicCalendar||{},allDates=school.termDates||ac.termDates||{};
+      const currentTerm=String(school.currentTerm||ac.currentTerm||'Current Term').trim();
+      const termHeading=document.getElementById('teacherAcademicTermHeading');
+      if(termHeading)termHeading.textContent=currentTerm;
       setAcademicText('teacherAcademicSession',school.academicSession||ac.session,'Not set by school');
-      setAcademicText('teacherAcademicCurrentTerm',school.currentTerm||ac.currentTerm,'Not set by school');
+      setAcademicText('teacherAcademicCurrentTerm',currentTerm,'Not set by school');
       setAcademicText('teacherAcademicCurrentStatus',school.currentStatus||ac.currentStatus,'Not set by school');
-      setAcademicText('teacherAcademicResumption',academicDateText(dates.resumption||dates.termStart),'Not set by school');
-      setAcademicText('teacherAcademicExamination',academicDateText(dates.examination||dates.examStart),'Not set by school');
-      setAcademicText('teacherAcademicTermEnd',academicDateText(dates.termEnd||dates.closing),'Not set by school');
-      if(eventsBox){const events=Array.isArray(ac.events)?ac.events:[];eventsBox.innerHTML=events.length?events.map(e=>'<div class="calendar-item"><div class="calendar-date">'+String(e.badge||'EVENT')+'<small>'+String(e.badgeLabel||'')+'</small></div><div><b>'+String(e.title||'School event')+'</b><p>'+String(academicDateText(e.date)||'Date not set')+(e.description?' · '+String(e.description):'')+'</p></div></div>').join(''):'<div class="empty">No calendar events have been published by the school.</div>';}
-      const holidays=Array.isArray(school.publicHolidays)?school.publicHolidays:(Array.isArray(ac.publicHolidays)?ac.publicHolidays:[]);
-      if(holidaysBox){holidaysBox.className=holidays.length?'calendar-list':'empty';holidaysBox.innerHTML=holidays.length?holidays.map(h=>'<div class="calendar-item"><div class="calendar-date">HOLIDAY</div><div><b>'+String(h.name||h.title||'Public Holiday')+'</b><p>'+String(academicDateText(h.date||h.dateText)||'Date not set')+'</p></div></div>').join(''):'No public holidays have been published by the school.';}
-    }catch(e){console.error('Teacher academic session load failed:',e);setAcademicText('teacherAcademicSession','Could not load school information','');if(eventsBox)eventsBox.innerHTML='<div class="empty">Could not load the school calendar. Check Firestore read permissions for schools/{schoolId}.</div>';}
+
+      const normalized=currentTerm.toLowerCase().replace(/\s+/g,' ').trim();
+      const termKey=normalized.replace(/\s/g,'');
+      const nestedDates=allDates[currentTerm]||allDates[normalized]||allDates[termKey]||
+        allDates[normalized.replace(' term','')]||ac[currentTerm]||ac[normalized]||{};
+      const dates={...allDates,...(nestedDates&&typeof nestedDates==='object'?nestedDates:{})};
+      const pick=(...keys)=>{for(const key of keys){if(dates[key]!==undefined&&dates[key]!==null&&dates[key]!=='')return dates[key];}return null;};
+      const resumption=pick('resumption','termStart','startDate','resumptionDate');
+      const examination=pick('examination','examStart','examinationStart','examDate','examinationDate');
+      const termEnd=pick('termEnd','closing','closingDate','endDate','termClosing');
+      setAcademicText('teacherAcademicResumption',academicDateText(resumption),'Not set by registrar');
+      setAcademicText('teacherAcademicExamination',academicDateText(examination),'Not set by registrar');
+      setAcademicText('teacherAcademicTermEnd',academicDateText(termEnd),'Not set by registrar');
+
+      if(calendarBox){
+        const items=[
+          {badge:'TERM',label:'START',title:currentTerm+' Resumption',date:resumption,empty:'Resumption date not yet published by the registrar.'},
+          {badge:'EXAM',label:'START',title:currentTerm+' Examination',date:examination,empty:'Examination date not yet published by the registrar.'},
+          {badge:'TERM',label:'END',title:currentTerm+' Closing',date:termEnd,empty:'Term closing date not yet published by the registrar.'}
+        ];
+        calendarBox.innerHTML=items.map(item=>'<div class="calendar-item"><div class="calendar-date">'+item.badge+'<small>'+item.label+'</small></div><div><b>'+item.title+'</b><p>'+String(academicDateText(item.date)||item.empty).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</p></div></div>').join('');
+      }
+    }catch(e){
+      console.error('Teacher academic session load failed:',e);
+      setAcademicText('teacherAcademicSession','Could not load school information','');
+      if(calendarBox)calendarBox.innerHTML='<div class="empty">Could not load the academic calendar. Check Firestore read permissions for schools/{schoolId}.</div>';
+    }
   }
   window.loadTeacherAcademicSession=loadTeacherAcademicSession;
 
