@@ -1750,37 +1750,7 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
     <p>Add, manage and view students. Added students will appear in C.A, Examination and Results.</p>
   </div>
 
-  <div class="student-form-card">
-    <div class="cardhead">
-      <h3>➕ Add New Student</h3>
-      <span class="status-pill current">Firebase Student Registration</span>
-    </div>
-    <form id="addStudentForm" class="student-form-grid">
-      <div class="field"><label>STUDENT NAME *</label><input id="newStudentName" type="text" placeholder="Full student name" required></div>
-      <div class="field"><label>ADMISSION NUMBER *</label><input id="newStudentAdmission" type="text" placeholder="e.g. P1/001 or P5/009" required></div>
-      <div class="field"><label>GENDER *</label><select id="newStudentGender" required><option value="">Select gender</option><option>Male</option><option>Female</option></select></div>
-      <div class="field"><label>CLASS *</label><select id="newStudentClass" required><option value="">Select class</option><option value="Primary 1">Primary 1</option><option value="Primary 2">Primary 2</option><option value="Primary 3">Primary 3</option><option value="Primary 4">Primary 4</option><option value="Primary 5">Primary 5</option><option value="Primary 6">Primary 6</option></select></div>
-      <div class="field"><label>DATE OF BIRTH</label><input id="newStudentDob" type="date"></div>
-      <div class="field"><label>PARENT PHONE NUMBER</label><input id="newStudentPhone" type="tel" placeholder="Parent phone number"></div>
-      <div class="field"><label>PARENT / GUARDIAN</label><input id="newStudentGuardian" type="text" placeholder="Parent or guardian name"></div>
-      <div class="field full"><label>PARENT ADDRESS</label><textarea id="newStudentAddress" placeholder="Parent/guardian address"></textarea></div>
-      
-<div class="field full">
-  <label>STUDENT PHOTO</label>
-  <div class="student-photo-upload">
-    <div class="student-photo-preview" id="studentPhotoPreview"><span>PHOTO</span></div>
-    <div class="student-photo-controls">
-      <label class="photo-btn">📁 CHOOSE PHOTO<input id="newStudentPhoto" type="file" accept="image/*"></label>
-      <label class="photo-btn">📷 TAKE PHOTO<input id="newStudentCamera" type="file" accept="image/*" capture="user"></label>
-      <button type="button" class="secondary photo-remove" id="removeStudentPhoto">REMOVE</button>
-    </div>
-    <small>Choose a photo from the device or use the camera directly.</small>
-  </div>
-</div>
 
-<div class="student-form-actions full"><button type="reset" class="secondary">CLEAR</button><button type="submit" class="primary">ADD STUDENT</button></div>
-    </form>
-  </div>
 
   <div id="studentFirebaseSourceNote" style="margin:0 0 12px;padding:10px 12px;border:1px solid #cfe4dd;border-radius:10px;background:#f3faf7;color:#35505f;font-size:12px;font-weight:700;">
   🔥 Student records are loaded directly from Firebase for the signed-in teacher. No pre-filled student records are used.
