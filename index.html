@@ -154,9 +154,32 @@ button{cursor:pointer;border:0}
 
 .ca-exam-options{
   display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:14px;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin-top:4px;
 }
+.ca-exam-option{
+  min-height:86px !important;
+  padding:12px !important;
+  gap:10px !important;
+  border-radius:12px !important;
+  align-items:center;
+  box-shadow:0 3px 9px rgba(16,35,63,.09);
+  transition:transform .16s ease,box-shadow .16s ease;
+}
+.ca-exam-option:hover{transform:translateY(-2px);box-shadow:0 6px 14px rgba(16,35,63,.14)}
+.ca-exam-icon{width:40px !important;height:40px !important;border-radius:11px !important;font-size:21px !important}
+.ca-exam-option b{font-size:15px !important;margin-bottom:4px !important;line-height:1.2}
+.ca-exam-option small{font-size:11px !important;line-height:1.35}
+.ca-exam-option.summary{background:#e21c68}
+@media(max-width:760px){
+ .ca-exam-options{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .ca-exam-option{min-height:76px !important;padding:10px !important;gap:8px !important}
+ .ca-exam-icon{width:34px !important;height:34px !important;font-size:18px !important}
+ .ca-exam-option b{font-size:13px !important}
+ .ca-exam-option small{font-size:10px !important}
+}
+@media(max-width:360px){.ca-exam-options{grid-template-columns:1fr 1fr}.ca-exam-option{padding:8px !important}}
 .ca-exam-option{
   border:0;
   border-radius:14px;
@@ -2417,7 +2440,7 @@ window.loadStudentsFromFirestore=async function(){
    const ref=window.firebaseFirestoreFns.collection(db,"schools",c.schoolId,"students"),snaps=[];
    for(let i=0;i<classes.length;i+=10){snaps.push(await window.firebaseFirestoreFns.getDocs(window.firebaseFirestoreFns.query(ref,window.firebaseFirestoreFns.where("className","in",classes.slice(i,i+10)))));}
    const docs=new Map();snaps.forEach(s=>s.docs.forEach(d=>docs.set(d.id,d)));
-   students=[...docs.values()].map(d=>{const x=d.data()||{};return [x.admissionNumber||x.admissionNo||"",x.name||x.studentName||x.fullName||"",x.gender||"",Number(x.ca1||0),Number(x.ca2||0),Number(x.ca3||0),Number(x.exam||0),{phone:x.parentPhone||x.parentGuardianPhone||x.phone||"",dob:x.dob||x.dateOfBirth||"",className:x.className||x.class||x.classLevel||"",guardian:x.guardian||x.parentGuardianName||x.parentName||"",address:x.address||x.parentAddress||"",photo:x.photo||x.studentPhoto||""},{schoolStudentId:d.id,firestoreId:""}];}).filter(s=>classes.includes(studentInfo(s).className));
+   students=[...docs.values()].map(d=>{const x=d.data()||{};return [x.admissionNumber||x.admissionNo||"",x.name||x.studentName||x.fullName||"",x.gender||"",Number(x.ca1||0),Number(x.ca2||0),Number(x.ca3||0),Number(x.exam||0),{phone:x.parentPhone||x.parentGuardianPhone||x.phone||"",dob:x.dob||x.dateOfBirth||"",className:x.className||x.class||x.classLevel||"",guardian:x.guardian||x.parentGuardianName||x.parentName||"",address:x.address||x.parentAddress||"",photo:x.photo||x.studentPhoto||""},{schoolStudentId:d.id,firestoreId:"",assessmentScopes:x.assessmentRecords||{}}];}).filter(s=>classes.includes(studentInfo(s).className));
    applyAssignedClassFilters();if(typeof window.refreshStudentViews==="function")window.refreshStudentViews();if(typeof window.renderAttendance==="function")window.renderAttendance();
    const note=document.getElementById("studentFirebaseSourceNote");if(note){note.textContent="Connected school register: "+students.length+" official student record"+(students.length===1?"":"s")+" loaded for your assigned classes.";note.style.display="";note.style.background="#f3faf7";note.style.borderColor="#cfe4dd";note.style.color="#35505f";}
    return {ok:true,count:students.length,source:"school-register"};
@@ -2945,8 +2968,34 @@ function caExamIsConnected(){
 function caExamSelectedSubject(){return document.getElementById("caExamSubjectFilter")?.value||"";}
 function caExamSelectedClass(){return document.getElementById("caExamClassFilter")?.value||selectedDashboardClass();}
 function caExamSelectedTerm(){return document.getElementById("caExamTermFilter")?.value||"First Term";}
+function caExamScopeKey(){
+  return [caExamSelectedSubject(),caExamSelectedClass(),caExamSelectedTerm()]
+    .map(v=>String(v||"").trim().toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,""))
+    .join("__");
+}
+function caExamScopedValues(s){
+  if(!s[8])s[8]={};
+  if(!s[8].assessmentScopes)s[8].assessmentScopes={};
+  const key=caExamScopeKey();
+  if(!s[8].assessmentScopes[key]){
+    s[8].assessmentScopes[key]={ca1:0,ca2:0,ca3:0,exam:0};
+  }
+  return s[8].assessmentScopes[key];
+}
+function caExamScore(s,fieldIndex){
+  const v=caExamScopedValues(s);
+  return Number(fieldIndex===3?v.ca1:fieldIndex===4?v.ca2:fieldIndex===5?v.ca3:v.exam)||0;
+}
+function caExamSetScore(s,fieldIndex,value){
+  const v=caExamScopedValues(s);
+  if(fieldIndex===3)v.ca1=value;
+  else if(fieldIndex===4)v.ca2=value;
+  else if(fieldIndex===5)v.ca3=value;
+  else v.exam=value;
+}
 function caExamVisibleRecords(){
   const cls=caExamSelectedClass();
+  if(!caExamSelectedSubject()||!cls||!caExamSelectedTerm())return [];
   return students.map((s,index)=>({s,index})).filter(x=>studentInfo(x.s).className===cls);
 }
 function refreshCAExamAssignmentFilters(){
@@ -3003,6 +3052,10 @@ document.getElementById("caExamSubjectFilter")?.addEventListener("change",refres
 document.getElementById("caExamClassFilter")?.addEventListener("change",()=>{});
 window.addEventListener("teacherAccountContextChanged",refreshCAExamAssignmentFilters);
 window.addEventListener("teacherAssignmentsUpdated",refreshCAExamAssignmentFilters);
+["caExamSubjectFilter","caExamClassFilter","caExamTermFilter"].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el)el.addEventListener("change",()=>{refreshCAExamAssignmentFilters();});
+});
 
 function openCA(n){
   refreshCAExamAssignmentFilters();
@@ -3018,7 +3071,7 @@ function openCA(n){
       <div class="meta-item"><b>Teacher name:</b> ${teacherFullName()}</div>
     </div>
     <div class="tablewrap"><table><thead><tr><th>S/N</th><th>Admission No.</th><th>Student</th><th>Score /10</th></tr></thead><tbody>
-    ${caExamVisibleRecords().map((x,i)=>{const s=x.s;return `<tr><td>${i+1}</td><td>${s[0]}</td><td>${s[1]}</td><td><input data-student-index="${x.index}" style="width:75px;padding:7px" type="number" min="0" max="10" value="${s[n+2]}"></td></tr>`;}).join("")}
+    ${caExamVisibleRecords().map((x,i)=>{const s=x.s;return `<tr><td>${i+1}</td><td>${s[0]}</td><td>${s[1]}</td><td><input data-student-index="${x.index}" style="width:75px;padding:7px" type="number" min="0" max="10" value="${caExamScore(s,n+2)}"></td></tr>`;}).join("")}
     </tbody></table></div>`);
 }
 function openExam(){
@@ -3034,7 +3087,7 @@ function openExam(){
       <div class="meta-item"><b>Teacher name:</b> ${teacherFullName()}</div>
     </div>
     <div class="tablewrap"><table><thead><tr><th>S/N</th><th>Admission No.</th><th>Student</th><th>Exam /70</th></tr></thead><tbody>
-    ${caExamVisibleRecords().map((x,i)=>{const s=x.s;return `<tr><td>${i+1}</td><td>${s[0]}</td><td>${s[1]}</td><td><input data-student-index="${x.index}" style="width:75px;padding:7px" type="number" min="0" max="70" value="${s[6]}"></td></tr>`;}).join("")}
+    ${caExamVisibleRecords().map((x,i)=>{const s=x.s;return `<tr><td>${i+1}</td><td>${s[0]}</td><td>${s[1]}</td><td><input data-student-index="${x.index}" style="width:75px;padding:7px" type="number" min="0" max="70" value="${caExamScore(s,6)}"></td></tr>`;}).join("")}
     </tbody></table></div>`);
 }
 
@@ -3059,15 +3112,16 @@ function openResults(){
         </thead>
         <tbody>
           ${caExamVisibleRecords().map(({s,index:i})=>{
-            const ca=Number(s[3])+Number(s[4])+Number(s[5]);
-            const fin=ca+Number(s[6]);
+            const ca=caExamScore(s,3)+caExamScore(s,4)+caExamScore(s,5);
+            const examScore=caExamScore(s,6);
+            const fin=ca+examScore;
             return `<tr>
               <td>${s[1]}</td>
-              <td><input class="result-input" id="r1_${i}" type="number" min="0" max="10" value="${s[3]}"></td>
-              <td><input class="result-input" id="r2_${i}" type="number" min="0" max="10" value="${s[4]}"></td>
-              <td><input class="result-input" id="r3_${i}" type="number" min="0" max="10" value="${s[5]}"></td>
+              <td><input class="result-input" id="r1_${i}" type="number" min="0" max="10" value="${caExamScore(s,3)}"></td>
+              <td><input class="result-input" id="r2_${i}" type="number" min="0" max="10" value="${caExamScore(s,4)}"></td>
+              <td><input class="result-input" id="r3_${i}" type="number" min="0" max="10" value="${caExamScore(s,5)}"></td>
               <td><b>${ca}</b>/30</td>
-              <td><input class="result-input" id="rex_${i}" type="number" min="0" max="70" value="${s[6]}"></td>
+              <td><input class="result-input" id="rex_${i}" type="number" min="0" max="70" value="${examScore}"></td>
               <td><b>${fin}</b>/100</td>
               <td><b>${grade(fin)}</b></td>
             </tr>`;
@@ -3085,10 +3139,13 @@ async function saveAssessment(){
  if(!currentAssessmentType)return;const isCA=currentAssessmentType.kind==="ca",n=isCA?currentAssessmentType.number:null,inputs=[...document.querySelectorAll("#modalBody input[type=number]")],shown=caExamVisibleRecords();
  for(let i=0;i<shown.length;i++){
   const s=shown[i].s,value=Math.max(0,Math.min(isCA?10:70,Number(inputs[i]?.value||0)));
-  if(isCA)s[n+2]=value;else s[6]=value;
+  const fieldIndex=isCA?n+2:6;
+  caExamSetScore(s,fieldIndex,value);
   if(teacherIsSchoolConnected()){
    const sid=s[8]?.schoolStudentId,c=window.activeTeacherConnection;if(!sid||!c?.schoolId)continue;
-   const patch={updatedAt:window.firebaseFirestoreFns.serverTimestamp(),updatedByTeacherUid:window.firebaseTeacherUID};if(isCA)patch["ca"+n]=value;else patch.exam=value;
+   const patch={updatedAt:window.firebaseFirestoreFns.serverTimestamp(),updatedByTeacherUid:window.firebaseTeacherUID};
+   const scopeKey=caExamScopeKey(),field=isCA?"ca"+n:"exam";
+   patch.assessmentRecords={[scopeKey]:{[field]:value}};
    await window.firebaseFirestoreFns.setDoc(window.firebaseFirestoreFns.doc(window.teacherFirestore,"schools",c.schoolId,"students",sid),patch,{merge:true});
   }else if(typeof saveStudentToFirestore==="function")await saveStudentToFirestore(s);
  }
@@ -3116,14 +3173,28 @@ function printAssessment(){
     <tbody>${caExamVisibleRecords().map(({s},i)=>`<tr><td>${i+1}</td><td>${s[0]}</td><td>${s[1]}</td><td>${s[scoreIndex]}</td></tr>`).join("")}</tbody></table>`);
 }
 
-function saveResults(){
-  caExamVisibleRecords().forEach(({s,index:i})=>{
-    s[3]=Math.max(0,Math.min(10,Number(document.getElementById(`r1_${i}`)?.value??s[3])));
-    s[4]=Math.max(0,Math.min(10,Number(document.getElementById(`r2_${i}`)?.value??s[4])));
-    s[5]=Math.max(0,Math.min(10,Number(document.getElementById(`r3_${i}`)?.value??s[5])));
-    s[6]=Math.max(0,Math.min(70,Number(document.getElementById(`rex_${i}`)?.value??s[6])));
-  });
-  alert("Results updated successfully.");
+async function saveResults(){
+  const scopeKey=caExamScopeKey();
+  for(const {s,index:i} of caExamVisibleRecords()){
+    const vals=[
+      Math.max(0,Math.min(10,Number(document.getElementById(`r1_${i}`)?.value??caExamScore(s,3)))),
+      Math.max(0,Math.min(10,Number(document.getElementById(`r2_${i}`)?.value??caExamScore(s,4)))),
+      Math.max(0,Math.min(10,Number(document.getElementById(`r3_${i}`)?.value??caExamScore(s,5)))),
+      Math.max(0,Math.min(70,Number(document.getElementById(`rex_${i}`)?.value??caExamScore(s,6))))
+    ];
+    vals.forEach((v,j)=>caExamSetScore(s,j+3,v));
+    if(teacherIsSchoolConnected()){
+      const sid=s[8]?.schoolStudentId,c=window.activeTeacherConnection;
+      if(sid&&c?.schoolId){
+        const patch={updatedAt:window.firebaseFirestoreFns.serverTimestamp(),updatedByTeacherUid:window.firebaseTeacherUID};
+        patch.assessmentRecords={[scopeKey]:{ca1:vals[0],ca2:vals[1],ca3:vals[2],exam:vals[3]}};
+        await window.firebaseFirestoreFns.setDoc(window.firebaseFirestoreFns.doc(window.teacherFirestore,"schools",c.schoolId,"students",sid),patch,{merge:true});
+      }
+    }else if(typeof saveStudentToFirestore==="function"){
+      await saveStudentToFirestore(s);
+    }
+  }
+  alert("Results updated successfully for "+caExamSelectedSubject()+", "+caExamSelectedClass()+", "+caExamSelectedTerm()+".");
   closeModal();
 }
 
@@ -3233,20 +3304,21 @@ function printStudentResult(i){
 
 function printResults(){
  const printDate=new Date().toLocaleDateString();
+ const subject=caExamSelectedSubject(),cls=caExamSelectedClass(),term=caExamSelectedTerm();
  printDocument(`
-   <h1 class="print-title">PRIMARY 5 — BASIC SCIENCE & TECHNOLOGY</h1>
-   <h2 style="text-align:center">FIRST TERM RESULTS</h2>
+   <h1 class="print-title">${cls} — ${subject}</h1>
+   <h2 style="text-align:center">${term.toUpperCase()} RESULTS</h2>
    <div class="print-meta">
      <div><b>School name:</b> ${teacherSchoolName()}</div>
-     <div><b>Subject:</b> Basic Science &amp; Technology</div>
-     <div><b>Term:</b> First Term</div>
-     <div><b>Class:</b> Primary 5</div>
+     <div><b>Subject:</b> ${subject}</div>
+     <div><b>Term:</b> ${term}</div>
+     <div><b>Class:</b> ${cls}</div>
      <div><b>Date:</b> ${printDate}</div>
      <div><b>Teacher name:</b> ${teacherFullName()}</div>
    </div>
    <table>
      <thead><tr><th>Student</th><th>1st C.A</th><th>2nd C.A</th><th>3rd C.A</th><th>C.A Total</th><th>Exam</th><th>Final</th><th>Grade</th></tr></thead>
-     <tbody>${students.map(s=>{let ca=Number(s[3])+Number(s[4])+Number(s[5]),f=ca+Number(s[6]);return `<tr><td>${s[1]}</td><td>${s[3]}</td><td>${s[4]}</td><td>${s[5]}</td><td>${ca}</td><td>${s[6]}</td><td>${f}</td><td>${grade(f)}</td></tr>`}).join("")}</tbody>
+     <tbody>${caExamVisibleRecords().map(({s})=>{const a=caExamScore(s,3),b=caExamScore(s,4),c=caExamScore(s,5),ex=caExamScore(s,6),ca=a+b+c,f=ca+ex;return `<tr><td>${s[1]}</td><td>${a}</td><td>${b}</td><td>${c}</td><td>${ca}</td><td>${ex}</td><td>${f}</td><td>${grade(f)}</td></tr>`}).join("")}</tbody>
    </table>`);
 }
 function printDocument(content){
