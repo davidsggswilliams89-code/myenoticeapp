@@ -5012,6 +5012,153 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   });
 </script>
 
+
+<style id="ca-exam-only-layout-fix">
+/* Scoped C.A & Examination layout only */
+#caExamView .ca-exam-options{
+  display:grid !important;
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  gap:9px !important;
+}
+#caExamView .ca-exam-option{
+  min-width:0 !important;
+  min-height:74px !important;
+  height:74px !important;
+  padding:9px 11px !important;
+  gap:9px !important;
+  border-radius:12px !important;
+}
+#caExamView .ca-exam-option .ca-exam-icon{
+  width:36px !important;height:36px !important;flex:0 0 36px !important;
+  border-radius:9px !important;font-size:19px !important;
+}
+#caExamView .ca-exam-option b{font-size:14px !important;margin:0 0 3px !important;line-height:1.2}
+#caExamView .ca-exam-option small{font-size:10px !important;line-height:1.25}
+#caExamView .ca-exam-option.exam,
+#caExamView .ca-exam-option.summary{
+  grid-column:1 / -1 !important;
+  height:74px !important;
+  min-height:74px !important;
+}
+@media(max-width:760px){
+  #caExamView .ca-exam-options{grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:7px !important}
+  #caExamView .ca-exam-option{height:72px !important;min-height:72px !important;padding:7px !important;gap:5px !important}
+  #caExamView .ca-exam-option .ca-exam-icon{width:30px !important;height:30px !important;flex-basis:30px !important;font-size:16px !important}
+  #caExamView .ca-exam-option b{font-size:12px !important}
+  #caExamView .ca-exam-option small{font-size:9px !important}
+  #caExamView .ca-exam-option.exam,
+  #caExamView .ca-exam-option.summary{height:72px !important;min-height:72px !important}
+}
+</style>
+
+<script id="ca-exam-filtered-handlers">
+/* C.A & Examination handlers: always use the current Subject + Class + Term scope. */
+(function(){
+  function caRows(){
+    return typeof caExamVisibleRecords === "function" ? caExamVisibleRecords() : [];
+  }
+  function caHeader(){
+    return `<div class="assessment-header">
+      <div class="meta-item"><b>School name:</b> ${teacherSchoolName()}</div>
+      <div class="meta-item"><b>Subject:</b> ${caExamSelectedSubject()}</div>
+      <div class="meta-item"><b>Term:</b> ${caExamSelectedTerm()}</div>
+      <div class="meta-item"><b>Class:</b> ${caExamSelectedClass()}</div>
+      <div class="meta-item"><b>Date:</b> ${new Date().toLocaleDateString()}</div>
+      <div class="meta-item"><b>Teacher name:</b> ${teacherFullName()}</div>
+    </div>`;
+  }
+  function caEmpty(){
+    return `<tr><td colspan="4" class="empty">No students found for ${caExamSelectedClass()} under the current selection.</td></tr>`;
+  }
+  window.openCA = function(n){
+    refreshCAExamAssignmentFilters();
+    currentAssessmentType={kind:"ca",number:n};
+    const suffix=n===1?"st":n===2?"nd":"rd";
+    const rows=caRows();
+    showModal(`📝 ${n}${suffix} C.A Record`,`${caHeader()}
+      <div class="tablewrap"><table><thead><tr><th>S/N</th><th>Admission No.</th><th>Student</th><th>Score /10</th></tr></thead><tbody>
+      ${rows.length?rows.map(({s,index},i)=>`<tr><td>${i+1}</td><td>${s[0]??""}</td><td>${s[1]??""}</td><td><input data-student-index="${index}" style="width:75px;padding:7px" type="number" min="0" max="10" value="${caExamScore(s,n+2)}"></td></tr>`).join(""):caEmpty()}
+      </tbody></table></div>`);
+  };
+  window.openExam = function(){
+    refreshCAExamAssignmentFilters();
+    currentAssessmentType={kind:"exam"};
+    const rows=caRows();
+    showModal("📋 Examination Record",`${caHeader()}
+      <div class="tablewrap"><table><thead><tr><th>S/N</th><th>Admission No.</th><th>Student</th><th>Exam /70</th></tr></thead><tbody>
+      ${rows.length?rows.map(({s,index},i)=>`<tr><td>${i+1}</td><td>${s[0]??""}</td><td>${s[1]??""}</td><td><input data-student-index="${index}" style="width:75px;padding:7px" type="number" min="0" max="70" value="${caExamScore(s,6)}"></td></tr>`).join(""):caEmpty()}
+      </tbody></table></div>`);
+  };
+  window.openResults = function(){
+    refreshCAExamAssignmentFilters();
+    const rows=caRows();
+    showModal("📊 Results — View / Edit / Print",`${caHeader()}
+      <div class="tablewrap"><table><thead><tr><th>Student</th><th>1st</th><th>2nd</th><th>3rd</th><th>C.A /30</th><th>Exam /70</th><th>Final /100</th><th>Grade</th></tr></thead><tbody>
+      ${rows.length?rows.map(({s,index})=>{
+        const a=caExamScore(s,3),b=caExamScore(s,4),c=caExamScore(s,5),ex=caExamScore(s,6),total=a+b+c+ex;
+        return `<tr><td>${s[1]??""}</td>
+          <td><input class="result-input" id="r1_${index}" type="number" min="0" max="10" value="${a}"></td>
+          <td><input class="result-input" id="r2_${index}" type="number" min="0" max="10" value="${b}"></td>
+          <td><input class="result-input" id="r3_${index}" type="number" min="0" max="10" value="${c}"></td>
+          <td><b>${a+b+c}</b>/30</td>
+          <td><input class="result-input" id="rex_${index}" type="number" min="0" max="70" value="${ex}"></td>
+          <td><b>${total}</b>/100</td><td><b>${grade(total)}</b></td></tr>`;
+      }).join(""):`<tr><td colspan="8" class="empty">No students found for ${caExamSelectedClass()} under the current selection.</td></tr>`}
+      </tbody></table></div><p style="font-size:12px;color:#667085;margin-top:10px">Scores are separated by the selected subject, class and term. Save your changes before closing.</p>`);
+  };
+  window.saveAssessment = async function(){
+    if(!currentAssessmentType)return;
+    const isCA=currentAssessmentType.kind==="ca",n=isCA?currentAssessmentType.number:null;
+    const rows=caRows(),inputs=[...document.querySelectorAll("#modalBody input[data-student-index]")];
+    for(const row of rows){
+      const s=row.s,index=row.index;
+      const input=inputs.find(el=>Number(el.dataset.studentIndex)===index);
+      if(!input)continue;
+      const value=Math.max(0,Math.min(isCA?10:70,Number(input.value||0)));
+      caExamSetScore(s,isCA?n+2:6,value);
+      if(caExamIsConnected()){
+        const sid=s[8]?.schoolStudentId,c=window.activeTeacherConnection;
+        if(!sid||!c?.schoolId)continue;
+        const patch={updatedAt:window.firebaseFirestoreFns.serverTimestamp(),updatedByTeacherUid:window.firebaseTeacherUID};
+        const scopeKey=caExamScopeKey(),field=isCA?"ca"+n:"exam";
+        patch.assessmentRecords={[scopeKey]:{[field]:value}};
+        await window.firebaseFirestoreFns.setDoc(window.firebaseFirestoreFns.doc(window.teacherFirestore,"schools",c.schoolId,"students",sid),patch,{merge:true});
+      }else if(typeof saveStudentToFirestore==="function"){
+        await saveStudentToFirestore(s);
+      }
+    }
+    if(typeof renderResults==="function")renderResults();
+    alert((isCA?`${n}${n===1?"st":n===2?"nd":"rd"} C.A`:"Examination")+" saved for "+caExamSelectedSubject()+", "+caExamSelectedClass()+", "+caExamSelectedTerm()+".");
+    closeModal();
+  };
+  window.saveResults = async function(){
+    const rows=caRows(),scopeKey=caExamScopeKey();
+    for(const {s,index} of rows){
+      const vals=[
+        Math.max(0,Math.min(10,Number(document.getElementById(`r1_${index}`)?.value??caExamScore(s,3)))),
+        Math.max(0,Math.min(10,Number(document.getElementById(`r2_${index}`)?.value??caExamScore(s,4)))),
+        Math.max(0,Math.min(10,Number(document.getElementById(`r3_${index}`)?.value??caExamScore(s,5)))),
+        Math.max(0,Math.min(70,Number(document.getElementById(`rex_${index}`)?.value??caExamScore(s,6))))
+      ];
+      vals.forEach((v,j)=>caExamSetScore(s,j+3,v));
+      if(caExamIsConnected()){
+        const sid=s[8]?.schoolStudentId,c=window.activeTeacherConnection;
+        if(sid&&c?.schoolId){
+          const patch={updatedAt:window.firebaseFirestoreFns.serverTimestamp(),updatedByTeacherUid:window.firebaseTeacherUID};
+          patch.assessmentRecords={[scopeKey]:{ca1:vals[0],ca2:vals[1],ca3:vals[2],exam:vals[3]}};
+          await window.firebaseFirestoreFns.setDoc(window.firebaseFirestoreFns.doc(window.teacherFirestore,"schools",c.schoolId,"students",sid),patch,{merge:true});
+        }
+      }else if(typeof saveStudentToFirestore==="function"){
+        await saveStudentToFirestore(s);
+      }
+    }
+    if(typeof renderResults==="function")renderResults();
+    alert("Results saved for "+caExamSelectedSubject()+", "+caExamSelectedClass()+", "+caExamSelectedTerm()+".");
+    closeModal();
+  };
+})();
+</script>
+
 </body>
 </html>
 <style>
