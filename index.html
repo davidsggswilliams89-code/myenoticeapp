@@ -838,8 +838,8 @@ button{cursor:pointer;border:0}
 .attendance-table{width:100%;min-width:760px;border-collapse:separate;border-spacing:0}
 .attendance-table th,.attendance-table td{border-bottom:1px solid #edf1f5;padding:10px 9px;text-align:center;white-space:nowrap}
 .attendance-table th{background:#f7fafc;color:#334155;font-size:11px;font-weight:900;position:sticky;top:0;z-index:2}
-.attendance-table th:first-child,.attendance-table td:first-child{position:sticky;left:0;background:#fff;z-index:3;width:64px}
-.attendance-table th:nth-child(2),.attendance-table td:nth-child(2){position:sticky;left:64px;background:#fff;z-index:3;text-align:left;min-width:180px}
+.attendance-table th:first-child,.attendance-table td:first-child{position:sticky;left:0;background:#fff;z-index:3;width:52px;min-width:52px;padding-left:5px;padding-right:5px}
+.attendance-table th:nth-child(2),.attendance-table td:nth-child(2){position:sticky;left:52px;background:#fff;z-index:3;text-align:left;width:145px;min-width:145px;max-width:145px;padding-left:6px;padding-right:6px}
 .attendance-table th:first-child,.attendance-table th:nth-child(2){background:#f7fafc;z-index:4}
 .attendance-student{display:flex;align-items:center;gap:9px}
 .attendance-student-photo{width:38px;height:46px;border-radius:7px;object-fit:cover;border:1px solid #d7e1ea;background:#eef3f7;flex:0 0 auto}
@@ -853,7 +853,7 @@ button{cursor:pointer;border:0}
 .attendance-locked{color:#94a3b8;font-size:11px;font-weight:800}
 .attendance-present{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:5px;background:#198754;color:#fff;font-weight:900;font-size:14px}
 .attendance-empty{padding:30px!important;color:#64748b;font-weight:800}
-@media(max-width:760px){.attendance-toolbar{padding:12px}.attendance-help{padding:9px 12px}.attendance-table{min-width:690px}.attendance-table th:first-child,.attendance-table td:first-child{width:52px}.attendance-table th:nth-child(2),.attendance-table td:nth-child(2){left:52px;min-width:175px}.attendance-student-name{max-width:135px}}
+@media(max-width:760px){.attendance-toolbar{padding:12px}.attendance-help{padding:9px 12px}.attendance-table{min-width:620px}.attendance-table th:first-child,.attendance-table td:first-child{width:48px;min-width:48px;padding-left:4px;padding-right:4px}.attendance-table th:nth-child(2),.attendance-table td:nth-child(2){left:48px;width:132px;min-width:132px;max-width:132px;padding-left:5px;padding-right:5px}.attendance-student-name{max-width:120px}.attendance-table th.attendance-day-head,.attendance-table td{padding-left:6px;padding-right:6px}}
 </style>
 <style>
 .profile-assignment-entry{
@@ -4132,7 +4132,8 @@ window.viewStudentResult=function(index){
   function mondayOfWeek(d){
     const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());
     const day=x.getDay();
-    const diff=day===0?-6:1-day;
+    // On Sunday, show the next school week starting tomorrow; otherwise use this week's Monday.
+    const diff=day===0?1:1-day;
     x.setDate(x.getDate()+diff);
     return x;
   }
