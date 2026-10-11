@@ -1993,15 +1993,15 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
   <div class="extra-grid">
     <div class="info-card">
       <h3>Academic Session</h3>
-      <p><b>Session:</b> 2026 / 2027</p>
-      <p><b>Current Term:</b> First Term</p>
-      <p><b>Current Status:</b> <span class="status-pill current">Teaching Period</span></p>
+      <p><b>Session:</b> <span id="teacherAcademicSession">Loading school information…</span></p>
+      <p><b>Current Term:</b> <span id="teacherAcademicCurrentTerm">—</span></p>
+      <p><b>Current Status:</b> <span id="teacherAcademicCurrentStatus" class="status-pill current">—</span></p>
     </div>
     <div class="info-card">
       <h3>First Term</h3>
-      <p><b>Resumption:</b> To be set by school</p>
-      <p><b>Examination:</b> To be set by school</p>
-      <p><b>Term Ends:</b> To be set by school</p>
+      <p><b>Resumption:</b> <span id="teacherAcademicResumption">—</span></p>
+      <p><b>Examination:</b> <span id="teacherAcademicExamination">—</span></p>
+      <p><b>Term Ends:</b> <span id="teacherAcademicTermEnd">—</span></p>
     </div>
   </div>
   <div class="card" style="margin-top:14px">
@@ -2015,7 +2015,7 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
   </div>
   <div class="card">
     <div class="cardhead"><h3>Public Holidays</h3><span class="status-pill">School Calendar</span></div>
-    <div class="empty">Public holiday dates will appear here when entered by the school.</div>
+    <div id="teacherAcademicHolidays" class="empty">Public holidays will appear here when published by the registrar.</div>
   </div>
 </div>
 
@@ -3731,6 +3731,9 @@ window.viewStudentResult=function(index){
   let attendanceSelectedClass="";
 
   function allStudentClasses(){
+    if(typeof window.teacherIsSchoolConnected==="function" && window.teacherIsSchoolConnected()){
+      return typeof window.teacherAssignedClasses==="function" ? window.teacherAssignedClasses() : [];
+    }
     const set=new Set(["Primary 1","Primary 2","Primary 3","Primary 4","Primary 5","Primary 6"]);
     students.forEach(function(s){
       const info=studentInfo(s);
@@ -3751,7 +3754,7 @@ window.viewStudentResult=function(index){
     const classes=allStudentClasses();
     if(!classes.length){select.innerHTML='<option value="">No classes</option>';attendanceSelectedClass="";return;}
     const preferred=attendanceSelectedClass || selectedDashboardClass();
-    if(!classes.includes(preferred)) attendanceSelectedClass=classes[0];
+    if(!classes.includes(preferred)) attendanceSelectedClass=classes[0]||"";
     else attendanceSelectedClass=preferred;
     select.innerHTML=classes.map(function(c){return '<option value="'+String(c).replace(/"/g,'&quot;')+'">'+c+'</option>';}).join("");
     select.value=attendanceSelectedClass;
@@ -4491,12 +4494,41 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         if(teacherIsSchoolConnected())schoolInput.value=r.schoolName||'';
         schoolInput.title=teacherIsSchoolConnected()?'Official school name is managed by the registrar.':'Enter your school name';
       }
-      if(r.status==='connected')showTeacherConnectionStatus(`Connected to ${r.schoolName||'your school'} · School ID: ${r.schoolId}${r.assignedClass?' · Class: '+r.assignedClass:''}${r.assignedRole?' · Role: '+r.assignedRole:''}`,'success');
+      if(r.status==='connected'||r.status==='approved'||r.status==='active')showTeacherConnectionStatus(`Connected to ${r.schoolName||'your school'} · School ID: ${r.schoolId}${r.assignedClass?' · Class: '+r.assignedClass:''}${r.assignedRole?' · Role: '+r.assignedRole:''}`,'success');
       else if(r.status==='pending')showTeacherConnectionStatus(`Connection request pending approval for ${r.schoolName||'the school'} · School ID: ${r.schoolId}`);
       else if(r.status==='deactivated')showTeacherConnectionStatus(`Your connection to ${r.schoolName||'the school'} has been deactivated. Contact the registrar or request a new connection.`,'error');
       else if(r.status==='rejected')showTeacherConnectionStatus(`Your request to ${r.schoolName||'the school'} was not approved. You may submit a new request if appropriate.`,'error');
       else showTeacherConnectionStatus('No active school connection. Enter a School ID to request connection.');
-    }catch(e){console.error(e);showTeacherConnectionStatus('Could not check connection status. Please check Firestore rules and try again.','error');}
+      if(typeof window.loadTeacherAcademicSession==='function')await window.loadTeacherAcademicSession();
+    }catch(e){
+      console.error('Teacher connection lookup failed:',e);
+      // The registrar also maintains a schoolTeachers membership record. Use it as a fallback
+      // when listing teacherConnectionRequests is denied by the current Firestore rules.
+      try{
+        const user=auth.currentUser;if(!user)throw e;
+        const profileSnap=await getDoc(doc(db,'teachers',user.uid));
+        const profileData=profileSnap.exists()?profileSnap.data():{};
+        const schoolId=profileData.schoolId||profileData.connectedSchoolId||'';
+        if(schoolId){
+          const memberSnap=await getDoc(doc(db,'schoolTeachers',schoolId+'_'+user.uid));
+          if(memberSnap.exists()){
+            const member={id:memberSnap.id,...memberSnap.data()};
+            if(['connected','approved','active'].includes(String(member.status||'').toLowerCase())){
+              activeTeacherConnection=member;window.activeTeacherConnection=member;renderTeacherAssignments(member);
+              window.dispatchEvent(new Event('teacherAccountContextChanged'));
+              if(typeof window.applyAssignedClassFilters==='function')window.applyAssignedClassFilters();
+              if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
+              if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
+              if(typeof window.loadDashboardTeacherSubjects==='function')window.loadDashboardTeacherSubjects();
+              showTeacherConnectionStatus('Connected to '+(member.schoolName||'your school')+'. Connection loaded from school membership.','success');
+              if(typeof window.loadTeacherAcademicSession==='function')await window.loadTeacherAcademicSession();
+              return;
+            }
+          }
+        }
+      }catch(fallbackError){console.error('School membership fallback failed:',fallbackError);}
+      showTeacherConnectionStatus('Could not check connection status: '+(e?.code||e?.message||'Firestore access denied')+'. Check read rules for teacherConnectionRequests and schoolTeachers.','error');
+    }
   }
   function teacherHasPair(record,entry){
     const pairs=Array.isArray(record?.assignedTeachingAssignments)?record.assignedTeachingAssignments:[];
@@ -4504,6 +4536,42 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   }
   function safeCell(row,value){const td=document.createElement('td');td.textContent=value||'—';row.append(td);return td;}
   function setTimetableMessage(id,text,isError=false){const el=document.getElementById(id);if(el){el.textContent=isError?text:'';el.style.display=isError?'block':'none';el.style.color=isError?'#991b1b':'#667085';}}
+  function setAcademicText(id,value,fallback='To be set by school'){
+    const el=document.getElementById(id);if(el)el.textContent=(value===undefined||value===null||value==='')?fallback:String(value);
+  }
+  function academicDateText(value){
+    if(!value)return '';
+    if(typeof value==='string')return value;
+    if(value.toDate && typeof value.toDate==='function')return value.toDate().toLocaleDateString();
+    if(value.seconds)return new Date(value.seconds*1000).toLocaleDateString();
+    return String(value);
+  }
+  async function loadTeacherAcademicSession(){
+    const rec=window.activeTeacherConnection||activeTeacherConnection;
+    const eventsBox=document.getElementById('teacherAcademicEvents'),holidaysBox=document.getElementById('teacherAcademicHolidays');
+    if(!rec||!['connected','approved','active'].includes(String(rec.status||'').toLowerCase())||!rec.schoolId){
+      setAcademicText('teacherAcademicSession','Connect to a school first','');
+      setAcademicText('teacherAcademicCurrentTerm','—','');setAcademicText('teacherAcademicCurrentStatus','—','');
+      if(eventsBox)eventsBox.innerHTML='<div class="empty">Connect to a school to view its published calendar.</div>';
+      if(holidaysBox)holidaysBox.textContent='Connect to a school to view public holidays.';return;
+    }
+    try{
+      const snap=await getDoc(doc(db,'schools',rec.schoolId));
+      if(!snap.exists())throw new Error('The connected school record was not found.');
+      const school=snap.data()||{},ac=school.academicCalendar||{},dates=school.termDates||ac.termDates||{};
+      setAcademicText('teacherAcademicSession',school.academicSession||ac.session,'Not set by school');
+      setAcademicText('teacherAcademicCurrentTerm',school.currentTerm||ac.currentTerm,'Not set by school');
+      setAcademicText('teacherAcademicCurrentStatus',school.currentStatus||ac.currentStatus,'Not set by school');
+      setAcademicText('teacherAcademicResumption',academicDateText(dates.resumption||dates.termStart),'Not set by school');
+      setAcademicText('teacherAcademicExamination',academicDateText(dates.examination||dates.examStart),'Not set by school');
+      setAcademicText('teacherAcademicTermEnd',academicDateText(dates.termEnd||dates.closing),'Not set by school');
+      if(eventsBox){const events=Array.isArray(ac.events)?ac.events:[];eventsBox.innerHTML=events.length?events.map(e=>'<div class="calendar-item"><div class="calendar-date">'+String(e.badge||'EVENT')+'<small>'+String(e.badgeLabel||'')+'</small></div><div><b>'+String(e.title||'School event')+'</b><p>'+String(academicDateText(e.date)||'Date not set')+(e.description?' · '+String(e.description):'')+'</p></div></div>').join(''):'<div class="empty">No calendar events have been published by the school.</div>';}
+      const holidays=Array.isArray(school.publicHolidays)?school.publicHolidays:(Array.isArray(ac.publicHolidays)?ac.publicHolidays:[]);
+      if(holidaysBox){holidaysBox.className=holidays.length?'calendar-list':'empty';holidaysBox.innerHTML=holidays.length?holidays.map(h=>'<div class="calendar-item"><div class="calendar-date">HOLIDAY</div><div><b>'+String(h.name||h.title||'Public Holiday')+'</b><p>'+String(academicDateText(h.date||h.dateText)||'Date not set')+'</p></div></div>').join(''):'No public holidays have been published by the school.';}
+    }catch(e){console.error('Teacher academic session load failed:',e);setAcademicText('teacherAcademicSession','Could not load school information','');if(eventsBox)eventsBox.innerHTML='<div class="empty">Could not load the school calendar. Check Firestore read permissions for schools/{schoolId}.</div>';}
+  }
+  window.loadTeacherAcademicSession=loadTeacherAcademicSession;
+
   async function loadTeacherTimetables(){
     const lessonBody=document.getElementById('teacherTimetableRows'),examBody=document.getElementById('teacherExamTimetableRows'),dutyBody=document.getElementById('teacherInvigilationRows');
     if(!lessonBody||!examBody)return;
