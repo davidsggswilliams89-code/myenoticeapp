@@ -843,7 +843,7 @@ button{cursor:pointer;border:0}
 .attendance-table th:first-child,.attendance-table th:nth-child(2){background:#f7fafc;z-index:4}
 .attendance-student{display:flex;align-items:center;gap:9px}
 .attendance-student-photo{width:38px;height:46px;border-radius:7px;object-fit:cover;border:1px solid #d7e1ea;background:#eef3f7;flex:0 0 auto}
-.attendance-student-name{font-size:12px;font-weight:900;color:#1e293b;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+.attendance-student-name{font-size:12px;font-weight:900;color:#1e293b;white-space:normal;overflow:visible;text-overflow:clip;max-width:none;overflow-wrap:break-word;line-height:1.25}
 .attendance-day-head{min-width:92px}
 .attendance-day-name{display:block;font-size:12px;font-weight:900}
 .attendance-day-date{display:block;font-size:10px;color:#64748b;margin-top:2px}
@@ -853,7 +853,7 @@ button{cursor:pointer;border:0}
 .attendance-locked{color:#94a3b8;font-size:11px;font-weight:800}
 .attendance-present{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:5px;background:#198754;color:#fff;font-weight:900;font-size:14px}
 .attendance-empty{padding:30px!important;color:#64748b;font-weight:800}
-@media(max-width:760px){.attendance-toolbar{padding:12px}.attendance-help{padding:9px 12px}.attendance-table{min-width:620px}.attendance-table th:first-child,.attendance-table td:first-child{width:48px;min-width:48px;padding-left:4px;padding-right:4px}.attendance-table th:nth-child(2),.attendance-table td:nth-child(2){left:48px;width:132px;min-width:132px;max-width:132px;padding-left:5px;padding-right:5px}.attendance-student-name{max-width:120px}.attendance-table th.attendance-day-head,.attendance-table td{padding-left:6px;padding-right:6px}}
+@media(max-width:760px){.attendance-toolbar{padding:12px}.attendance-help{padding:9px 12px}.attendance-table{min-width:620px}.attendance-table th:first-child,.attendance-table td:first-child{width:48px;min-width:48px;padding-left:4px;padding-right:4px}.attendance-table th:nth-child(2),.attendance-table td:nth-child(2){left:48px;width:132px;min-width:132px;max-width:132px;padding-left:5px;padding-right:5px}.attendance-student-name{max-width:none;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word}.attendance-table th.attendance-day-head,.attendance-table td{padding-left:6px;padding-right:6px}}
 </style>
 <style>
 .profile-assignment-entry{
