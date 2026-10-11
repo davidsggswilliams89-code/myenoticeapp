@@ -3187,6 +3187,26 @@ renderCurriculum();renderStudents();renderResults();
       av.style.color=info.subjects.length && subjectActive?'#078c55':'#e63149';
     }
   }
+  window.openSubscriptionForLessonSelection=function(){
+    const selectedSubject=librarySubject?.value||'';
+    const selectedClass=libraryClass?.value||'';
+    const panel=document.getElementById('subscriptionView');
+    const toggle=document.getElementById('lessonSubscriptionToggle');
+    const arrow=document.getElementById('lessonSubscriptionArrow');
+    if(panel){panel.style.display='block';}
+    if(toggle)toggle.setAttribute('aria-expanded','true');
+    if(arrow)arrow.textContent='−';
+    const subscriptionSubject=document.getElementById('subscriptionSubjectSelect');
+    if(subscriptionSubject&&selectedSubject){
+      const option=Array.from(subscriptionSubject.options).find(o=>(o.dataset.subjectName||o.textContent||'').trim().toLowerCase()===selectedSubject.trim().toLowerCase());
+      if(option){subscriptionSubject.value=option.value;subscriptionSubject.dispatchEvent(new Event('change',{bubbles:true}));}
+    }
+    const choices=document.querySelectorAll('#subscriptionClassChoices input');
+    choices.forEach(input=>{input.checked=input.value===selectedClass&&!input.disabled;});
+    if(typeof window.updateSubscriptionPage==='function')window.updateSubscriptionPage();
+    panel?.scrollIntoView({behavior:'smooth',block:'start'});
+  };
+
   window.updateLessonLibrary=function(){
     renderSummary();
     const box=document.getElementById('courseContentsList'),empty=document.getElementById('lessonLibraryEmpty');
@@ -3195,9 +3215,39 @@ renderCurriculum();renderStudents();renderResults();
     const selectedClass=libraryClass?.value||'';
     const selectedTerm=libraryTerm?.value||'';
     const selectedSubject=librarySubject?.value||'';
+
+    // Lesson access is granted only when this teacher has an active yearly
+    // subscription for both the selected subject and the selected class.
+    function hasSubjectClassSubscription(subject, cls){
+      if(!subject || !cls) return false;
+      const uid=window.firebaseTeacherUID||'unauthenticated';
+      let records=[];
+      try{
+        const raw=localStorage.getItem('teacherSubscriptions_'+uid)||'[]';
+        const parsed=JSON.parse(raw); records=Array.isArray(parsed)?parsed:[];
+      }catch(e){records=[];}
+      const norm=v=>String(v||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();
+      const subjectOption=librarySubject?.selectedOptions?.[0];
+      const subjectId=subjectOption?.dataset?.subjectId||'';
+      return records.some(record=>{
+        if(String(record.status||'').toLowerCase()!=='active') return false;
+        const sameSubject=(subjectId&&record.subjectId&&String(subjectId)===String(record.subjectId)) || norm(record.subject)===norm(subject);
+        const classes=Array.isArray(record.classes)?record.classes:[];
+        return sameSubject && classes.some(value=>norm(value)===norm(cls));
+      });
+    }
     const selectedRecord=curriculumCatalog.find(function(item){
       return item.className===selectedClass && item.term===selectedTerm && item.subject===selectedSubject;
     });
+
+    if(!hasSubjectClassSubscription(selectedSubject, selectedClass)){
+      box.innerHTML='';
+      if(empty){
+        empty.style.display='block';
+        empty.innerHTML='<div style="max-width:620px;margin:auto;padding:8px 2px"><div style="font-size:38px;margin-bottom:8px">🔒</div><b style="font-size:19px;color:#17324d">Subscribe to access lesson plans and lesson notes</b><p style="margin:9px 0 16px;line-height:1.55">This subject and class are not covered by your active yearly subscription. Subscribe to unlock lesson plans, lesson notes, curriculum materials and other lesson services.</p><button type="button" class="subscription-action" style="max-width:300px" onclick="openSubscriptionForLessonSelection()">💳 Subscribe to this subject</button></div>';
+      }
+      return;
+    }
     const classMatches=curriculumCatalog.some(function(item){return item.className===selectedClass;});
     const termMatches=curriculumCatalog.some(function(item){return item.className===selectedClass && item.term===selectedTerm;});
     const subjectMatches=curriculumCatalog.some(function(item){return item.className===selectedClass && item.term===selectedTerm && item.subject===selectedSubject;});
@@ -3218,7 +3268,7 @@ renderCurriculum();renderStudents();renderResults();
     if(empty){
       empty.style.display=visible?'none':'block';
       if(!subjectMatches){
-        empty.innerHTML='<b>No lesson content available for '+esc(selectedSubject||'this subject')+' yet.</b><br><small>No curriculum has been added to the curriculum source for this subject, class and term yet.</small>';
+        empty.innerHTML='<div style="max-width:620px;margin:auto;padding:8px 2px"><div style="font-size:30px;margin-bottom:7px">📘</div><b style="font-size:18px;color:#526171">No lesson content available for '+esc(selectedSubject||'this subject')+' yet.</b><br><small style="display:block;margin-top:8px;line-height:1.55">Your subscription is active, but curriculum content has not yet been added to the curriculum source for this subject, class and term. Please check again after the curriculum is uploaded.</small></div>';
       }else if(!classMatches || !termMatches){
         empty.innerHTML='<b>No lesson content available for this selection yet.</b><br><small>Choose a class, subject and term with an approved curriculum in the curriculum source.</small>';
       }else{
