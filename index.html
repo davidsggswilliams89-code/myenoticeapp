@@ -2381,12 +2381,19 @@ function teacherAssignedPairs(){const r=window.activeTeacherConnection||{};retur
 function teacherAssignedClasses(){const pairs=teacherAssignedPairs(),fromPairs=pairs.map(a=>a.className||a.class).filter(Boolean),r=window.activeTeacherConnection||{},legacy=Array.isArray(r.assignedClasses)?r.assignedClasses:(r.assignedClass?[r.assignedClass]:[]);return [...new Set(fromPairs.length?fromPairs:legacy)];}
 function teacherAssignedSubjectsForClass(cls){const p=teacherAssignedPairs().filter(a=>(a.className||a.class)===cls).map(a=>a.subject).filter(Boolean);if(p.length)return [...new Set(p)];const r=window.activeTeacherConnection||{};return Array.isArray(r.assignedSubjects)?r.assignedSubjects:[];}
 function applyAssignedClassFilters(){
- if(!teacherIsSchoolConnected())return;const classes=teacherAssignedClasses();if(!classes.length)return;
+ if(!teacherIsSchoolConnected())return;
+ const classes=teacherAssignedClasses();
  const setOptions=(el,values,placeholder)=>{if(!el)return;const old=el.value;el.replaceChildren();if(placeholder!==null)el.add(new Option(placeholder,""));values.forEach(v=>el.add(new Option(v,v)));if(values.includes(old))el.value=old;else if(values.length)el.value=values[0];el.disabled=values.length<=1;};
- setOptions(document.getElementById("classSelect"),classes,null);setOptions(document.getElementById("attendanceClassFilter"),classes,null);setOptions(document.getElementById("lessonLibraryClass"),classes,null);
- const cls=document.getElementById("classSelect")?.value||classes[0];setOptions(document.getElementById("dashboardSubjectFilter"),teacherAssignedSubjectsForClass(cls),"All Assigned Subjects");
- const lcls=document.getElementById("lessonLibraryClass")?.value||classes[0];setOptions(document.getElementById("lessonLibrarySubject"),teacherAssignedSubjectsForClass(lcls),"Select Assigned Subject");
- if(typeof window.updateDashboard==="function")window.updateDashboard();if(typeof window.renderStudents==="function")window.renderStudents();if(typeof window.renderAttendance==="function")window.renderAttendance();
+ setOptions(document.getElementById("classSelect"),classes,null);
+ setOptions(document.getElementById("attendanceClassFilter"),classes,null);
+ setOptions(document.getElementById("lessonLibraryClass"),classes,null);
+ const cls=document.getElementById("classSelect")?.value||classes[0]||"";
+ setOptions(document.getElementById("dashboardSubjectFilter"),cls?teacherAssignedSubjectsForClass(cls):[],"All Assigned Subjects");
+ const lcls=document.getElementById("lessonLibraryClass")?.value||classes[0]||"";
+ setOptions(document.getElementById("lessonLibrarySubject"),lcls?teacherAssignedSubjectsForClass(lcls):[],"Select Assigned Subject");
+ if(typeof window.updateDashboard==="function")window.updateDashboard();
+ if(typeof window.renderStudents==="function")window.renderStudents();
+ if(typeof window.renderAttendance==="function")window.renderAttendance();
 }
 window.teacherIsSchoolConnected=teacherIsSchoolConnected;window.teacherAssignedClasses=teacherAssignedClasses;window.teacherAssignedSubjectsForClass=teacherAssignedSubjectsForClass;window.applyAssignedClassFilters=applyAssignedClassFilters;
 document.getElementById("classSelect")?.addEventListener("change",()=>{if(teacherIsSchoolConnected())applyAssignedClassFilters();if(typeof window.renderStudents==="function")window.renderStudents();});
@@ -3101,10 +3108,21 @@ renderCurriculum();renderStudents();renderResults();
   const librarySubject=document.getElementById('lessonLibrarySubject');
   const search=document.getElementById('lessonLibrarySearch');
   function esc(v){return String(v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]})}
+  function teacherScopedKey(base){
+    const uid=window.firebaseTeacherUID||'';
+    return base+'_'+(uid||'unauthenticated');
+  }
   function assignmentInfo(){
-    let data=[];
-    try{data=JSON.parse(localStorage.getItem('teacherTeachingAssignments')||'[]')}catch(e){data=[]}
     const cls=libraryClass?.value||selectedDashboardClass();
+    // Connected teachers receive assignments only from the registrar.
+    if(typeof window.teacherIsSchoolConnected==='function'&&window.teacherIsSchoolConnected()){
+      const pairs=window.activeTeacherConnection?.assignedTeachingAssignments||[];
+      const matching=pairs.filter(a=>(a.className||a.class)===cls);
+      const subjects=[...new Set(matching.map(a=>a.subject).filter(Boolean))];
+      return {classes:matching.map(a=>({className:a.className||a.class,subject:a.subject})),subjects};
+    }
+    let data=[];
+    try{data=JSON.parse(localStorage.getItem(teacherScopedKey('teacherTeachingAssignments'))||'[]')}catch(e){data=[]}
     const matching=data.filter(a=>a.className===cls);
     const subjects=[];
     matching.forEach(a=>{if(a.subject&&!subjects.includes(a.subject))subjects.push(a.subject)});
@@ -3939,11 +3957,18 @@ window.viewStudentResult=function(index){
     const box=document.getElementById('dashboardTeacherSubjects');
     if(!box) return;
     let assignments=[];
-    try{
-      const raw=localStorage.getItem('teacherTeachingAssignments');
-      const parsed=raw?JSON.parse(raw):[];
-      assignments=Array.isArray(parsed)?parsed:[];
-    }catch(e){assignments=[];}
+    if(typeof window.teacherIsSchoolConnected==='function'&&window.teacherIsSchoolConnected()){
+      assignments=Array.isArray(window.activeTeacherConnection?.assignedTeachingAssignments)
+        ? window.activeTeacherConnection.assignedTeachingAssignments.map(a=>({subject:a.subject,className:a.className||a.class}))
+        : [];
+    }else{
+      try{
+        const uid=window.firebaseTeacherUID||'unauthenticated';
+        const raw=localStorage.getItem('teacherTeachingAssignments_'+uid);
+        const parsed=raw?JSON.parse(raw):[];
+        assignments=Array.isArray(parsed)?parsed:[];
+      }catch(e){assignments=[];}
+    }
     const subjects=[];
     assignments.forEach(function(a){
       const subject=String(a.subject||'').trim();
@@ -4061,22 +4086,29 @@ window.viewStudentResult=function(index){
 (function(){
   const subjects=['English Studies','Mathematics','Basic Science & Technology','Social Studies','Civic Education','Computer Studies','Agricultural Science','Physical & Health Education','Religious Studies','Home Economics','Cultural & Creative Arts','Basic Technology','French','Hausa','Yoruba','Igbo','Security Education','Christian Religious Studies','Islamic Religious Studies'];
   const fee=1000, SUB_KEY='teacherSubscriptions', ASSIGN_KEY='teacherTeachingAssignments';
-
-  function readSubs(){try{const x=JSON.parse(localStorage.getItem(SUB_KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return[]}}
-  function writeSubs(v){localStorage.setItem(SUB_KEY,JSON.stringify(v))}
+  function scopedKey(base){return base+'_'+(window.firebaseTeacherUID||'unauthenticated')}
+  function isRegistrarConnected(){return typeof window.teacherIsSchoolConnected==='function'&&window.teacherIsSchoolConnected()}
+  function readSubs(){try{const x=JSON.parse(localStorage.getItem(scopedKey(SUB_KEY))||'[]');return Array.isArray(x)?x:[]}catch(e){return[]}}
+  function writeSubs(v){localStorage.setItem(scopedKey(SUB_KEY),JSON.stringify(v))}
   function activeSubs(){return readSubs().filter(x=>x.status==='Active')}
   function isActive(s){return activeSubs().some(x=>String(x.subject).toLowerCase()===String(s).toLowerCase())}
   function getActive(s){return activeSubs().find(x=>String(x.subject).toLowerCase()===String(s).toLowerCase())}
 
   function syncAssignments(){
+    // Registrar assignments are authoritative for school-connected accounts.
+    if(isRegistrarConnected()){
+      window.dispatchEvent(new Event('teacherAssignmentsUpdated'));
+      return;
+    }
     const data=[];
     activeSubs().forEach(s=>(s.classes||[]).forEach(c=>data.push({subject:s.subject,className:c,createdAt:s.createdAt||new Date().toISOString()})));
-    localStorage.setItem(ASSIGN_KEY,JSON.stringify(data));
+    localStorage.setItem(scopedKey(ASSIGN_KEY),JSON.stringify(data));
     window.dispatchEvent(new Event('teacherAssignmentsUpdated'));
   }
 
   function populateDashboardSubjectFilter(){
     const el=document.getElementById('dashboardSubjectFilter'); if(!el)return;
+    if(isRegistrarConnected()){if(typeof window.applyAssignedClassFilters==='function')window.applyAssignedClassFilters();return;}
     const current=el.value;
     el.innerHTML='<option value="">All Subscribed Subjects</option>';
     activeSubs().forEach(s=>{const o=document.createElement('option');o.value=s.subject;o.textContent=s.subject;el.appendChild(o)});
@@ -4085,12 +4117,14 @@ window.viewStudentResult=function(index){
 
   function populateDashboardClassFilter(){
     const el=document.getElementById('classSelect'); if(!el)return;
+    if(isRegistrarConnected()){if(typeof window.applyAssignedClassFilters==='function')window.applyAssignedClassFilters();return;}
     const classes=[];
     activeSubs().forEach(s=>(s.classes||[]).forEach(c=>{if(!classes.includes(c))classes.push(c)}));
-    if(!classes.length)return;
+    const available=classes.length?classes:['Primary 1','Primary 2','Primary 3','Primary 4','Primary 5','Primary 6'];
     const current=el.value;
-    el.innerHTML=classes.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
-    if(classes.includes(current))el.value=current;
+    el.innerHTML=available.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
+    if(available.includes(current))el.value=current;
+    else if(available.includes('Primary 5'))el.value='Primary 5';
   }
 
   function renderDashboardSubscriptions(){
@@ -4135,6 +4169,7 @@ window.viewStudentResult=function(index){
   };
 
   window.startSubscription=function(){
+    if(isRegistrarConnected()){alert('Your school connection is active. Your classes and subjects are managed by the registrar, so independent teaching assignments cannot be changed here.');return;}
     const sub=document.getElementById('subscriptionSubjectSelect')?.value||'';
     const classes=Array.from(document.querySelectorAll('#subscriptionClassChoices input:checked')).map(x=>x.value);
     if(!sub){alert('Please select a subject.');return}
@@ -4412,7 +4447,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     const box=document.getElementById('dynamicMyClasses');if(!box)return;box.replaceChildren();
     const classes=record?.assignedClasses?.length?record.assignedClasses:(record?.assignedClass?[record.assignedClass]:[]);
     const subjects=record?.assignedSubjects||[];
-    if(!record||record.status!=='connected'){const p=document.createElement('p');p.textContent='Your registrar-assigned classes and subjects will appear here after your school connection is approved.';p.style.cssText='padding:16px;background:#f8fafc;border-radius:10px;color:#475569';box.append(p);return;}
+    if(!record||!['connected','approved','active'].includes(String(record.status||'').toLowerCase())){const p=document.createElement('p');p.textContent='Your registrar-assigned classes and subjects will appear here after your school connection is approved.';p.style.cssText='padding:16px;background:#f8fafc;border-radius:10px;color:#475569';box.append(p);return;}
     const heading=document.createElement('p');heading.textContent=`School: ${record.schoolName||'Connected school'} · Role: ${record.assignedRole||'Not assigned'}`;heading.style.cssText='padding:12px;background:#ecfdf5;border-radius:10px;color:#166534;font-weight:700';box.append(heading);
     if(!classes.length||!subjects.length){const p=document.createElement('p');p.textContent='The registrar has not assigned both classes and subjects yet.';box.append(p);}
     const pairs=Array.isArray(record.assignedTeachingAssignments)?record.assignedTeachingAssignments:[];
@@ -4431,9 +4466,31 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     try{
       const user=auth.currentUser;if(!user)return;
       const qs=await getDocs(query(collection(db,'teacherConnectionRequests'),where('teacherUid','==',user.uid)));
-      if(qs.empty){activeTeacherConnection=null;window.activeTeacherConnection=null;renderTeacherAssignments(null);const schoolInput=document.getElementById('teacherSchool');if(schoolInput)schoolInput.readOnly=false;showTeacherConnectionStatus('Not connected to a school yet. Enter the School ID above to send a request.');return;}
+      if(qs.empty){
+        activeTeacherConnection=null;window.activeTeacherConnection=null;
+        renderTeacherAssignments(null);
+        const schoolInput=document.getElementById('teacherSchool');if(schoolInput)schoolInput.readOnly=false;
+        showTeacherConnectionStatus('Not connected to a school yet. Enter the School ID above to send a request.');
+        window.dispatchEvent(new Event('teacherAccountContextChanged'));
+        if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
+        if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
+        if(typeof window.loadDashboardTeacherSubjects==='function')window.loadDashboardTeacherSubjects();
+        return;
+      }
       const records=qs.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.updatedAt?.seconds||b.requestedAt?.seconds||0)-(a.updatedAt?.seconds||a.requestedAt?.seconds||0));
-      const r=records[0];activeTeacherConnection=r;window.activeTeacherConnection=r;renderTeacherAssignments(r);if(typeof window.applyAssignedClassFilters==='function')window.applyAssignedClassFilters();if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();const schoolInput=document.getElementById('teacherSchool');if(schoolInput){schoolInput.readOnly=r.status==='connected';if(r.status==='connected')schoolInput.value=r.schoolName||schoolInput.value;schoolInput.title=r.status==='connected'?'Official school name is managed by the registrar.':'Enter your school name';}
+      const r=records[0];activeTeacherConnection=r;window.activeTeacherConnection=r;
+      renderTeacherAssignments(r);
+      window.dispatchEvent(new Event('teacherAccountContextChanged'));
+      if(typeof window.applyAssignedClassFilters==='function'&&teacherIsSchoolConnected())window.applyAssignedClassFilters();
+      if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
+      if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
+      if(typeof window.loadDashboardTeacherSubjects==='function')window.loadDashboardTeacherSubjects();
+      const schoolInput=document.getElementById('teacherSchool');
+      if(schoolInput){
+        schoolInput.readOnly=teacherIsSchoolConnected();
+        if(teacherIsSchoolConnected())schoolInput.value=r.schoolName||'';
+        schoolInput.title=teacherIsSchoolConnected()?'Official school name is managed by the registrar.':'Enter your school name';
+      }
       if(r.status==='connected')showTeacherConnectionStatus(`Connected to ${r.schoolName||'your school'} · School ID: ${r.schoolId}${r.assignedClass?' · Class: '+r.assignedClass:''}${r.assignedRole?' · Role: '+r.assignedRole:''}`,'success');
       else if(r.status==='pending')showTeacherConnectionStatus(`Connection request pending approval for ${r.schoolName||'the school'} · School ID: ${r.schoolId}`);
       else if(r.status==='deactivated')showTeacherConnectionStatus(`Your connection to ${r.schoolName||'the school'} has been deactivated. Contact the registrar or request a new connection.`,'error');
@@ -4522,9 +4579,12 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   onAuthStateChanged(auth,async user=>{
     if(user){
       document.documentElement.classList.add('teacher-auth-pending');
+      // Never carry connection or school records from the previously signed-in account.
+      activeTeacherConnection=null;window.activeTeacherConnection=null;
+      window.firebaseTeacherUID=user.uid;window.firebaseTeacherUser=user;
+      window.dispatchEvent(new Event('teacherAccountContextChanged'));
       try{
         const role=await routeSignedInUser(user);
-        setTimeout(()=>refreshTeacherSchoolConnection(),900);
         if(role==='registrar')return;
       }catch(err){
         console.error('Account role check failed:',err);
@@ -4539,8 +4599,11 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       localStorage.setItem('firebaseTeacherDisplayName',user.displayName||'');
       try{const profile=await ensureTeacherProfile(user);applyFirestoreTeacherProfile(profile,user);}
       catch(err){console.error('Teacher profile sync failed:',err);applyFirestoreTeacherProfile({},user);}
+      // Resolve this account's registrar connection before loading students or assignments.
+      await refreshTeacherSchoolConnection();
       try{if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();}
       catch(err){console.error('Student Firebase query failed during login:',err);}
+      if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
       gate?.classList.add('auth-hidden');gate?.classList.add('auth-ready');
       let activeSection='dashboardView';try{activeSection=sessionStorage.getItem('teacherActiveSection')||'dashboardView';}catch(_e){}
       const validSections=['dashboardView','lessonsView','caExamView','studentsView','attendanceView','profileView','assignmentView','myClassesView','myTimetableView','examTimetableView','academicSessionView','settingsView','subscriptionView','holidayView'];
@@ -4549,8 +4612,12 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       if(activeSection==='profileView'&&typeof window.loadTeacherProfile==='function')window.loadTeacherProfile();
       window.__restoringTeacherSection=false;document.documentElement.classList.remove('teacher-auth-pending');
     }else{
+      activeTeacherConnection=null;window.activeTeacherConnection=null;
       window.firebaseTeacherUID=null;window.firebaseTeacherUser=null;
+      students=[];
+      renderTeacherAssignments(null);
       try{localStorage.removeItem('firebaseTeacherUID');localStorage.removeItem('firebaseTeacherDisplayName');}catch(_e){}
+      window.dispatchEvent(new Event('teacherAccountContextChanged'));
       document.documentElement.classList.remove('teacher-auth-pending');
       showPanel(loginForm);if(subtitle)subtitle.textContent='Sign in to continue';
       if(!authInitialized){gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');authInitialized=true;}
