@@ -2357,15 +2357,15 @@ window.loadStudentsFromFirestore=async function(){
    for(let i=0;i<classes.length;i+=10){snaps.push(await window.firebaseFirestoreFns.getDocs(window.firebaseFirestoreFns.query(ref,window.firebaseFirestoreFns.where("className","in",classes.slice(i,i+10)))));}
    const docs=new Map();snaps.forEach(s=>s.docs.forEach(d=>docs.set(d.id,d)));
    students=[...docs.values()].map(d=>{const x=d.data()||{};return [x.admissionNumber||x.admissionNo||"",x.name||x.studentName||x.fullName||"",x.gender||"",Number(x.ca1||0),Number(x.ca2||0),Number(x.ca3||0),Number(x.exam||0),{phone:x.parentPhone||x.parentGuardianPhone||x.phone||"",dob:x.dob||x.dateOfBirth||"",className:x.className||x.class||x.classLevel||"",guardian:x.guardian||x.parentGuardianName||x.parentName||"",address:x.address||x.parentAddress||"",photo:x.photo||x.studentPhoto||""},{schoolStudentId:d.id,firestoreId:""}];}).filter(s=>classes.includes(studentInfo(s).className));
-   applyAssignedClassFilters();refreshStudentViews();if(typeof window.renderAttendance==="function")window.renderAttendance();
+   applyAssignedClassFilters();if(typeof window.refreshStudentViews==="function")window.refreshStudentViews();if(typeof window.renderAttendance==="function")window.renderAttendance();
    const note=document.getElementById("studentFirebaseSourceNote");if(note){note.textContent="Connected school register: "+students.length+" official student record"+(students.length===1?"":"s")+" loaded for your assigned classes.";note.style.display="";note.style.background="#f3faf7";note.style.borderColor="#cfe4dd";note.style.color="#35505f";}
    return {ok:true,count:students.length,source:"school-register"};
   }
   const snap=await window.firebaseFirestoreFns.getDocs(window.firebaseFirestoreFns.collection(db,"teachers",uid,"students"));
   students=snap.docs.map(d=>{const x=d.data()||{};return [x.admissionNumber||"",x.name||"",x.gender||"",Number(x.ca1||0),Number(x.ca2||0),Number(x.ca3||0),Number(x.exam||0),{phone:x.parentPhone||"",dob:x.dob||"",className:x.className||"",guardian:x.guardian||"",address:x.address||"",photo:x.photo||""},{firestoreId:d.id}];});
-  refreshStudentViews();if(typeof window.renderAttendance==="function")window.renderAttendance();return {ok:true,count:students.length,source:"teacher"};
+  if(typeof window.refreshStudentViews==="function")window.refreshStudentViews();if(typeof window.renderAttendance==="function")window.renderAttendance();return {ok:true,count:students.length,source:"teacher"};
  }catch(err){
-  console.error("Student Firebase query failed:",err);if(teacherIsSchoolConnected())students=[];refreshStudentViews();if(typeof window.renderAttendance==="function")window.renderAttendance();
+  console.error("Student Firebase query failed:",err);if(teacherIsSchoolConnected())students=[];if(typeof window.refreshStudentViews==="function")window.refreshStudentViews();if(typeof window.renderAttendance==="function")window.renderAttendance();
   const note=document.getElementById("studentFirebaseSourceNote");if(note){note.textContent=(teacherIsSchoolConnected()?"Official school student list could not load: ":"Firebase student loading failed: ")+(err?.message||"Check Firestore rules.");note.style.display="";note.style.background="#fff1f2";note.style.borderColor="#fecdd3";note.style.color="#9f1239";}
   return {ok:false,count:students.length,error:err?.message||String(err)};
  }
@@ -3264,6 +3264,9 @@ renderCurriculum();renderStudents();renderResults();
     var formCls=document.getElementById("newStudentClass");
     if(cls && formCls) formCls.value=cls.value;
   }
+  // Expose the refresh function for the separate Firebase/connection scripts.
+  // Those scripts run outside this IIFE and otherwise throw "refreshStudentViews is not defined".
+  window.refreshStudentViews=refreshStudentViews;
 
   window.updateDashboardStudentCount=function(){
     var count=visibleStudentRecords().length;
