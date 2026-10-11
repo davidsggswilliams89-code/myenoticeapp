@@ -1385,59 +1385,61 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
 
 
 <style>
-/* Profile section only: compact horizontal photo and action controls */
-#profileView .profile-page-head p{display:none!important}
+/* Profile section only: centered photo and compact horizontal action buttons */
 #profileView .profile-photo-panel{
-  flex-direction:row!important;
-  align-items:center!important;
-  gap:14px!important;
+  display:flex!important;flex-direction:column!important;align-items:center!important;
+  justify-content:center!important;gap:12px!important;text-align:center!important;
+  padding:18px 12px!important;
 }
-#profileView .profile-photo-panel>div{flex:1;min-width:0}
+#profileView .profile-photo-panel>div{
+  width:100%;min-width:0;display:flex;flex-direction:column;align-items:center;gap:12px;
+}
+#profileView .profile-photo-panel strong{display:none!important}
+#profileView .profile-photo-preview{
+  width:140px!important;height:140px!important;flex:0 0 140px!important;
+  border-radius:50%!important;object-fit:cover!important;
+}
 #profileView .profile-photo-actions{
-  display:flex!important;
-  flex-direction:row!important;
-  flex-wrap:nowrap!important;
-  gap:6px!important;
-  width:100%;
+  display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;
+  justify-content:center!important;gap:8px!important;width:100%;max-width:460px;margin:0 auto;
 }
 #profileView .profile-photo-actions button{
-  flex:1 1 0!important;
-  min-width:0!important;
-  padding:10px 6px!important;
-  font-size:12px!important;
-  white-space:nowrap!important;
+  flex:1 1 0!important;min-width:0!important;padding:11px 6px!important;
+  font-size:13px!important;white-space:nowrap!important;
 }
 #profileView .profile-actions{
-  display:flex!important;
-  flex-direction:row!important;
-  justify-content:stretch!important;
-  gap:7px!important;
-  width:100%;
+  display:flex!important;flex-direction:row!important;justify-content:center!important;
+  align-items:stretch!important;gap:12px!important;width:100%;max-width:620px;margin:18px auto 0;
 }
 #profileView .profile-actions button{
-  flex:1 1 0!important;
-  min-width:0!important;
-  padding:11px 5px!important;
-  font-size:12px!important;
-  line-height:1.2!important;
-  white-space:normal!important;
+  flex:1 1 0!important;min-width:0!important;padding:12px 8px!important;
+  font-size:13px!important;line-height:1.2!important;white-space:normal!important;
 }
-#profileView .profile-actions .save{background:#078c55;color:#fff}
-#profileView .profile-actions .cancel{background:#eef2f6;color:#344054}
-#profileView .teacher-profile-page[style*="margin-bottom:18px"]{margin-top:18px}
+#profileView .profile-actions .cancel{background:#078c55!important;color:#fff!important}
+#profileView .profile-actions .save{background:#078c55!important;color:#fff!important}
+#profileView #teacherProfileResetButton{display:none!important}
+#profileView .school-connection-actions{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:10px;width:100%;
+}
+#profileView .school-connection-actions input{grid-column:1/-1;width:100%;min-width:0!important}
+#profileView .school-connection-actions button{
+  width:100%;min-width:0;white-space:normal;padding:12px 8px!important;
+}
 @media(max-width:700px){
-  #profileView .profile-photo-panel{padding:10px!important;gap:10px!important}
-  #profileView .profile-photo-preview{width:76px;height:76px;flex:0 0 76px}
-  #profileView .profile-photo-actions{gap:4px!important}
-  #profileView .profile-photo-actions button{font-size:10px!important;padding:9px 3px!important}
-  #profileView .profile-actions button{font-size:11px!important;padding:10px 3px!important}
+  #profileView .profile-photo-panel{padding:16px 10px!important;gap:12px!important}
+  #profileView .profile-photo-preview{width:140px!important;height:140px!important;flex-basis:140px!important}
+  #profileView .profile-photo-actions{gap:6px!important}
+  #profileView .profile-photo-actions button{font-size:11px!important;padding:10px 3px!important}
+  #profileView .profile-actions{gap:10px!important}
+  #profileView .profile-actions button{font-size:12px!important;padding:12px 6px!important}
+  #profileView .school-connection-actions{gap:8px}
+  #profileView .school-connection-actions button{font-size:12px;padding:11px 5px!important}
 }
 @media(max-width:360px){
-  #profileView .profile-photo-preview{width:64px;height:64px;flex-basis:64px}
-  #profileView .profile-photo-actions button{font-size:9px!important}
-  #profileView .profile-actions button{font-size:10px!important}
+  #profileView .profile-photo-preview{width:120px!important;height:120px!important;flex-basis:120px!important}
+  #profileView .profile-photo-actions button{font-size:10px!important}
+  #profileView .profile-actions button{font-size:11px!important}
 }
-</style>
 
 </head>
 <body>
@@ -2046,7 +2048,6 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
     <div class="profile-photo-panel">
       <img id="teacherProfilePhotoPreview" class="profile-photo-preview" alt="Teacher profile photo">
       <div>
-        <strong>Profile Photo</strong>
         <div class="profile-photo-actions">
           <button type="button" class="choose" onclick="document.getElementById('teacherPhotoInput').click()">Choose Photo</button>
           <button type="button" class="choose" onclick="document.getElementById('teacherCameraInput').click()">Take Photo</button>
@@ -2073,7 +2074,6 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
     <div id="profileStatus" class="profile-status">Profile saved successfully.</div>
     <div class="profile-actions">
       <button type="button" class="cancel" onclick="showSection('dashboardView',document.querySelectorAll('.topnav-item')[0])">RETURN TO DASHBOARD</button>
-      <button type="button" class="cancel" id="teacherProfileResetButton" onclick="loadTeacherProfile()">RESET</button>
       <button type="button" class="save" id="teacherProfileSaveButton" onclick="saveTeacherProfile()">SAVE PROFILE</button>
     </div>
   </div>
@@ -2083,7 +2083,7 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
     <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:14px;padding:18px;margin-bottom:18px">
       <h3 style="margin:0 0 6px;color:#166534">Connect with School</h3>
       <p style="margin:0 0 12px;color:#475569">Enter the School ID provided by your school registrar. Your connection becomes active only after the registrar approves it.</p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><input id="connectSchoolId" placeholder="Enter School ID" style="flex:1;min-width:200px;padding:12px;border:1px solid #cbd5e1;border-radius:9px"><button type="button" id="requestSchoolConnection" style="padding:12px 16px;border:0;border-radius:9px;background:#15803d;color:#fff;font-weight:700;cursor:pointer">Connect with School</button><button type="button" id="refreshSchoolConnection" style="padding:12px 16px;border:1px solid #15803d;border-radius:9px;background:#fff;color:#166534;font-weight:700;cursor:pointer">Refresh Status</button></div>
+      <div class="school-connection-actions"><input id="connectSchoolId" placeholder="Enter School ID" style="padding:12px;border:1px solid #cbd5e1;border-radius:9px"><button type="button" id="requestSchoolConnection" style="border:0;border-radius:9px;background:#15803d;color:#fff;font-weight:700;cursor:pointer">Connect with School</button><button type="button" id="refreshSchoolConnection" style="border:1px solid #15803d;border-radius:9px;background:#fff;color:#166534;font-weight:700;cursor:pointer">Refresh Status</button></div>
       <div id="teacherSchoolConnectionStatus" role="status" style="margin-top:12px;padding:10px;border-radius:8px;background:#fff;color:#334155">Checking school connection…</div>
     </div>
   </div>
