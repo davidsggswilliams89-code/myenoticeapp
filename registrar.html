@@ -69,6 +69,22 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 <section class="card registrar-page-panel" data-page-panel="academic" id="academicSessionCard" style="margin-top:18px">
 <h3>Academic Session &amp; Calendar</h3>
 <p class="muted">Publish academic-session information for teachers connected to this school. Saved details will appear in their Academic Session section.</p>
+<div class="official-calendar" style="margin:16px 0 22px;padding:16px;border:1px solid var(--line);border-radius:14px;background:#f7fbf8">
+<h3 style="margin-top:0">Official 2026/2027 School Academic Calendar</h3>
+<p class="muted">Source: Zamfara State Education Quality Assurance Authority document dated 16 September 2025. The document describes this calendar as proposed.</p>
+<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:650px;background:#fff"><thead><tr><th style="text-align:left;padding:9px;border:1px solid var(--line)">Term</th><th style="text-align:left;padding:9px;border:1px solid var(--line)">Activity</th><th style="text-align:left;padding:9px;border:1px solid var(--line)">Start / Resumption</th><th style="text-align:left;padding:9px;border:1px solid var(--line)">End / Closing</th><th style="text-align:left;padding:9px;border:1px solid var(--line)">Duration</th></tr></thead><tbody>
+<tr><td style="padding:9px;border:1px solid var(--line)">First Term</td><td style="padding:9px;border:1px solid var(--line)">Academic activities</td><td style="padding:9px;border:1px solid var(--line)">27 Sep 2026</td><td style="padding:9px;border:1px solid var(--line)">18 Dec 2026</td><td style="padding:9px;border:1px solid var(--line)">12 weeks</td></tr>
+<tr><td style="padding:9px;border:1px solid var(--line)">First Term</td><td style="padding:9px;border:1px solid var(--line)">Holiday</td><td style="padding:9px;border:1px solid var(--line)">19 Dec 2026</td><td style="padding:9px;border:1px solid var(--line)">9 Jan 2027</td><td style="padding:9px;border:1px solid var(--line)">3 weeks</td></tr>
+<tr><td style="padding:9px;border:1px solid var(--line)">Second Term</td><td style="padding:9px;border:1px solid var(--line)">Academic activities</td><td style="padding:9px;border:1px solid var(--line)">10 Jan 2027</td><td style="padding:9px;border:1px solid var(--line)">26 Feb 2027</td><td style="padding:9px;border:1px solid var(--line)">7 weeks</td></tr>
+<tr><td style="padding:9px;border:1px solid var(--line)">Second Term</td><td style="padding:9px;border:1px solid var(--line)">Ramadan/Sallah break</td><td style="padding:9px;border:1px solid var(--line)">27 Feb 2027</td><td style="padding:9px;border:1px solid var(--line)">13 Mar 2027</td><td style="padding:9px;border:1px solid var(--line)">2 weeks</td></tr>
+<tr><td style="padding:9px;border:1px solid var(--line)">Second Term</td><td style="padding:9px;border:1px solid var(--line)">Academic activities continue</td><td style="padding:9px;border:1px solid var(--line)">14 Mar 2027</td><td style="padding:9px;border:1px solid var(--line)">30 Apr 2027</td><td style="padding:9px;border:1px solid var(--line)">7 weeks</td></tr>
+<tr><td style="padding:9px;border:1px solid var(--line)">Third Term</td><td style="padding:9px;border:1px solid var(--line)">Holiday</td><td style="padding:9px;border:1px solid var(--line)">1 May 2027</td><td style="padding:9px;border:1px solid var(--line)">15 May 2027</td><td style="padding:9px;border:1px solid var(--line)">2 weeks</td></tr>
+<tr><td style="padding:9px;border:1px solid var(--line)">Third Term</td><td style="padding:9px;border:1px solid var(--line)">Academic activities</td><td style="padding:9px;border:1px solid var(--line)">16 May 2027</td><td style="padding:9px;border:1px solid var(--line)">20 Aug 2027</td><td style="padding:9px;border:1px solid var(--line)">14 weeks</td></tr>
+<tr><td style="padding:9px;border:1px solid var(--line)">Third Term</td><td style="padding:9px;border:1px solid var(--line)">Holiday</td><td style="padding:9px;border:1px solid var(--line)">21 Aug 2027</td><td style="padding:9px;border:1px solid var(--line)">25 Sep 2027</td><td style="padding:9px;border:1px solid var(--line)">5 weeks</td></tr>
+</tbody></table></div>
+<h4>Examination periods</h4><ul><li>First Term: 30 November–11 December 2026</li><li>Second Term: 12–23 April 2027</li><li>Third Term: 2–13 August 2027</li></ul>
+<p class="muted" style="margin-bottom:0">Expected religious dates in the source: Ramadan fasting 7–8 February 2027; Eid-el-Fitr 9–10 March 2027; Eid-el-Adha 16–17 May 2027. Proposed start of 2027/2028 session: 26 September 2027. Dates may be subject to official change.</p>
+</div>
 <form id="academicSessionForm">
 <div class="timetable-form">
 <div><label for="academicSessionInput">Academic session</label><input id="academicSessionInput" maxlength="30" required placeholder="2026/2027"></div>
@@ -268,9 +284,25 @@ async function loadAcademicSessionForm(){
   $("academicResumption").value=dates.resumption||dates.termStart||"";
   $("academicExamination").value=dates.examination||dates.examStart||"";
   $("academicTermEnd").value=dates.termEnd||dates.closing||"";
-  $("academicEventsText").value=formatPipeRows(ac.events,[ "title","date","description","badge","badgeLabel" ]);
+  const defaultEvents=[
+   {title:"First Term Academic Activities",date:"27 Sep 2026 – 18 Dec 2026",description:"12 weeks",badge:"TERM",badgeLabel:"FIRST"},
+   {title:"First Term Holiday",date:"19 Dec 2026 – 9 Jan 2027",description:"3 weeks",badge:"HOLIDAY",badgeLabel:"BREAK"},
+   {title:"Second Term Academic Activities",date:"10 Jan 2027 – 26 Feb 2027",description:"7 weeks",badge:"TERM",badgeLabel:"SECOND"},
+   {title:"Ramadan/Sallah Break",date:"27 Feb 2027 – 13 Mar 2027",description:"2 weeks",badge:"HOLIDAY",badgeLabel:"BREAK"},
+   {title:"Second Term Academic Activities Continue",date:"14 Mar 2027 – 30 Apr 2027",description:"7 weeks",badge:"TERM",badgeLabel:"SECOND"},
+   {title:"Third Term Holiday",date:"1 May 2027 – 15 May 2027",description:"2 weeks",badge:"HOLIDAY",badgeLabel:"BREAK"},
+   {title:"Third Term Academic Activities",date:"16 May 2027 – 20 Aug 2027",description:"14 weeks",badge:"TERM",badgeLabel:"THIRD"},
+   {title:"Long Vacation",date:"21 Aug 2027 – 25 Sep 2027",description:"5 weeks",badge:"HOLIDAY",badgeLabel:"VACATION"},
+   {title:"First Term Examinations",date:"30 Nov 2026 – 11 Dec 2026",description:"Examination period",badge:"EXAM",badgeLabel:"FIRST"},
+   {title:"Second Term Examinations",date:"12 Apr 2027 – 23 Apr 2027",description:"Examination period",badge:"EXAM",badgeLabel:"SECOND"},
+   {title:"Third Term Examinations",date:"2 Aug 2027 – 13 Aug 2027",description:"Examination period",badge:"EXAM",badgeLabel:"THIRD"},
+   {title:"Proposed 2027/2028 Session Begins",date:"26 Sep 2027",description:"Proposed date from the source calendar",badge:"SESSION",badgeLabel:"NEXT"}
+  ];
+  const savedEvents=Array.isArray(ac.events)?ac.events:[];
+  $("academicEventsText").value=formatPipeRows(savedEvents.length?savedEvents:defaultEvents,["title","date","description","badge","badgeLabel"]);
   const holidays=Array.isArray(school.publicHolidays)?school.publicHolidays:(Array.isArray(ac.publicHolidays)?ac.publicHolidays:[]);
-  $("academicHolidaysText").value=formatPipeRows(holidays.map(h=>({name:h.name||h.title,date:h.date||h.dateText})),["name","date"]);
+  const defaultHolidays=[{name:"Expected Ramadan fasting",date:"7–8 February 2027"},{name:"Expected Eid-el-Fitr",date:"9–10 March 2027"},{name:"Expected Eid-el-Adha",date:"16–17 May 2027"}];
+  $("academicHolidaysText").value=formatPipeRows((holidays.length?holidays:defaultHolidays).map(h=>({name:h.name||h.title,date:h.date||h.dateText})),["name","date"]);
   setTableStatus("academicSessionStatus","Loaded the school's currently published academic information.","info");
  }catch(e){console.error(e);setTableStatus("academicSessionStatus","Could not load academic information: "+err(e),"error")}
 }
