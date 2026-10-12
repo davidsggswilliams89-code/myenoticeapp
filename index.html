@@ -2321,7 +2321,7 @@ function applyCurriculumSelection(){
   const selectedTerm=document.getElementById('lessonLibraryTerm')?.value || 'First Term';
   const selectedSubject=document.getElementById('lessonLibrarySubject')?.value || '';
   const record=curriculumCatalog.find(function(item){
-    return item.className===selectedClass && item.term===selectedTerm && (!selectedSubject || item.subject===selectedSubject);
+    return item.className===selectedClass && item.term===selectedTerm && (!selectedSubject || String(item.subject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()===String(selectedSubject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim());
   });
   curriculum=record && Array.isArray(record.curriculum) ? record.curriculum : [];
   if(curriculum.length){
@@ -2825,7 +2825,7 @@ function getActiveLessonData(type="Lesson Plan"){
   const selectedTerm=document.getElementById('lessonLibraryTerm')?.value || 'First Term';
   const selectedSubject=document.getElementById('lessonLibrarySubject')?.value || '';
   const activeRecord=(curriculumCatalog||[]).find(function(item){
-    return item.className===selectedClass && item.term===selectedTerm && (!selectedSubject || item.subject===selectedSubject);
+    return item.className===selectedClass && item.term===selectedTerm && (!selectedSubject || String(item.subject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()===String(selectedSubject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim());
   });
   const weekNumber=(Number(selectedLesson.topicIndex)||0)+1;
   const periodNumber=(Number(selectedLesson.periodIndex)||0)+1;
@@ -3487,7 +3487,7 @@ renderCurriculum();renderStudents();renderResults();
       });
     }
     const selectedRecord=curriculumCatalog.find(function(item){
-      return item.className===selectedClass && item.term===selectedTerm && item.subject===selectedSubject;
+      return item.className===selectedClass && item.term===selectedTerm && String(item.subject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()===String(selectedSubject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();
     });
 
     if(!hasSubjectClassSubscription(selectedSubject, selectedClass)){
@@ -3500,7 +3500,7 @@ renderCurriculum();renderStudents();renderResults();
     }
     const classMatches=curriculumCatalog.some(function(item){return item.className===selectedClass;});
     const termMatches=curriculumCatalog.some(function(item){return item.className===selectedClass && item.term===selectedTerm;});
-    const subjectMatches=curriculumCatalog.some(function(item){return item.className===selectedClass && item.term===selectedTerm && item.subject===selectedSubject;});
+    const subjectMatches=curriculumCatalog.some(function(item){return item.className===selectedClass && item.term===selectedTerm && String(item.subject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()===String(selectedSubject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();});
     const curriculumMatches=!!selectedRecord && Array.isArray(curriculum) && curriculum.length>0;
     let visible=0;
     box.innerHTML=curriculumMatches ? curriculum.map(function(c,i){
