@@ -13,8 +13,8 @@ header{background:var(--gd);color:white;padding:14px 5%;display:flex;align-items
 .brand-copy{min-width:0;flex:1}
 h1{font-size:clamp(25px,5vw,34px);line-height:1.15;margin:0 0 8px;text-align:center;font-weight:800}
 header p{margin:0;font-size:16px;opacity:.9;text-align:center;line-height:1.25}header p{margin:0;font-size:14px;opacity:.85;text-align:center}
-#signOut{position:absolute;right:16px;top:12px}
-@media(max-width:700px){header{padding:14px 12px;min-height:104px}.brand{gap:12px}.logo{width:64px;height:64px;flex-basis:64px}h1{font-size:25px}header p{font-size:12px}#signOut{right:8px;top:6px;padding:6px 8px;font-size:12px}}
+#signOut{position:static;right:auto;top:auto}.registrar-nav .nav-logout{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.3);color:#fff}.registrar-nav .nav-logout:hover{background:#fff;color:#075c51}
+@media(max-width:700px){header{padding:14px 12px;min-height:104px}.brand{gap:12px}.logo{width:64px;height:64px;flex-basis:64px}h1{font-size:25px}header p{font-size:12px}#signOut{padding:8px 12px;font-size:11px}}
 main{max-width:1050px;margin:26px auto;padding:0 16px}.hero{display:none!important;background:linear-gradient(120deg,var(--g),#278657);color:white;padding:26px;border-radius:16px;margin-bottom:20px}
 .hero h2{margin:0 0 8px;font-size:clamp(24px,4vw,34px)}.hero p{margin:0;line-height:1.5}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.card{background:white;border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:18px}
@@ -43,7 +43,7 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 <body>
 <header><div class="brand"><div class="logo" id="headerSchoolLogo" aria-label="School logo">eN</div><div class="brand-copy"><h1>my e-notice app</h1><p>Registrar Portal</p></div></div></header>
 <nav id="registrarNav" class="registrar-nav hidden" aria-label="Registrar dashboard navigation">
-<button class="active" data-page="dashboard"><span>🏠</span>Dashboard</button><button data-page="classes"><span>🏫</span>Classes</button><button data-page="teachers"><span>👩‍🏫</span>Teachers</button><button data-page="students"><span>👥</span>Students</button><button data-page="timetable"><span>📅</span>Timetable</button><button data-page="exams"><span>📝</span>Exam Timetable</button><button data-page="academic"><span>🗓️</span>Academic Session</button>
+<button class="active" data-page="dashboard"><span>🏠</span>Dashboard</button><button data-page="classes"><span>🏫</span>Classes</button><button data-page="teachers"><span>👩‍🏫</span>Teachers</button><button data-page="students"><span>👥</span>Students</button><button data-page="timetable"><span>📅</span>Timetable</button><button data-page="exams"><span>📝</span>Exam Timetable</button><button data-page="academic"><span>🗓️</span>Academic Session</button><button type="button" id="signOut" class="nav-logout"><span>↪️</span>Logout</button>
 </nav>
 <main>
 <section class="hero"><h2>Welcome to your Registrar Portal</h2><p>Complete your school profile, add the official school photo, and manage your school information from one dashboard.</p></section>
