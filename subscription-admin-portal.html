@@ -29,15 +29,15 @@
 }
 #appView > .layout > .sidebar::-webkit-scrollbar{display:none}
 #appView .nav-btn{
-  flex:0 0 auto;width:auto;min-width:145px;min-height:70px;
+  flex:0 0 auto;width:auto;min-width:125px;height:64px;min-height:64px;max-height:64px;
   display:flex;flex-direction:column;justify-content:center;align-items:center;
-  gap:5px;text-align:center;padding:8px 13px;margin:0;
-  border:1px solid #ffffff35;border-radius:16px;background:#ffffff16;
-  color:#fff;font-weight:750;font-size:13px;line-height:1.25;
+  gap:3px;text-align:center;padding:4px 10px;margin:0;
+  border:1px solid #ffffff35;border-radius:13px;background:#ffffff16;
+  color:#fff;font-weight:750;font-size:12px;line-height:1.15;
 }
 #appView .nav-btn span:first-child{
-  width:34px;height:34px;min-width:34px;display:grid;place-items:center;
-  border-radius:11px;background:#ffffff28;color:#fff;font-size:17px;
+  width:25px;height:25px;min-width:25px;display:grid;place-items:center;
+  border-radius:8px;background:#ffffff28;color:#fff;font-size:14px;
 }
 #appView .nav-btn.active{background:#fff;color:#145c50;border-color:#fff;box-shadow:0 3px 10px #003e3020}
 #appView .nav-btn.active span:first-child{background:#087f68;color:#fff}
@@ -51,8 +51,8 @@
 @media(max-width:600px){
   #appView > .layout{padding:0 0 28px;margin-top:0}
   #appView > .layout > .sidebar{gap:7px;padding:5px 8px}
-  #appView .nav-btn{min-width:145px;min-height:70px;padding:8px 12px;font-size:13px;border-radius:16px}
-  #appView .nav-btn span:first-child{width:34px;height:34px;min-width:34px}
+  #appView .nav-btn{min-width:125px;width:auto;height:64px;min-height:64px;max-height:64px;padding:4px 10px;font-size:12px;border-radius:13px}
+  #appView .nav-btn span:first-child{width:25px;height:25px;min-width:25px}
   #appView main{padding:0 10px;margin-top:18px}
 }
 </style>
