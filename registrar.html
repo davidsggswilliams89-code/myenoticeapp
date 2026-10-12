@@ -99,7 +99,7 @@ const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
 const $=id=>document.getElementById(id);let user=null,profile=null,busy=false;let activeSchoolClasses=["Primary 1","Primary 2","Primary 3","Primary 4","Primary 5","Primary 6"];
 function msg(t,type="info"){const e=$("message");e.textContent=t;e.className="notice "+type}
 function hideMsg(){$("message").classList.add("hidden")}
-function view(name){["setup","dashboard"].forEach(x=>$(x).classList.toggle("hidden",x!==name));$("signOut").classList.toggle("hidden",!user);$("registrarNav")?.classList.toggle("hidden",name!=="dashboard")}
+function view(name){["setup","dashboard"].forEach(x=>$(x).classList.toggle("hidden",x!==name));const signOutButton=$("signOut");if(signOutButton)signOutButton.classList.toggle("hidden",!user);$("registrarNav")?.classList.toggle("hidden",name!=="dashboard")}
 function err(e){const map={"auth/email-already-in-use":"This email already has an account. Please sign in.","auth/invalid-credential":"Email or password is incorrect.","auth/weak-password":"Use a password with at least 6 characters.","auth/invalid-email":"Enter a valid email address.","permission-denied":"Firebase denied this operation. Check the Firestore security rules."};return map[e.code]||e.message||"Something went wrong. Please try again."}
 function setBusy(v){busy=v;document.querySelectorAll("form button[type=submit]").forEach(b=>{b.disabled=v;b.style.opacity=v?".6":"1"})}
 function detail(label,value){const d=document.createElement("div");d.className="item";const s=document.createElement("small"),b=document.createElement("strong");s.textContent=label;b.textContent=value||"Not provided";d.append(s,b);return d}
