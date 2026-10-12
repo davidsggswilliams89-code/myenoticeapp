@@ -5514,3 +5514,36 @@ body.lessons-active #lessonSubscriptionToggle{
   body.lessons-active .main{padding-top:64px !important;padding-left:8px !important;padding-right:8px !important;}
 }
 </style>
+
+<style>
+  #firebaseAuthGate .auth-logo{cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+  #firebaseAuthGate .auth-logo:focus-visible{outline:3px solid #087f5b;outline-offset:4px}
+</style>
+<script>
+(function(){
+  const logo = document.querySelector('#firebaseAuthGate .auth-logo');
+  if (!logo) return;
+  let taps = 0;
+  let resetTimer = null;
+  logo.setAttribute('role','button');
+  logo.setAttribute('tabindex','0');
+  logo.setAttribute('aria-label','App logo');
+  function tapLogo(){
+    taps += 1;
+    clearTimeout(resetTimer);
+    if (taps >= 10) {
+      taps = 0;
+      window.location.href = new URL('subscription-admin-portal.html', window.location.href).href;
+      return;
+    }
+    resetTimer = setTimeout(function(){ taps = 0; }, 4000);
+  }
+  logo.addEventListener('click', tapLogo);
+  logo.addEventListener('keydown', function(event){
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      tapLogo();
+    }
+  });
+})();
+</script>
