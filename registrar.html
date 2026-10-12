@@ -6,9 +6,14 @@
 <style>
 :root{--g:#176b45;--gd:#104b32;--bg:#f3f7f4;--line:#dce6df;--muted:#65736a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:#17251d;font:16px Arial,sans-serif}
-header{background:var(--gd);color:white;padding:16px 5%;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.brand{display:flex;align-items:center;gap:12px}.logo{background:white;color:var(--gd);font-weight:bold;border-radius:10px;padding:13px}
-h1{font-size:19px;margin:0 0 4px}header p{margin:0;font-size:12px;opacity:.8}
+header{background:var(--gd);color:white;padding:16px 5%;display:flex;align-items:center;justify-content:center;gap:12px;position:relative;min-height:108px}
+.brand{display:flex;align-items:center;justify-content:center;gap:16px;width:100%;text-align:center}
+.logo{width:76px;height:76px;flex:0 0 76px;background:white;color:var(--gd);font-weight:bold;border-radius:50%;display:grid;place-items:center;padding:5px;overflow:hidden}
+.logo img{width:100%;height:100%;object-fit:contain;border-radius:50%;display:block}
+.brand-copy{min-width:0}
+h1{font-size:clamp(24px,4vw,32px);line-height:1.15;margin:0 0 5px;text-align:center}header p{margin:0;font-size:14px;opacity:.85;text-align:center}
+#signOut{position:absolute;right:16px;top:12px}
+@media(max-width:700px){header{padding:14px 12px;min-height:104px}.brand{gap:12px}.logo{width:64px;height:64px;flex-basis:64px}h1{font-size:25px}header p{font-size:12px}#signOut{right:8px;top:6px;padding:6px 8px;font-size:12px}}
 main{max-width:1050px;margin:26px auto;padding:0 16px}.hero{display:none!important;background:linear-gradient(120deg,var(--g),#278657);color:white;padding:26px;border-radius:16px;margin-bottom:20px}
 .hero h2{margin:0 0 8px;font-size:clamp(24px,4vw,34px)}.hero p{margin:0;line-height:1.5}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.card{background:white;border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:18px}
@@ -35,7 +40,7 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 </style>
 </head>
 <body>
-<header><div class="brand"><div class="logo">eN</div><div><h1>my e-notice app</h1><p>Registrar Portal · School administration</p></div></div><button id="signOut" class="secondary hidden">Sign out</button></header>
+<header><div class="brand"><div class="logo" id="headerSchoolLogo" aria-label="School logo">eN</div><div class="brand-copy"><h1>my e-notice app</h1><p>Registrar Portal · School administration</p></div></div><button id="signOut" class="secondary hidden">Sign out</button></header>
 <nav id="registrarNav" class="registrar-nav hidden" aria-label="Registrar dashboard navigation">
 <button class="active" data-page="dashboard"><span>🏠</span>Dashboard</button><button data-page="classes"><span>🏫</span>Classes</button><button data-page="teachers"><span>👩‍🏫</span>Teachers</button><button data-page="students"><span>👥</span>Students</button><button data-page="timetable"><span>📅</span>Timetable</button><button data-page="exams"><span>📝</span>Exam Timetable</button><button data-page="academic"><span>🗓️</span>Academic Session</button>
 </nav>
@@ -97,7 +102,7 @@ function view(name){["setup","dashboard"].forEach(x=>$(x).classList.toggle("hidd
 function err(e){const map={"auth/email-already-in-use":"This email already has an account. Please sign in.","auth/invalid-credential":"Email or password is incorrect.","auth/weak-password":"Use a password with at least 6 characters.","auth/invalid-email":"Enter a valid email address.","permission-denied":"Firebase denied this operation. Check the Firestore security rules."};return map[e.code]||e.message||"Something went wrong. Please try again."}
 function setBusy(v){busy=v;document.querySelectorAll("form button[type=submit]").forEach(b=>{b.disabled=v;b.style.opacity=v?".6":"1"})}
 function detail(label,value){const d=document.createElement("div");d.className="item";const s=document.createElement("small"),b=document.createElement("strong");s.textContent=label;b.textContent=value||"Not provided";d.append(s,b);return d}
-function render(school){$("welcome").textContent="Welcome, "+(user.displayName||profile?.fullName||"Registrar");$("dashboardSchoolName").textContent=school.name||"School Profile";$("schoolId").textContent="School ID: "+school.id;const photo=$("dashboardSchoolPhoto");if(school.photo){photo.src=school.photo;photo.classList.remove("hidden")}else{photo.removeAttribute("src");photo.classList.add("hidden")}const d=$("details");d.replaceChildren(detail("Official school name",school.name),detail("School type",school.type),detail("School address",school.address),detail("School phone",school.phone),detail("Academic session",school.academicSession),detail("Registrar",profile?.fullName||user.displayName));view("dashboard");showRegistrarPage(activeRegistrarPage||"dashboard");loadAcademicSessionForm().catch(e=>console.error(e));renderSchoolClasses(school);populateOfficialStudentClasses();refreshOfficialStudents().catch(e=>console.error(e));refreshTeacherConnections().catch(e=>console.error(e));initializeTimetableModule().catch(e=>console.error(e))}
+function render(school){const headerLogo=$("headerSchoolLogo");if(headerLogo){if(school.photo){const img=document.createElement("img");img.src=school.photo;img.alt=(school.name||"School")+" logo";headerLogo.replaceChildren(img);headerLogo.setAttribute("aria-label",img.alt)}else{headerLogo.textContent="eN";headerLogo.setAttribute("aria-label","School logo")}}$("welcome").textContent="Welcome, "+(user.displayName||profile?.fullName||"Registrar");$("dashboardSchoolName").textContent=school.name||"School Profile";$("schoolId").textContent="School ID: "+school.id;const photo=$("dashboardSchoolPhoto");if(school.photo){photo.src=school.photo;photo.classList.remove("hidden")}else{photo.removeAttribute("src");photo.classList.add("hidden")}const d=$("details");d.replaceChildren(detail("Official school name",school.name),detail("School type",school.type),detail("School address",school.address),detail("School phone",school.phone),detail("Academic session",school.academicSession),detail("Registrar",profile?.fullName||user.displayName));view("dashboard");showRegistrarPage(activeRegistrarPage||"dashboard");loadAcademicSessionForm().catch(e=>console.error(e));renderSchoolClasses(school);populateOfficialStudentClasses();refreshOfficialStudents().catch(e=>console.error(e));refreshTeacherConnections().catch(e=>console.error(e));initializeTimetableModule().catch(e=>console.error(e))}
 async function copySchoolId(){
  const id=profile?.schoolId;
  const feedback=$("copySchoolIdMessage");
