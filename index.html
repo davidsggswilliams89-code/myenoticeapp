@@ -2255,6 +2255,7 @@ function showSection(id,el){
   document.querySelectorAll("#dashboardView,#lessonsView,#caExamView,#studentsView,#attendanceView,#profileView,#assignmentView,#myClassesView,#myTimetableView,#examTimetableView,#academicSessionView,#settingsView,#subscriptionView,#holidayView").forEach(v=>v.style.display="none");
   const target=document.getElementById(id);
   if(target) target.style.display="block";
+  document.body.classList.toggle("lessons-active", id==="lessonsView");
   if(id==="caExamView"&&typeof refreshCAExamAssignmentFilters==="function")refreshCAExamAssignmentFilters();
   try{ sessionStorage.setItem("teacherActiveSection",id); }catch(e){}
   setTopNav(el,id);
@@ -2274,6 +2275,7 @@ function showExtraSection(id,menuButton){
   document.querySelectorAll("#dashboardView,#lessonsView,#caExamView,#studentsView,#attendanceView,#profileView,#assignmentView,#myClassesView,#myTimetableView,#examTimetableView,#academicSessionView,#settingsView,#subscriptionView,#holidayView").forEach(v=>v.style.display="none");
   const target=document.getElementById(id);
   if(target) target.style.display="block";
+  document.body.classList.remove("lessons-active");
   document.querySelectorAll(".more-menu button").forEach(b=>b.classList.remove("active"));
   if(menuButton) menuButton.classList.add("active");
   const more=document.querySelector(".more-wrap .topnav-item");
@@ -5406,4 +5408,22 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
 </html>
 <style>
 .more-wrap,.more-menu{display:none !important;}
+</style>
+
+<style>
+/* Lessons only: remove the oversized blank area below the fixed navigation. */
+@media(max-width:760px){
+  body.lessons-active .main{
+    padding-top:64px !important;
+    margin-top:0 !important;
+  }
+  body.lessons-active #lessonsView{
+    margin-top:0 !important;
+    padding-top:0 !important;
+    min-height:0 !important;
+  }
+  body.lessons-active #lessonSubscriptionToggle{
+    margin-top:0 !important;
+  }
+}
 </style>
