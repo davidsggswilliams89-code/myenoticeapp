@@ -492,6 +492,9 @@ button{cursor:pointer;border:0}
 }
 .lesson-subscription-toggle span{font-size:23px;line-height:1}
 #lessonsView #subscriptionView{margin-bottom:16px}
+/* Lesson section: remove the excessive blank space above Subject Subscription. */
+#lessonsView{margin-top:0!important;padding-top:0!important}
+#lessonsView .lesson-subscription-toggle{margin-top:0!important}
 
 /* C.A. & Examination registrar-assigned filters */
 .ca-exam-assignment-filters{
@@ -2256,7 +2259,7 @@ function showSection(id,el){
   try{ sessionStorage.setItem("teacherActiveSection",id); }catch(e){}
   setTopNav(el,id);
   closeMoreMenu();
-  window.scrollTo({top:0,behavior:window.__restoringTeacherSection ? "auto" : "smooth"});
+  window.scrollTo({top:0,behavior:(id==="lessonsView"||window.__restoringTeacherSection) ? "auto" : "smooth"});
 }
 function toggleMoreMenu(el){
   setTopNav(el);
