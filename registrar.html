@@ -286,23 +286,32 @@ async function loadAcademicSessionForm(){
   $("academicTermEnd").value=dates.termEnd||dates.closing||"";
   const defaultEvents=[
    {title:"First Term Academic Activities",date:"27 Sep 2026 – 18 Dec 2026",description:"12 weeks",badge:"TERM",badgeLabel:"FIRST"},
-   {title:"First Term Holiday",date:"19 Dec 2026 – 9 Jan 2027",description:"3 weeks",badge:"HOLIDAY",badgeLabel:"BREAK"},
    {title:"Second Term Academic Activities",date:"10 Jan 2027 – 26 Feb 2027",description:"7 weeks",badge:"TERM",badgeLabel:"SECOND"},
-   {title:"Ramadan/Sallah Break",date:"27 Feb 2027 – 13 Mar 2027",description:"2 weeks",badge:"HOLIDAY",badgeLabel:"BREAK"},
    {title:"Second Term Academic Activities Continue",date:"14 Mar 2027 – 30 Apr 2027",description:"7 weeks",badge:"TERM",badgeLabel:"SECOND"},
-   {title:"Third Term Holiday",date:"1 May 2027 – 15 May 2027",description:"2 weeks",badge:"HOLIDAY",badgeLabel:"BREAK"},
    {title:"Third Term Academic Activities",date:"16 May 2027 – 20 Aug 2027",description:"14 weeks",badge:"TERM",badgeLabel:"THIRD"},
-   {title:"Long Vacation",date:"21 Aug 2027 – 25 Sep 2027",description:"5 weeks",badge:"HOLIDAY",badgeLabel:"VACATION"},
    {title:"First Term Examinations",date:"30 Nov 2026 – 11 Dec 2026",description:"Examination period",badge:"EXAM",badgeLabel:"FIRST"},
    {title:"Second Term Examinations",date:"12 Apr 2027 – 23 Apr 2027",description:"Examination period",badge:"EXAM",badgeLabel:"SECOND"},
    {title:"Third Term Examinations",date:"2 Aug 2027 – 13 Aug 2027",description:"Examination period",badge:"EXAM",badgeLabel:"THIRD"},
    {title:"Proposed 2027/2028 Session Begins",date:"26 Sep 2027",description:"Proposed date from the source calendar",badge:"SESSION",badgeLabel:"NEXT"}
   ];
   const savedEvents=Array.isArray(ac.events)?ac.events:[];
-  $("academicEventsText").value=formatPipeRows(savedEvents.length?savedEvents:defaultEvents,["title","date","description","badge","badgeLabel"]);
+  // Move any previously saved holiday-type events into the Holidays field rather than listing them as academic events.
+  const savedHolidayEvents=savedEvents.filter(ev=>String(ev.badge||"").toUpperCase()==="HOLIDAY");
+  const academicOnlyEvents=savedEvents.filter(ev=>String(ev.badge||"").toUpperCase()!=="HOLIDAY");
+  $("academicEventsText").value=formatPipeRows(academicOnlyEvents.length?academicOnlyEvents:defaultEvents,["title","date","description","badge","badgeLabel"]);
   const holidays=Array.isArray(school.publicHolidays)?school.publicHolidays:(Array.isArray(ac.publicHolidays)?ac.publicHolidays:[]);
-  const defaultHolidays=[{name:"Expected Ramadan fasting",date:"7–8 February 2027"},{name:"Expected Eid-el-Fitr",date:"9–10 March 2027"},{name:"Expected Eid-el-Adha",date:"16–17 May 2027"}];
-  $("academicHolidaysText").value=formatPipeRows((holidays.length?holidays:defaultHolidays).map(h=>({name:h.name||h.title,date:h.date||h.dateText})),["name","date"]);
+  const defaultHolidays=[
+   {name:"First Term Holiday",date:"19 December 2026 – 9 January 2027 (3 weeks)"},
+   {name:"Ramadan/Sallah Break",date:"27 February – 13 March 2027 (2 weeks)"},
+   {name:"Third Term Holiday",date:"1–15 May 2027 (2 weeks)"},
+   {name:"Long Vacation",date:"21 August – 25 September 2027 (5 weeks)"},
+   {name:"Expected Ramadan fasting",date:"7–8 February 2027"},
+   {name:"Expected Eid-el-Fitr",date:"9–10 March 2027"},
+   {name:"Expected Eid-el-Adha",date:"16–17 May 2027"}
+  ];
+  const holidayRows=(holidays.length?holidays:defaultHolidays).map(h=>({name:h.name||h.title,date:h.date||h.dateText}));
+  for(const ev of savedHolidayEvents){if(!holidayRows.some(h=>h.name===(ev.title||ev.name)))holidayRows.push({name:ev.title||ev.name,date:ev.date||ev.dateText||""});}
+  $("academicHolidaysText").value=formatPipeRows(holidayRows,["name","date"]);
   setTableStatus("academicSessionStatus","Loaded the school's currently published academic information.","info");
  }catch(e){console.error(e);setTableStatus("academicSessionStatus","Could not load academic information: "+err(e),"error")}
 }
