@@ -4608,17 +4608,49 @@ window.viewStudentResult=function(index){
     const teacherEmail=window.teacherFirebaseAuth?.currentUser?.email||'';
     const teacherName=document.querySelector('[data-teacher-name]')?.textContent?.trim()||window.teacherProfileName||teacherEmail||'Teacher';
     const amount=fee;
-    const message='MySchoolBook subscription payment request%0A'+'Teacher: '+teacherName+'%0A'+'Email: '+teacherEmail+'%0A'+'Subject: '+sub+'%0A'+'Classes: '+classes.join(', ')+'%0A'+'Amount: ₦'+amount.toLocaleString()+'%0A'+'Teacher UID: '+uid;
+    const paymentReference='MSB-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,7).toUpperCase();
     try{
-      await window.firebaseFirestoreFns.addDoc(window.firebaseFirestoreFns.collection(window.teacherFirestore,'subscriptionRequests'),{
-        teacherUid:uid,teacherEmail,teacherName,subject:sub,subjectId:info.id||'',classes:Array.from(new Set(classes)),amount,status:'pending',createdAt:window.firebaseFirestoreFns.serverTimestamp(),requestedAt:new Date().toISOString()
+      const requestRef=await window.firebaseFirestoreFns.addDoc(window.firebaseFirestoreFns.collection(window.teacherFirestore,'subscriptionRequests'),{
+        teacherUid:uid,teacherEmail,teacherName,subject:sub,subjectId:info.id||'',classes:Array.from(new Set(classes)),amount,
+        paymentReference,requestId:'',status:'pending',createdAt:window.firebaseFirestoreFns.serverTimestamp(),requestedAt:new Date().toISOString(),
+        paymentMethod:'bank_transfer',receiptStatus:'awaiting_receipt'
       });
-      alert('Your subscription request has been submitted. Please send your payment receipt to the administrator on WhatsApp. Access will be enabled after admin approval.');
-      window.open('https://wa.me/?text='+encodeURIComponent('MySchoolBook subscription payment request\nTeacher: '+teacherName+'\nEmail: '+teacherEmail+'\nSubject: '+sub+'\nClasses: '+classes.join(', ')+'\nAmount: ₦'+amount.toLocaleString()+'\nTeacher UID: '+uid),'_blank','noopener');
+      const classText=Array.from(new Set(classes)).join(', ');
+      const moneyText='₦'+Number(amount).toLocaleString('en-NG');
+      const waMessage='Hello MySchoolBook Admin. I have made a subscription payment.\nTeacher: '+teacherName+'\nEmail: '+(teacherEmail||'Not provided')+'\nTeacher UID: '+uid+'\nRequest ID: '+requestRef.id+'\nPayment Reference: '+paymentReference+'\nSubject: '+sub+'\nClasses: '+classText+'\nDuration: 1 year\nAmount Paid: '+moneyText+'\nPlease verify my payment and activate this subscription. I will attach my payment receipt to this WhatsApp message.';
+      const overlay=document.createElement('div');
+      overlay.id='msbPaymentModal';
+      overlay.style.cssText='position:fixed;inset:0;z-index:100000;background:rgba(9,27,35,.65);display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto';
+      overlay.innerHTML=`<div style="width:min(560px,100%);max-height:94vh;overflow:auto;background:#fff;border-radius:18px;padding:20px;color:#17324d;box-shadow:0 20px 60px #0003;font-family:Arial,sans-serif">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h2 style="margin:0;color:#087c60;font-size:22px">Complete Your Subscription</h2><button type="button" id="msbClosePayment" style="background:#eef2f6;border-radius:50%;width:36px;height:36px;font-size:22px">×</button></div>
+        <p style="color:#667085;margin:8px 0 14px">Your request has been recorded. Make the transfer below, then send your receipt.</p>
+        <div style="background:#f2faf6;border:1px solid #d4eee1;border-radius:12px;padding:14px;margin-bottom:14px">
+          <div><b>Teacher:</b> ${String(teacherName).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</div>
+          <div><b>Subject:</b> ${String(sub).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</div>
+          <div><b>Class(es):</b> ${classText}</div><div><b>Duration:</b> 1 year</div>
+          <div style="font-size:21px;font-weight:800;color:#087c60;margin-top:7px">Amount: ${moneyText}</div>
+          <div style="margin-top:8px"><b>Payment Reference:</b> <span style="font-weight:800">${paymentReference}</span></div>
+          <div style="font-size:12px;color:#667085;margin-top:3px">Request ID: ${requestRef.id}</div>
+        </div>
+        <h3 style="margin:0 0 8px">Bank Transfer Details</h3>
+        <div style="border:1px solid #dfe7ef;border-radius:12px;padding:14px;line-height:1.9">
+          <div><b>Bank:</b> OPay Mobile Banking</div><div><b>Account Name:</b> Abubakar Yahaya</div>
+          <div style="font-size:19px;font-weight:800;letter-spacing:.5px"><b>Account Number:</b> 8133839892</div>
+        </div>
+        <div style="background:#fff7e6;border:1px solid #f1dfb6;border-radius:10px;padding:12px;margin:13px 0;font-size:13px">After transferring, press the button below. WhatsApp will open with your reference and subscription details. Attach your bank receipt image before sending.</div>
+        <button type="button" id="msbSendReceipt" style="width:100%;padding:14px;background:#159b56;color:#fff;border-radius:10px;font-weight:800;font-size:15px">📲 SEND RECEIPT ON WHATSAPP</button>
+        <button type="button" id="msbCopyReference" style="width:100%;padding:11px;background:#eef2f6;color:#17324d;border-radius:10px;margin-top:8px;font-weight:700">Copy Payment Reference</button>
+        <p style="font-size:12px;color:#667085;margin:12px 0 0">Your subscription stays pending until the administrator verifies the bank transfer and approves it. WhatsApp does not attach the receipt automatically.</p>
+      </div>`;
+      document.body.appendChild(overlay);
+      overlay.querySelector('#msbClosePayment').onclick=()=>overlay.remove();
+      overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});
+      overlay.querySelector('#msbSendReceipt').onclick=()=>window.open('https://wa.me/2348133839892?text='+encodeURIComponent(waMessage),'_blank','noopener');
+      overlay.querySelector('#msbCopyReference').onclick=async()=>{try{await navigator.clipboard.writeText(paymentReference);alert('Payment reference copied: '+paymentReference)}catch{prompt('Copy this payment reference:',paymentReference)}};
     }catch(e){console.error(e);alert('Could not submit your subscription request. Please check your connection and Firebase Firestore Rules, then try again.');}
   };
 
-  window.openSubjectSubscription=function(){const target=document.querySelectorAll('.topnav-item')[4]||null;showSection('profileView',target);const profilePage=document.querySelector('#profileView .teacher-profile-page'),subscription=document.getElementById('subscriptionView');if(profilePage)profilePage.style.display='block';if(subscription)subscription.style.display='block';renderSubscriptionSubjectOptions();renderSubscriptionClasses();updateSubscriptionPage();window.scrollTo({top:0,behavior:'smooth'});};
+    window.openSubjectSubscription=function(){const target=document.querySelectorAll('.topnav-item')[4]||null;showSection('profileView',target);const profilePage=document.querySelector('#profileView .teacher-profile-page'),subscription=document.getElementById('subscriptionView');if(profilePage)profilePage.style.display='block';if(subscription)subscription.style.display='block';renderSubscriptionSubjectOptions();renderSubscriptionClasses();updateSubscriptionPage();window.scrollTo({top:0,behavior:'smooth'});};
   window.openTeachingAssignment=window.openSubjectSubscription;
   window.closeProfileAssignment=function(){openTeacherProfile()};
   const subjectSelect=document.getElementById('subscriptionSubjectSelect');
