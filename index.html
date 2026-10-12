@@ -5410,20 +5410,40 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
 .more-wrap,.more-menu{display:none !important;}
 </style>
 
-<style>
-/* Lessons only: remove the oversized blank area below the fixed navigation. */
+<style id="lessons-empty-gap-removal">
+/* LESSONS SECTION ONLY: remove the blank spacer/container above the subscription entry. */
+body.lessons-active .main{
+  padding-top:64px !important; /* only enough room for the fixed navigation */
+  margin-top:0 !important;
+  min-height:0 !important;
+  height:auto !important;
+}
+body.lessons-active #lessonsView{
+  display:block !important;
+  position:relative !important;
+  top:auto !important;
+  margin:0 !important;
+  padding:0 !important;
+  min-height:0 !important;
+  height:auto !important;
+  transform:none !important;
+}
+body.lessons-active #lessonsView::before,
+body.lessons-active #lessonsView::after{
+  content:none !important;
+  display:none !important;
+}
+body.lessons-active #lessonsView > :first-child{
+  margin-top:0 !important;
+}
+body.lessons-active #lessonSubscriptionToggle{
+  display:flex !important;
+  position:relative !important;
+  top:auto !important;
+  margin-top:0 !important;
+  transform:none !important;
+}
 @media(max-width:760px){
-  body.lessons-active .main{
-    padding-top:64px !important;
-    margin-top:0 !important;
-  }
-  body.lessons-active #lessonsView{
-    margin-top:0 !important;
-    padding-top:0 !important;
-    min-height:0 !important;
-  }
-  body.lessons-active #lessonSubscriptionToggle{
-    margin-top:0 !important;
-  }
+  body.lessons-active .main{padding-top:64px !important;padding-left:8px !important;padding-right:8px !important;}
 }
 </style>
