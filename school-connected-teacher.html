@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <script>window.TEACHER_DASHBOARD_MODE = "school-connected";</script>
+<script>
+/* Phase 2B: the school-connection request controls belong only to independent mode. */
+document.addEventListener('DOMContentLoaded', function () {
+  if (window.TEACHER_DASHBOARD_MODE === 'school-connected') {
+    const panel = document.getElementById('independentSchoolConnectionPanel');
+    if (panel) panel.hidden = true;
+  }
+});
+</script>
 <title>Primary Teacher Dashboard</title>
 <style>
 :root{
@@ -2074,7 +2083,7 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
   </div>
 
   <!-- School connection moved to the bottom of the Profile section -->
-  <div class="teacher-profile-page" style="margin-bottom:18px">
+  <div id="independentSchoolConnectionPanel" class="teacher-profile-page" style="margin-bottom:18px">
     <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:14px;padding:18px;margin-bottom:18px">
       <h3 style="margin:0 0 6px;color:#166534">Connect with School</h3>
       <p style="margin:0 0 12px;color:#475569">Enter the School ID provided by your school registrar. Your connection becomes active only after the registrar approves it.</p>
