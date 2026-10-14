@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<script>window.TEACHER_DASHBOARD_MODE = "school-connected";</script>
 <title>Primary Teacher Dashboard</title>
 <style>
 :root{
@@ -2442,6 +2443,9 @@ function studentFirestorePayload(s){
  };
 }
 async function saveStudentToFirestore(s){
+ if((window.TEACHER_DASHBOARD_MODE||"independent")==="school-connected"){
+   throw new Error("Official student records are managed by the school registrar. Use the school-connected student view to read assigned students.");
+ }
  const db=window.teacherFirestore,uid=window.firebaseTeacherUID;
  if(!db||!uid) throw new Error("Teacher Firebase account is not ready.");
  const id=studentFirestoreId(s);
@@ -2476,8 +2480,21 @@ window.loadStudentsFromFirestore=async function(){
  if(!db||!uid)throw new Error("Teacher Firebase account is not ready.");
  try{
   clearLegacyStudentLocalStorage();
+  const mode=window.TEACHER_DASHBOARD_MODE||"independent";
   const c=window.activeTeacherConnection||null;
-  if(c&&["connected","approved","active"].includes(String(c.status||"").toLowerCase())&&c.schoolId){
+  const isConnected=!!(c&&["connected","approved","active"].includes(String(c.status||"").toLowerCase())&&c.schoolId);
+  if(mode==="school-connected"&&!isConnected){
+   students=[];
+   if(typeof window.refreshStudentViews==="function")window.refreshStudentViews();
+   if(typeof window.renderAttendance==="function")window.renderAttendance();
+   const note=document.getElementById("studentFirebaseSourceNote");if(note){note.textContent="School connection is not active. Official student records are unavailable until the registrar-approved connection is verified.";note.style.display="";note.style.background="#fff7ed";note.style.borderColor="#fed7aa";note.style.color="#9a3412";}
+   return {ok:false,count:0,error:"No approved school connection",source:"school-register"};
+  }
+  if(mode==="independent"&&isConnected){
+   // Independent mode never reads the school's student collection.
+   window.activeTeacherConnection=null;
+  }
+  if(mode==="school-connected"&&isConnected){
    const pairClasses=teacherAssignedPairs().map(a=>a.className||a.class).filter(Boolean);
    const classes=[...new Set(pairClasses.length?pairClasses:teacherAssignedClasses())];
    if(!classes.length)throw new Error("Your school connection is active, but the registrar has not assigned any classes yet.");
@@ -4920,7 +4937,33 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         return;
       }
       const records=qs.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.updatedAt?.seconds||b.requestedAt?.seconds||0)-(a.updatedAt?.seconds||a.requestedAt?.seconds||0));
-      const r=records[0];activeTeacherConnection=r;window.activeTeacherConnection=r;
+      const mode=window.TEACHER_DASHBOARD_MODE||"independent";
+      const approved=records.find(x=>x.schoolId&&["connected","approved","active"].includes(String(x.status||"").toLowerCase()));
+      const r=mode==="school-connected"?approved:(records[0]||null);
+      if(mode==="independent"){
+        activeTeacherConnection=null;window.activeTeacherConnection=null;
+        renderTeacherAssignments(null);
+        window.dispatchEvent(new Event('teacherAccountContextChanged'));
+        if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
+        if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
+        if(typeof window.loadDashboardTeacherSubjects==='function')window.loadDashboardTeacherSubjects();
+        const latest=records[0];
+        if(approved){showTeacherConnectionStatus(`Your connection to ${approved.schoolName||'the school'} is approved. Open the school-connected dashboard to use school records.`,'success');}
+        else if(latest?.status==='pending'){showTeacherConnectionStatus(`Connection request pending approval for ${latest.schoolName||'the school'} · School ID: ${latest.schoolId}`);}
+        else if(latest?.status==='rejected'){showTeacherConnectionStatus(`Your request to ${latest.schoolName||'the school'} was not approved. You may submit a new request if appropriate.`,'error');}
+        else if(latest?.status==='deactivated'){showTeacherConnectionStatus(`Your previous connection is deactivated. You can continue independently or request a new connection.`,'error');}
+        else {showTeacherConnectionStatus('Not connected to a school yet. Enter the School ID above to send a request.');}
+        return;
+      }
+      if(!r){
+        activeTeacherConnection=null;window.activeTeacherConnection=null;
+        renderTeacherAssignments(null);
+        window.dispatchEvent(new Event('teacherAccountContextChanged'));
+        if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
+        showTeacherConnectionStatus('This dashboard requires an approved school connection. Ask the registrar to approve your account.','error');
+        return;
+      }
+      activeTeacherConnection=r;window.activeTeacherConnection=r;
       renderTeacherAssignments(r);
       window.dispatchEvent(new Event('teacherAccountContextChanged'));
       if(typeof window.applyAssignedClassFilters==='function'&&teacherIsSchoolConnected())window.applyAssignedClassFilters();
@@ -4941,10 +4984,19 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       if(typeof window.loadTeacherAcademicSession==='function')await window.loadTeacherAcademicSession();
     }catch(e){
       console.error('Teacher connection lookup failed:',e);
+      const mode=window.TEACHER_DASHBOARD_MODE||"independent";
+      if(mode==="independent"){
+        activeTeacherConnection=null;window.activeTeacherConnection=null;
+        renderTeacherAssignments(null);
+        if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
+        showTeacherConnectionStatus('Independent mode is active. School connection status could not be refreshed; your own records remain separate.','error');
+        return;
+      }
       // The registrar also maintains a schoolTeachers membership record. Use it as a fallback
       // when listing teacherConnectionRequests is denied by the current Firestore rules.
       try{
         const user=auth.currentUser;if(!user)throw e;
+        if((window.TEACHER_DASHBOARD_MODE||"independent")==="independent")throw e;
         const profileSnap=await getDoc(doc(db,'teachers',user.uid));
         const profileData=profileSnap.exists()?profileSnap.data():{};
         const schoolId=profileData.schoolId||profileData.connectedSchoolId||'';
@@ -4966,7 +5018,12 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
           }
         }
       }catch(fallbackError){console.error('School membership fallback failed:',fallbackError);}
-      showTeacherConnectionStatus('Could not check connection status: '+(e?.code||e?.message||'Firestore access denied')+'. Check read rules for teacherConnectionRequests and schoolTeachers.','error');
+      activeTeacherConnection=null;window.activeTeacherConnection=null;
+      students=[];
+      if(typeof window.refreshStudentViews==='function')window.refreshStudentViews();
+      if(typeof window.renderAttendance==='function')window.renderAttendance();
+      showTeacherConnectionStatus('Could not verify the school connection: '+(e?.code||e?.message||'Firestore access denied')+'. School records remain locked until the connection can be verified.','error');
+      if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
     }
   }
   function teacherHasPair(record,entry){
@@ -5149,6 +5206,10 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   window.loadTeacherTimetables=loadTeacherTimetables;
 
   async function requestTeacherSchoolConnection(){
+    if((window.TEACHER_DASHBOARD_MODE||"independent")==="school-connected"){
+      showTeacherConnectionStatus('School connections and teaching assignments are managed by your registrar.','error');
+      return;
+    }
     const btn=document.getElementById('requestSchoolConnection');if(btn)btn.disabled=true;
     try{
       const user=auth.currentUser;if(!user)throw new Error('Please sign in as a teacher first.');
