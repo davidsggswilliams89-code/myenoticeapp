@@ -3159,28 +3159,32 @@ function refreshCAExamAssignmentFilters(){
   if(!subjectEl||!classEl||!termEl)return;
   const oldSubject=subjectEl.value,oldClass=classEl.value;
   const connected=caExamIsConnected();
-  let subjects=[], allowedClasses=[];
+  let pairs=[],subjects=[],allowedClasses=[];
   if(connected){
-    const pairs=caExamAssignmentPairs();
-    subjects=[...new Set(pairs.map(a=>a.subject).filter(Boolean))];
-    subjects.sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:"base"}));
-    subjectEl.replaceChildren();
-    if(subjects.length)subjects.forEach(x=>subjectEl.add(new Option(x,x)));
-    else subjectEl.add(new Option("No assigned subjects found",""));
-    subjectEl.value=subjects.includes(oldSubject)?oldSubject:(subjects[0]||"");
-    allowedClasses=[...new Set(pairs.filter(a=>a.subject.toLowerCase()===subjectEl.value.toLowerCase()).map(a=>a.className).filter(Boolean))];
+    pairs=caExamAssignmentPairs().map(a=>({
+      subject:String(a.subject||"").trim(),
+      className:String(a.className||a.class||"").trim()
+    })).filter(a=>a.subject&&a.className);
   }else{
-    const pairs=typeof window.teacherLessonAssignmentPairs==="function"?window.teacherLessonAssignmentPairs():[];
-    subjects=[...new Set(pairs.map(a=>String(a.subject||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:"base"}));
-    subjectEl.replaceChildren();
-    if(subjects.length)subjects.forEach(x=>subjectEl.add(new Option(x,x)));
-    else subjectEl.add(new Option("No saved subjects",""));
-    subjectEl.value=subjects.includes(oldSubject)?oldSubject:(subjects[0]||"");
-    allowedClasses=typeof window.teacherLessonClassesForSubject==="function"
-      ?window.teacherLessonClassesForSubject(subjectEl.value):[];
+    // Independent teachers' saved My Classes assignments live in
+    // teachers/{uid}.teachingAssignments and are exposed by this function.
+    // Do not depend on the connected-teacher lesson assignment helper.
+    pairs=typeof window.getIndependentTeachingAssignments==="function"
+      ?window.getIndependentTeachingAssignments()
+      :(typeof window.teacherLessonAssignmentPairs==="function"?window.teacherLessonAssignmentPairs():[]);
+    pairs=(Array.isArray(pairs)?pairs:[]).map(a=>({
+      subject:String(a.subject||a.subjectName||"").trim(),
+      className:String(a.className||a.class||"").trim()
+    })).filter(a=>a.subject&&a.className);
   }
+  subjects=[...new Set(pairs.map(a=>a.subject))].sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:"base"}));
+  subjectEl.replaceChildren();
+  if(subjects.length)subjects.forEach(x=>subjectEl.add(new Option(x,x)));
+  else subjectEl.add(new Option(connected?"No assigned subjects found":"No saved subjects",""));
+  subjectEl.value=subjects.includes(oldSubject)?oldSubject:(subjects[0]||"");
+  allowedClasses=[...new Set(pairs.filter(a=>a.subject.toLowerCase()===subjectEl.value.toLowerCase()).map(a=>a.className))]
+    .sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:"base"}));
   subjectEl.disabled=subjects.length===0;
-  allowedClasses=[...new Set(allowedClasses.filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:"base"}));
   classEl.replaceChildren();
   if(allowedClasses.length)allowedClasses.forEach(c=>classEl.add(new Option(c,c)));
   else classEl.add(new Option("No assigned classes found",""));
@@ -3188,7 +3192,7 @@ function refreshCAExamAssignmentFilters(){
   classEl.disabled=allowedClasses.length===0;
   if(status)status.textContent=subjects.length&&allowedClasses.length
     ?(connected?"Showing only Registrar-assigned subjects and their classes.":"Showing your saved independent-teacher subjects and their assigned classes.")
-    :"Save a subject and class in My Classes to make them available here.";
+    :"No saved subject/class assignments were found for this signed-in teacher account.";
 }
 document.getElementById("caExamSubjectFilter")?.addEventListener("change",refreshCAExamAssignmentFilters);
 document.getElementById("caExamClassFilter")?.addEventListener("change",()=>{});
