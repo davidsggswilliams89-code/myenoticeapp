@@ -4361,7 +4361,7 @@ window.viewStudentResult=function(index){
     }
     const label=document.getElementById("attendanceWeekLabel");
     if(label){const first=days[0].date,last=days[days.length-1].date;label.textContent="5-week attendance · "+prettyDate(first)+" – "+prettyDate(last)+" (Mon–Fri)";}
-    head.innerHTML='<tr><th>PHOTO</th><th>STUDENT NAME</th>'+days.map(function(item){const d=item.date;return '<th class="attendance-day-head '+(item.weekStart?'attendance-week-start':'')+'"><span class="attendance-day-name">'+dayNames[d.getDay()-1]+'</span><span class="attendance-day-date">'+prettyDate(d)+'</span><span class="attendance-button-hint"><span style="color:#198754">☑ Present</span><br><span style="color:#dc2626">☒ Absent</span></span></th>';}).join('')+'</tr>';
+    head.innerHTML='<tr><th>PHOTO</th><th>STUDENT NAME</th>'+days.map(function(item){const d=item.date;return '<th class="attendance-day-head '+(item.weekStart?'attendance-week-start':'')+'"><span class="attendance-day-name">'+dayNames[d.getDay()-1]+'</span><span class="attendance-day-date">'+prettyDate(d)+'</span></th>';}).join('')+'</tr>';
     const records=attendanceStudents();
     if(!records.length){body.innerHTML='<tr><td colspan="'+(days.length+2)+'" class="attendance-empty">No students have been added to '+safeText(attendanceSelectedClass||"this class")+' yet.</td></tr>';return;}
     body.innerHTML=records.map(function(item,i){
@@ -5969,3 +5969,21 @@ body.lessons-active #lessonSubscriptionToggle{
   });
 })();
 </script>
+
+<style>
+/* Attendance section: final alignment polish only */
+#attendanceView .attendance-help{display:flex!important;align-items:center!important;justify-content:center!important;flex-wrap:wrap!important;gap:8px 16px!important;text-align:center!important;width:100%!important;padding:12px 10px!important;line-height:1.4!important}
+#attendanceView .attendance-table th,#attendanceView .attendance-table td{vertical-align:middle!important}
+#attendanceView .attendance-table th.attendance-day-head{text-align:center!important;padding-top:12px!important;padding-bottom:12px!important}
+#attendanceView .attendance-day-name,#attendanceView .attendance-day-date{text-align:center!important}
+#attendanceView .attendance-student{width:100%!important;min-height:72px!important;display:flex!important;align-items:center!important;justify-content:center!important}
+#attendanceView .attendance-student-name{width:100%!important;text-align:center!important;font-size:14px!important;line-height:1.3!important;overflow-wrap:anywhere!important}
+#attendanceView .attendance-table td:first-child{vertical-align:middle!important}
+#attendanceView .attendance-student-photo{display:block!important;margin:0 auto!important}
+#attendanceView .attendance-choice{min-height:72px!important;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;gap:10px!important;margin:0 auto!important}
+#attendanceView .attendance-mark{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex-direction:row!important;gap:3px!important;min-height:36px!important}
+#attendanceView .attendance-mark input{width:22px!important;height:22px!important;margin:0!important}
+#attendanceView .attendance-button-hint{display:none!important}
+@media(max-width:480px){#attendanceView .attendance-help{gap:6px 12px!important;padding:11px 8px!important}#attendanceView .attendance-student-name{font-size:14px!important}#attendanceView .attendance-choice{gap:8px!important}}
+</style>
+
