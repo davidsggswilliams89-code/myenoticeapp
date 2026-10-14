@@ -3948,30 +3948,7 @@ window.viewStudentResult=function(index){
 </script>
 
 
-<script>
-(function(){
- function previewPhoto(file){
-   if(!file)return;
-   var reader=new FileReader();
-   reader.onload=function(e){
-     var p=document.getElementById("studentPhotoPreview");
-     if(p)p.innerHTML='<img src="'+e.target.result+'" alt="Student photo preview">';
-   };
-   reader.readAsDataURL(file);
- }
- var a=document.getElementById("newStudentPhoto");
- var b=document.getElementById("newStudentCamera");
- var r=document.getElementById("removeStudentPhoto");
- if(a)a.addEventListener("change",function(){previewPhoto(this.files[0]);});
- if(b)b.addEventListener("change",function(){previewPhoto(this.files[0]);});
- if(r)r.addEventListener("click",function(){
-   if(a)a.value="";
-   if(b)b.value="";
-   var p=document.getElementById("studentPhotoPreview");
-   if(p)p.innerHTML="<span>PHOTO</span>";
- });
-})();
-</script>
+<!-- Independent student-creation photo handler removed from school-connected dashboard. -->
 
 <script>
 (function(){
