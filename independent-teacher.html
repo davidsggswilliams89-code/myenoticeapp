@@ -4373,10 +4373,9 @@ window.viewStudentResult=function(index){
       const photo=info.photo?'<img class="attendance-student-photo" src="'+safeText(info.photo)+'" alt="Student photo">':'<div class="attendance-student-photo"></div>';
       const cells=days.map(function(dayItem){
         const d=dayItem.date,state=dayState(student,d),dateString=isoDate(d);
-        const now=new Date();
-        const selectedDay=new Date(d.getFullYear(),d.getMonth(),d.getDate());
-        const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
-        const disabled=selectedDay.getTime()!==today.getTime();
+        // Only the current local calendar date can be marked; all other dates stay locked.
+        const todayString=isoDate(new Date());
+        const disabled=dateString!==todayString;
         const presentChecked=state==="present"?' checked':'';
         const absentChecked=state==="absent"?' checked':'';
         const lockNote="";
