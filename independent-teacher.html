@@ -5659,63 +5659,51 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   const escapeHTML=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   function connected(){return typeof window.teacherIsSchoolConnected==='function'&&window.teacherIsSchoolConnected();}
   function key(){return 'teacherTeachingAssignments_'+(window.firebaseTeacherUID||'unauthenticated');}
-  function read(){
-    try{
-      const raw=localStorage.getItem(key());
-      const arr=raw?JSON.parse(raw):[];
-      return Array.isArray(arr)?arr.map(a=>({subject:String(a.subject||'').trim(),className:String(a.className||a.class||'').trim()})).filter(a=>a.subject&&a.className):[];
-    }catch(e){return [];}
+  function normalize(arr){return Array.isArray(arr)?arr.flatMap(a=>{const subject=String(a.subject||'').trim();const cs=Array.isArray(a.classes)?a.classes:[a.className||a.class||''];return cs.map(className=>({subject,className:String(className||'').trim()})).filter(x=>x.subject&&x.className)}):[];}
+  function read(){try{const raw=localStorage.getItem(key());return normalize(raw?JSON.parse(raw):[])}catch(e){return []}}
+  function cache(data){localStorage.setItem(key(),JSON.stringify(data))}
+  async function loadFromFirebase(){
+    if(connected())return;const uid=window.firebaseTeacherUID,db=window.teacherFirestore,f=window.firebaseFirestoreFns;if(!uid||!db||!f)return;
+    try{const snap=await f.getDoc(f.doc(db,'teachers',uid));const remote=normalize(snap.exists()?(snap.data()||{}).teachingAssignments||[]:[]);cache(remote);renderSaved();notifyChanges();const st=$('iamStatus');if(st)st.textContent=remote.length?'Teaching assignments loaded from Firebase.':'No teaching assignments saved yet.'}
+    catch(err){console.error('Could not load teaching assignments:',err);const st=$('iamStatus');if(st)st.textContent='Could not load assignments from Firebase: '+(err.message||'Check Firestore rules.')}
   }
   function renderSaved(){
-    const host=$('iamSavedList'); if(!host)return;
-    if(connected()){
-      const manager=$('independentAssignmentManager'); if(manager)manager.style.display='none';
-      return;
-    }
-    const data=read(),groups=[];
-    data.forEach(a=>{let g=groups.find(x=>x.subject.toLowerCase()===a.subject.toLowerCase());if(!g){g={subject:a.subject,classes:[]};groups.push(g)}if(!g.classes.includes(a.className))g.classes.push(a.className)});
+    const host=$('iamSavedList');if(!host)return;if(connected()){const manager=$('independentAssignmentManager');if(manager)manager.style.display='none';return}
+    const data=read(),groups=[];data.forEach(a=>{let g=groups.find(x=>x.subject.toLowerCase()===a.subject.toLowerCase());if(!g){g={subject:a.subject,classes:[]};groups.push(g)}if(!g.classes.includes(a.className))g.classes.push(a.className)});
     host.innerHTML=groups.length?groups.map(g=>'<div class="iam-saved-row"><div><strong>'+escapeHTML(g.subject)+'</strong><small>'+g.classes.map(escapeHTML).join(' · ')+'</small></div><button type="button" class="iam-remove" data-remove="'+escapeHTML(g.subject)+'">Remove</button></div>').join(''):'<div class="iam-empty">No subjects saved yet. Select a subject and its classes above to begin.</div>';
     host.querySelectorAll('[data-remove]').forEach(btn=>btn.addEventListener('click',()=>removeSubject(btn.getAttribute('data-remove'))));
+    applyIndependentAssignmentFilters(data);
   }
-  function notifyChanges(){
-    window.dispatchEvent(new Event('teacherAssignmentsUpdated'));
-    if(typeof window.loadDashboardTeacherSubjects==='function')window.loadDashboardTeacherSubjects();
-    if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
+  function notifyChanges(){window.dispatchEvent(new Event('teacherAssignmentsUpdated'));if(typeof window.loadDashboardTeacherSubjects==='function')window.loadDashboardTeacherSubjects();if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();if(typeof window.refreshCurriculumFromSource==='function')window.refreshCurriculumFromSource();if(typeof window.renderAttendance==='function')window.renderAttendance();if(typeof window.renderStudents==='function')window.renderStudents();}
+  function setOpts(el,vals,placeholder){if(!el)return;const old=el.value;el.replaceChildren();if(placeholder!==null)el.add(new Option(placeholder,''));[...new Set(vals)].forEach(v=>el.add(new Option(v,v)));if(vals.includes(old))el.value=old;else if(vals.length)el.value=vals[0];el.disabled=!vals.length;}
+  function applyIndependentAssignmentFilters(data){
+    if(connected())return;data=data||read();const subjects=[...new Set(data.map(a=>a.subject))].sort((a,b)=>a.localeCompare(b));const classes=[...new Set(data.map(a=>a.className))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+    const clsFor=sub=>data.filter(a=>!sub||a.subject===sub).map(a=>a.className);
+    const ls=$('lessonLibrarySubject'),lc=$('lessonLibraryClass');setOpts(ls,subjects,'Select Subject');setOpts(lc,clsFor(ls?.value||''),'Select Class');
+    const cs=$('caExamSubjectFilter'),cc=$('caExamClassFilter');setOpts(cs,subjects,'Select Subject');setOpts(cc,clsFor(cs?.value||''),'Select Class');
+    const ds=$('classSelect'),ac=$('attendanceClassFilter');setOpts(ds,classes,'Select Class');setOpts(ac,classes,'Select Class');
+    const dbs=$('dashboardSubjectFilter');setOpts(dbs,data.filter(a=>a.className===(ds?.value||'')).map(a=>a.subject).sort(),'Select Subject');
+    const status=$('caExamFilterStatus');if(status)status.textContent=subjects.length?'Showing your saved independent-teacher subjects and classes.':'Save a subject and class in My Classes to make them available here.';
   }
-  function save(){
-    if(connected()){const st=$('iamStatus');if(st)st.textContent='Your school connection is active. Subjects and classes are managed by your registrar.';return;}
-    const subject=$('iamSubject')?.value||'';
-    const selected=Array.from(document.querySelectorAll('#iamClasses input:checked')).map(x=>x.value);
-    const status=$('iamStatus');
-    if(!subject){if(status)status.textContent='Please select a subject.';return;}
-    if(!selected.length){if(status)status.textContent='Please select at least one class.';return;}
-    const data=read().filter(a=>a.subject.toLowerCase()!==subject.toLowerCase());
-    selected.forEach(className=>data.push({subject,className}));
-    localStorage.setItem(key(),JSON.stringify(data));
-    if(status)status.textContent=subject+' saved for '+selected.join(', ')+'.';
-    renderSaved();notifyChanges();
-    $('iamSubject').value='';
-    document.querySelectorAll('#iamClasses input').forEach(x=>x.checked=false);
+  async function save(){
+    if(connected()){const st=$('iamStatus');if(st)st.textContent='Your school connection is active. Subjects and classes are managed by your registrar.';return}
+    const subject=$('iamSubject')?.value||'',selected=Array.from(document.querySelectorAll('#iamClasses input:checked')).map(x=>x.value),status=$('iamStatus');
+    if(!subject){if(status)status.textContent='Please select a subject.';return}if(!selected.length){if(status)status.textContent='Please select at least one class.';return}
+    const uid=window.firebaseTeacherUID,db=window.teacherFirestore,f=window.firebaseFirestoreFns;if(!uid||!db||!f){if(status)status.textContent='Firebase teacher account is not ready. Please wait and try again.';return}
+    const data=read().filter(a=>a.subject.toLowerCase()!==subject.toLowerCase());selected.forEach(className=>data.push({subject,className}));
+    try{if(status)status.textContent='Saving assignments to Firebase…';await f.setDoc(f.doc(db,'teachers',uid),{teachingAssignments:data,updatedAt:f.serverTimestamp()},{merge:true});cache(data);if(status)status.textContent=subject+' saved to Firebase for '+selected.join(', ')+'.';renderSaved();notifyChanges();$('iamSubject').value='';document.querySelectorAll('#iamClasses input').forEach(x=>x.checked=false)}
+    catch(err){console.error('Firebase teaching assignment save failed:',err);if(status)status.textContent='Could not save to Firebase: '+(err.message||'Check Firestore rules and internet connection.')}
   }
-  function removeSubject(subject){
-    if(connected())return;
-    localStorage.setItem(key(),JSON.stringify(read().filter(a=>a.subject.toLowerCase()!==String(subject).toLowerCase())));
-    const status=$('iamStatus');if(status)status.textContent=subject+' removed from your teaching assignments.';
-    renderSaved();notifyChanges();
+  async function removeSubject(subject){
+    if(connected())return;const uid=window.firebaseTeacherUID,db=window.teacherFirestore,f=window.firebaseFirestoreFns;if(!uid||!db||!f)return;const data=read().filter(a=>a.subject.toLowerCase()!==String(subject).toLowerCase()),status=$('iamStatus');
+    try{if(status)status.textContent='Updating Firebase…';await f.setDoc(f.doc(db,'teachers',uid),{teachingAssignments:data,updatedAt:f.serverTimestamp()},{merge:true});cache(data);if(status)status.textContent=subject+' removed from Firebase.';renderSaved();notifyChanges()}catch(err){if(status)status.textContent='Could not remove subject from Firebase: '+(err.message||'Check Firestore rules.')}
   }
-  function init(){
-    const select=$('iamSubject'),classesHost=$('iamClasses');
-    if(!select||!classesHost)return;
-    select.innerHTML='<option value="">Choose a subject</option>'+subjects.map(x=>'<option value="'+escapeHTML(x)+'">'+escapeHTML(x)+'</option>').join('');
-    classesHost.innerHTML=classes.map(x=>'<label class="iam-class-option"><input type="checkbox" value="'+escapeHTML(x)+'"><span>'+escapeHTML(x)+'</span></label>').join('');
-    $('iamSaveBtn')?.addEventListener('click',save);
-    $('iamClearBtn')?.addEventListener('click',()=>{if(select)select.value='';classesHost.querySelectorAll('input').forEach(x=>x.checked=false);const st=$('iamStatus');if(st)st.textContent='Selection cleared.';});
-    renderSaved();
-    if(connected()){$('independentAssignmentManager').style.display='none';}
-  }
+  function init(){const select=$('iamSubject'),classesHost=$('iamClasses');if(!select||!classesHost)return;select.innerHTML='<option value="">Choose a subject</option>'+subjects.map(x=>'<option value="'+escapeHTML(x)+'">'+escapeHTML(x)+'</option>').join('');classesHost.innerHTML=classes.map(x=>'<label class="iam-class-option"><input type="checkbox" value="'+escapeHTML(x)+'"><span>'+escapeHTML(x)+'</span></label>').join('');$('iamSaveBtn')?.addEventListener('click',save);$('iamClearBtn')?.addEventListener('click',()=>{select.value='';classesHost.querySelectorAll('input').forEach(x=>x.checked=false);const st=$('iamStatus');if(st)st.textContent='Selection cleared.'});renderSaved();$('lessonLibrarySubject')?.addEventListener('change',()=>setOpts($('lessonLibraryClass'),read().filter(a=>a.subject=== $('lessonLibrarySubject').value).map(a=>a.className),'Select Class'));$('caExamSubjectFilter')?.addEventListener('change',()=>setOpts($('caExamClassFilter'),read().filter(a=>a.subject===$('caExamSubjectFilter').value).map(a=>a.className),'Select Class'));$('classSelect')?.addEventListener('change',()=>setOpts($('dashboardSubjectFilter'),read().filter(a=>a.className===$('classSelect').value).map(a=>a.subject).sort(),'Select Subject'));if(connected())$('independentAssignmentManager').style.display='none';else loadFromFirebase();}
   window.addEventListener('teacherAssignmentsUpdated',renderSaved);
+  window.addEventListener('teacherAccountContextChanged',()=>{renderSaved();setTimeout(loadFromFirebase,300)});
   window.addEventListener('load',init);
   window.renderIndependentTeachingAssignments=renderSaved;
+  window.applyIndependentAssignmentFilters=applyIndependentAssignmentFilters;
 })();
 </script>
 </body>
