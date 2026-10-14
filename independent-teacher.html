@@ -4342,7 +4342,11 @@ window.viewStudentResult=function(index){
   }
   function markAttendance(index,date,value){
     const records=attendanceStudents(),item=records[index];if(!item)return;
-    const state=dayState(item.s,date);if(state!=="open")return;
+    const now=new Date();
+    const selectedDay=new Date(date.getFullYear(),date.getMonth(),date.getDate());
+    const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    // Attendance can only be changed on the current local calendar date.
+    if(selectedDay.getTime()!==today.getTime())return;
     const store=attendanceStore();store[studentAttendanceKey(item.s,date)]=value;saveAttendanceStore(store);renderAttendance();
   }
   window.markAttendance=markAttendance;
@@ -4369,7 +4373,10 @@ window.viewStudentResult=function(index){
       const photo=info.photo?'<img class="attendance-student-photo" src="'+safeText(info.photo)+'" alt="Student photo">':'<div class="attendance-student-photo"></div>';
       const cells=days.map(function(dayItem){
         const d=dayItem.date,state=dayState(student,d),dateString=isoDate(d);
-        const disabled=state!=="open";
+        const now=new Date();
+        const selectedDay=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+        const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+        const disabled=selectedDay.getTime()!==today.getTime();
         const presentChecked=state==="present"?' checked':'';
         const absentChecked=state==="absent"?' checked':'';
         const lockNote="";
