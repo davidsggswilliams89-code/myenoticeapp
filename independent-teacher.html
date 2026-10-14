@@ -3107,6 +3107,9 @@ function openLessonNote(index=0,periodIndex=null){
  setLessonTab("Lesson Note"); showModal("📖 Lesson Note",lessonForm("Lesson Note",currentLessonIndex));
 }
 function caExamAssignmentPairs(){
+  if(!caExamIsConnected() && typeof window.getIndependentTeachingAssignments==="function"){
+    return window.getIndependentTeachingAssignments();
+  }
   if(typeof window.teacherLessonAssignmentPairs==="function")return window.teacherLessonAssignmentPairs();
   const r=window.activeTeacherConnection||{};
   const pairs=Array.isArray(r.assignedTeachingAssignments)?r.assignedTeachingAssignments:[];
@@ -5545,8 +5548,9 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     } else {
       /* Independent teacher class filter comes from saved My Classes assignments,
          so every assigned class appears even when it has no student records yet. */
-      var pairs = typeof window.teacherLessonAssignmentPairs === "function"
-        ? window.teacherLessonAssignmentPairs() : [];
+      var pairs = typeof window.getIndependentTeachingAssignments === "function"
+        ? window.getIndependentTeachingAssignments()
+        : (typeof window.teacherLessonAssignmentPairs === "function" ? window.teacherLessonAssignmentPairs() : []);
       values = pairs.map(function(a){ return String(a.className || a.class || "").trim(); }).filter(Boolean);
     }
     var unique = Array.from(new Set(values.map(function(v){ return String(v).trim(); }).filter(Boolean)));
@@ -5781,6 +5785,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     const waitForUid=()=>{if(uid()){loadFromFirebase();return}if(++attempts<40)setTimeout(waitForUid,250);else{const st=$('iamStatus');if(st)st.textContent='Could not identify your Firebase teacher account. Please sign in again.'}};
     waitForUid();
   }
+  window.getIndependentTeachingAssignments=function(){return assignments.map(a=>({subject:a.subject,className:a.className}));};
   window.addEventListener('teacherAssignmentsUpdated',()=>{renderSaved()});
   window.addEventListener('teacherAccountContextChanged',()=>{assignments=[];renderSaved();setTimeout(loadFromFirebase,250)});
   window.renderIndependentTeachingAssignments=renderSaved;
