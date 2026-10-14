@@ -3155,48 +3155,37 @@ function refreshCAExamAssignmentFilters(){
   const status=document.getElementById("caExamFilterStatus");
   if(!subjectEl||!classEl||!termEl)return;
   const oldSubject=subjectEl.value,oldClass=classEl.value;
-  const pairs=caExamAssignmentPairs();
   const connected=caExamIsConnected();
-  let subjects=[];
+  let subjects=[], allowedClasses=[];
   if(connected){
-    subjects=[...new Set(pairs.map(a=>a.subject))].sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:"base"}));
+    const pairs=caExamAssignmentPairs();
+    subjects=[...new Set(pairs.map(a=>a.subject).filter(Boolean))];
+    subjects.sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:"base"}));
+    subjectEl.replaceChildren();
+    if(subjects.length)subjects.forEach(x=>subjectEl.add(new Option(x,x)));
+    else subjectEl.add(new Option("No assigned subjects found",""));
+    subjectEl.value=subjects.includes(oldSubject)?oldSubject:(subjects[0]||"");
+    allowedClasses=[...new Set(pairs.filter(a=>a.subject.toLowerCase()===subjectEl.value.toLowerCase()).map(a=>a.className).filter(Boolean))];
   }else{
-    subjects=typeof window.teacherLessonAssignedSubjects==="function"
-      ?window.teacherLessonAssignedSubjects().map(a=>a.name)
-      :[];
-    if(!subjects.length)subjects=["Basic Science & Technology"];
-    subjects=[...new Set(subjects)].sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:"base"}));
-  }
-  subjectEl.replaceChildren();
-  if(!subjects.length)subjectEl.add(new Option("No assigned subjects found",""));
-  else subjects.forEach(s=>subjectEl.add(new Option(s,s)));
-  subjectEl.value=subjects.includes(oldSubject)?oldSubject:(subjects[0]||"");
-  subjectEl.disabled=subjects.length===0;
-  let allowedClasses;
-  if(connected){
-    allowedClasses=[...new Set(pairs.filter(a=>a.subject.toLowerCase()===subjectEl.value.toLowerCase()).map(a=>a.className))];
-    if(subjectEl.value.toLowerCase()==="basic education"){
-      allowedClasses=allowedClasses.filter(c=>["Primary 5","Primary 6"].includes(c));
-    }
-  }else{
+    const pairs=typeof window.teacherLessonAssignmentPairs==="function"?window.teacherLessonAssignmentPairs():[];
+    subjects=[...new Set(pairs.map(a=>String(a.subject||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:"base"}));
+    subjectEl.replaceChildren();
+    if(subjects.length)subjects.forEach(x=>subjectEl.add(new Option(x,x)));
+    else subjectEl.add(new Option("No saved subjects",""));
+    subjectEl.value=subjects.includes(oldSubject)?oldSubject:(subjects[0]||"");
     allowedClasses=typeof window.teacherLessonClassesForSubject==="function"
-      ?window.teacherLessonClassesForSubject(subjectEl.value)
-      :primarySchoolClasses();
-    if(!allowedClasses.length)allowedClasses=primarySchoolClasses();
+      ?window.teacherLessonClassesForSubject(subjectEl.value):[];
   }
-  allowedClasses.sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:"base"}));
+  subjectEl.disabled=subjects.length===0;
+  allowedClasses=[...new Set(allowedClasses.filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:"base"}));
   classEl.replaceChildren();
-  if(!allowedClasses.length)classEl.add(new Option("No assigned classes found",""));
-  else allowedClasses.forEach(c=>classEl.add(new Option(c,c)));
+  if(allowedClasses.length)allowedClasses.forEach(c=>classEl.add(new Option(c,c)));
+  else classEl.add(new Option("No assigned classes found",""));
   classEl.value=allowedClasses.includes(oldClass)?oldClass:(allowedClasses[0]||"");
   classEl.disabled=allowedClasses.length===0;
-  if(status){
-    status.textContent=connected
-      ?(subjects.length&&allowedClasses.length
-        ?"Showing only Registrar-assigned subjects and their assigned classes."
-        :"No matching Registrar subject/class assignments were found for this account.")
-      :"Showing the available lesson subjects and classes. Connect to a Registrar account to restrict these filters to official assignments.";
-  }
+  if(status)status.textContent=subjects.length&&allowedClasses.length
+    ?(connected?"Showing only Registrar-assigned subjects and their classes.":"Showing your saved independent-teacher subjects and their assigned classes.")
+    :"Save a subject and class in My Classes to make them available here.";
 }
 document.getElementById("caExamSubjectFilter")?.addEventListener("change",refreshCAExamAssignmentFilters);
 document.getElementById("caExamClassFilter")?.addEventListener("change",()=>{});
@@ -5554,9 +5543,11 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     if (connected) {
       values = typeof window.teacherAssignedClasses === "function" ? window.teacherAssignedClasses() : [];
     } else {
-      values = getStudentRecords().map(function(s){
-        return getStudentClassInfo(s).className || "";
-      }).filter(Boolean);
+      /* Independent teacher class filter comes from saved My Classes assignments,
+         so every assigned class appears even when it has no student records yet. */
+      var pairs = typeof window.teacherLessonAssignmentPairs === "function"
+        ? window.teacherLessonAssignmentPairs() : [];
+      values = pairs.map(function(a){ return String(a.className || a.class || "").trim(); }).filter(Boolean);
     }
     var unique = Array.from(new Set(values.map(function(v){ return String(v).trim(); }).filter(Boolean)));
     unique.sort(function(a,b){
