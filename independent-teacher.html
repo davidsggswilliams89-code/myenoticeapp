@@ -4371,28 +4371,21 @@ window.viewStudentResult=function(index){
     body.innerHTML=records.map(function(item,i){
       const student=item.s,info=studentInfo(student);
       const photo=info.photo?'<img class="attendance-student-photo" src="'+safeText(info.photo)+'" alt="Student photo">':'<div class="attendance-student-photo"></div>';
-      // Calculate the local calendar date once for this render. The matching
-      // column is the only one whose checkboxes may be enabled.
-      const attendanceToday = new Date();
-      const attendanceTodayKey = attendanceToday.getFullYear() + '-' + String(attendanceToday.getMonth()+1).padStart(2,'0') + '-' + String(attendanceToday.getDate()).padStart(2,'0');
       const cells=days.map(function(dayItem){
         const d=dayItem.date,state=dayState(student,d),dateString=isoDate(d);
-        // Compare plain YYYY-MM-DD calendar IDs, not timestamps/time zones.
-        const disabled = dateString !== attendanceTodayKey;
+        const now=new Date();
+        const selectedDay=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+        const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+        const disabled=selectedDay.getTime()!==today.getTime();
         const presentChecked=state==="present"?' checked':'';
         const absentChecked=state==="absent"?' checked':'';
         const lockNote="";
         return '<td class="'+(dayItem.weekStart?'attendance-week-start':'')+'"><div class="attendance-choice">'+
-          '<label class="attendance-mark present" title="Present"><input type="checkbox" aria-label="Mark present" data-attendance-date="'+dateString+'"'+presentChecked+(disabled?' disabled':'')+' onchange="markAttendance('+i+',new Date(\''+dateString+'T12:00:00\'),\'present\')"><span>✓</span></label>'+
-          '<label class="attendance-mark absent" title="Absent"><input type="checkbox" aria-label="Mark absent" data-attendance-date="'+dateString+'"'+absentChecked+(disabled?' disabled':'')+' onchange="markAttendance('+i+',new Date(\''+dateString+'T12:00:00\'),\'absent\')"><span>×</span></label></div>'+lockNote+'</td>';
+          '<label class="attendance-mark present" title="Present"><input type="checkbox" aria-label="Mark present"'+presentChecked+(disabled?' disabled':'')+' onchange="markAttendance('+i+',new Date(\''+dateString+'T12:00:00\'),\'present\')"><span>✓</span></label>'+
+          '<label class="attendance-mark absent" title="Absent"><input type="checkbox" aria-label="Mark absent"'+absentChecked+(disabled?' disabled':'')+' onchange="markAttendance('+i+',new Date(\''+dateString+'T12:00:00\'),\'absent\')"><span>×</span></label></div>'+lockNote+'</td>';
       }).join("");
       return '<tr><td>'+photo+'</td><td><div class="attendance-student"><div class="attendance-student-name">'+safeText(student[1])+'</div></div></td>'+cells+'</tr>';
     }).join("");
-    // Final safeguard: force checkbox state from the current local calendar ID.
-    const liveToday = isoDate(new Date());
-    body.querySelectorAll('input[data-attendance-date]').forEach(function(input){
-      input.disabled = input.getAttribute('data-attendance-date') !== liveToday;
-    });
   };
   const cls=document.getElementById("classSelect"),term=document.getElementById("termSelect");
   if(cls)cls.addEventListener("change",function(){attendanceSelectedClass="";setTimeout(renderAttendance,0);});
