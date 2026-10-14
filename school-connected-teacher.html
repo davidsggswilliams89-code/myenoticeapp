@@ -817,26 +817,6 @@ button{cursor:pointer;border:0}
 </style>
 
 <style>
-.student-form-card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:14px;box-shadow:0 3px 12px rgba(16,35,63,.05)}
-.student-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:16px}
-.student-form-grid .field label{display:block;font-size:12px;font-weight:800;color:#334155;margin-bottom:5px}
-.student-form-grid .field input,.student-form-grid .field select,.student-form-grid .field textarea{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #cbd6e2;border-radius:8px;background:#fff;font:inherit}
-.student-form-grid .field textarea{min-height:80px;resize:vertical}
-.student-form-actions{display:flex;justify-content:flex-end;gap:8px;padding-top:2px}
-@media(max-width:760px){.student-form-grid{grid-template-columns:1fr;padding:12px}.student-form-actions{justify-content:stretch}.student-form-actions button{flex:1}}
-</style>
-
-<style>
-.student-photo-upload{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:12px;border:1px dashed #b9c8d8;border-radius:10px;background:#f8fbfd}
-.student-photo-preview{width:92px;height:112px;border-radius:10px;border:2px solid #d6e0ea;background:#eef3f7;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;color:#718096;font-size:11px;font-weight:800}
-.student-photo-preview img{width:100%;height:100%;object-fit:cover}
-.student-photo-controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.photo-btn,.photo-remove{display:inline-flex;align-items:center;justify-content:center;padding:10px 13px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:800;border:1px solid #cbd6e2;background:#fff;color:#334155}
-.photo-btn input{display:none}
-.student-photo-upload small{width:100%;color:#718096;font-size:11px}
-</style>
-
-<style>
 .attendance-card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 3px 12px rgba(16,35,63,.05);margin-bottom:18px}
 .attendance-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 16px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,#f3fbf7,#f5f9ff)}
 .attendance-toolbar b{display:block;color:#183b2b;font-size:15px}
@@ -3667,112 +3647,7 @@ renderCurriculum();renderStudents();renderResults();
  }).join("") || '<tr><td colspan="7" class="empty">No students have been added to '+selectedDashboardClass()+' yet.</td></tr>';
 };
 
-var studentSaveInProgress=false;
-
-window.addStudentFromForm=async function(){
- if(studentSaveInProgress) return;
-
- var name=document.getElementById("newStudentName").value.trim();
- var admission=document.getElementById("newStudentAdmission").value.trim();
- var gender=document.getElementById("newStudentGender").value;
- var className=document.getElementById("newStudentClass").value;
- var dob=document.getElementById("newStudentDob").value;
- var phone=document.getElementById("newStudentPhone").value.trim();
- var guardian=document.getElementById("newStudentGuardian").value.trim();
- var address=document.getElementById("newStudentAddress").value.trim();
- var photoInput=document.getElementById("newStudentPhoto");
- var cameraInput=document.getElementById("newStudentCamera");
- var form=document.getElementById("addStudentForm");
- var submitButton=form ? form.querySelector('button[type="submit"]') : null;
-
- if(!name||!admission||!gender||!className){
-   alert("Please complete Student Name, Admission Number, Gender and Class.");
-   return;
- }
-
- admission=admission.trim();
-
- if(students.some(function(s){
-   return String(s[0]||"").trim().toLowerCase()===admission.toLowerCase();
- })){
-   alert("This admission number already exists in Firebase for this teacher.");
-   return;
- }
-
- studentSaveInProgress=true;
- if(submitButton){
-   submitButton.disabled=true;
-   submitButton.dataset.originalText=submitButton.textContent;
-   submitButton.textContent="SAVING...";
-   submitButton.style.opacity=".7";
- }
-
- var file=(photoInput&&photoInput.files[0])||(cameraInput&&cameraInput.files[0]);
- var photoData="";
-
- try{
-   if(!window.firebaseTeacherUID || !window.teacherFirestore){
-     throw new Error("Teacher Firebase account is not ready. Please wait for the teacher account to finish loading, then try again.");
-   }
-
-   if(file && typeof window.uploadStudentPhotoToCloudinary==='function'){
-     photoData=await window.uploadStudentPhotoToCloudinary(file);
-   }else if(file){
-     photoData=await new Promise(function(resolve,reject){
-       var reader=new FileReader();
-       reader.onload=function(e){resolve(e.target.result);};
-       reader.onerror=reject;
-       reader.readAsDataURL(file);
-     });
-   }
-
-   var student=[admission,name,gender,0,0,0,0,{
-     phone:phone,dob:dob,className:className,guardian:guardian,address:address,photo:photoData
-   },{}];
-
-   // Save to Firebase FIRST. The local student list changes only after Firebase confirms success.
-   await saveStudentToFirestore(student);
-
-   students.push(student);
-   refreshStudentViews();
-
-   document.getElementById("addStudentForm").reset();
-   document.getElementById("newStudentClass").value=selectedDashboardClass();
-   if(!document.getElementById("newStudentClass").value) document.getElementById("newStudentClass").value="Primary 5";
-
-   var preview=document.getElementById("studentPhotoPreview");
-   if(preview)preview.innerHTML="<span>PHOTO</span>";
-
-   var sourceNote=document.getElementById("studentFirebaseSourceNote");
-   if(sourceNote){
-     sourceNote.textContent="🔥 Firebase connected. Student records are being loaded and saved directly for this teacher.";
-     sourceNote.style.background="#f3faf7";
-     sourceNote.style.borderColor="#cfe4dd";
-     sourceNote.style.color="#35505f";
-   }
-
-   alert(name+" has been added successfully and verified in Firebase. The student is now available in C.A, Examination, Results and Attendance.");
- }catch(err){
-   console.error("Student save failed:",err);
-
-   var message=err&&err.message?err.message:"Unknown error";
-   if(String(message).toLowerCase().indexOf("teacher cannot read")>=0 || String(message).toLowerCase().indexOf("permission")>=0){
-     message+="\n\nRequired Firestore Rules:\nteachers/{teacherUid}/students/{studentId} → allow read, write when request.auth.uid == teacherUid.";
-   }
-
-   // No failed student is left in the local array.
-   refreshStudentViews();
-
-   alert("Student could not be saved to Firebase.\n\n"+message);
- }finally{
-   studentSaveInProgress=false;
-   if(submitButton){
-     submitButton.disabled=false;
-     submitButton.textContent=submitButton.dataset.originalText || "ADD STUDENT";
-     submitButton.style.opacity="";
-   }
- }
-};
+/* Independent-only student creation logic removed from the school-connected dashboard. */
 
 window.__editingStudentPhoto = null;
 window.__editingStudentPhotoChanged = false;
@@ -4064,12 +3939,7 @@ window.viewStudentResult=function(index){
     alert("Results updated successfully.");closeModal();
   };
 
-  var form=document.getElementById("addStudentForm");
-  if(form)form.addEventListener("submit",async function(e){
-    e.preventDefault();
-    if(studentSaveInProgress) return;
-    await addStudentFromForm();
-  });
+  /* No personal student-creation form is registered in school-connected mode. */
   var cls=document.getElementById("classSelect"),term=document.getElementById("termSelect");
   if(cls)cls.addEventListener("change",refreshStudentViews);
   if(term)term.addEventListener("change",refreshStudentViews);
