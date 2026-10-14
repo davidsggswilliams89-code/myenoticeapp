@@ -4320,8 +4320,6 @@ window.viewStudentResult=function(index){
   function saveAttendanceStore(data){try{localStorage.setItem(ATT_KEY,JSON.stringify(data));}catch(e){alert("Attendance could not be saved on this device.");}}
   function mondayOfWeek(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());const day=x.getDay();x.setDate(x.getDate()+(day===0?1:1-day));return x;}
   function isoDate(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");return y+"-"+m+"-"+day;}
-  // Use one local-calendar date key everywhere, avoiding timestamp/time-zone mismatches.
-  function attendanceTodayKey(){return isoDate(new Date());}
   function prettyDate(d){return d.toLocaleDateString(undefined,{day:"2-digit",month:"short"});}
   function academicWeekNumber(monday){
     const term=selectedDashboardTerm();let termStart=null;
@@ -4344,9 +4342,11 @@ window.viewStudentResult=function(index){
   }
   function markAttendance(index,date,value){
     const records=attendanceStudents(),item=records[index];if(!item)return;
-    const selectedDateKey = isoDate(date);
-    // Attendance can only be changed for the current local calendar date.
-    if(selectedDateKey !== attendanceTodayKey())return;
+    const now=new Date();
+    const selectedDay=new Date(date.getFullYear(),date.getMonth(),date.getDate());
+    const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    // Attendance can only be changed on the current local calendar date.
+    if(selectedDay.getTime()!==today.getTime())return;
     const store=attendanceStore();store[studentAttendanceKey(item.s,date)]=value;saveAttendanceStore(store);renderAttendance();
   }
   window.markAttendance=markAttendance;
@@ -4373,11 +4373,12 @@ window.viewStudentResult=function(index){
       const photo=info.photo?'<img class="attendance-student-photo" src="'+safeText(info.photo)+'" alt="Student photo">':'<div class="attendance-student-photo"></div>';
       // Calculate the local calendar date once for this render. The matching
       // column is the only one whose checkboxes may be enabled.
-      const todayKey = attendanceTodayKey();
+      const attendanceToday = new Date();
+      const attendanceTodayKey = attendanceToday.getFullYear() + '-' + String(attendanceToday.getMonth()+1).padStart(2,'0') + '-' + String(attendanceToday.getDate()).padStart(2,'0');
       const cells=days.map(function(dayItem){
         const d=dayItem.date,state=dayState(student,d),dateString=isoDate(d);
-        // Only today's local calendar date is enabled; every earlier/later date is disabled.
-        const disabled = dateString !== todayKey;
+        // Compare plain YYYY-MM-DD calendar IDs, not timestamps/time zones.
+        const disabled = dateString !== attendanceTodayKey;
         const presentChecked=state==="present"?' checked':'';
         const absentChecked=state==="absent"?' checked':'';
         const lockNote="";
@@ -4388,13 +4389,9 @@ window.viewStudentResult=function(index){
       return '<tr><td>'+photo+'</td><td><div class="attendance-student"><div class="attendance-student-name">'+safeText(student[1])+'</div></div></td>'+cells+'</tr>';
     }).join("");
     // Final safeguard: force checkbox state from the current local calendar ID.
-    const liveToday = attendanceTodayKey();
+    const liveToday = isoDate(new Date());
     body.querySelectorAll('input[data-attendance-date]').forEach(function(input){
-      const isToday = input.getAttribute('data-attendance-date') === liveToday;
-      input.disabled = !isToday;
-      input.style.cursor = isToday ? 'pointer' : 'not-allowed';
-      const label = input.closest('.attendance-mark');
-      if(label){label.style.cursor = isToday ? 'pointer' : 'not-allowed';}
+      input.disabled = input.getAttribute('data-attendance-date') !== liveToday;
     });
   };
   const cls=document.getElementById("classSelect"),term=document.getElementById("termSelect");
