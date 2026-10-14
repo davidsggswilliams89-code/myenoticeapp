@@ -1468,6 +1468,7 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
 </style>
 </head>
 <body>
+<div id="teacherDashboardModeBadge" role="status" style="position:fixed;right:10px;bottom:10px;z-index:9998;padding:7px 10px;border-radius:999px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font:700 10px/1.2 Arial,sans-serif;box-shadow:0 2px 8px #00000012;pointer-events:none" aria-live="polite"></div>
 <script>
   /* Mark an existing Firebase session as pending before the dashboard paints.
      This prevents the login overlay/dashboard from flashing during refresh. */
@@ -5606,5 +5607,35 @@ body.lessons-active #lessonSubscriptionToggle{
       tapLogo();
     }
   });
+})();
+</script>
+
+<script>
+/* Phase 4: mode-based feature and button visibility. UI control only; Firestore rules remain the security boundary. */
+(function () {
+  const mode = String(window.TEACHER_DASHBOARD_MODE || 'independent').toLowerCase();
+  const connectedMode = mode === 'school-connected';
+  function applyTeacherModeControls() {
+    const panel = document.getElementById('independentSchoolConnectionPanel');
+    if (panel) {
+      panel.hidden = connectedMode;
+      panel.setAttribute('aria-hidden', connectedMode ? 'true' : 'false');
+      panel.querySelectorAll('input, button, select, textarea').forEach(el => {
+        el.disabled = connectedMode;
+        if (connectedMode) el.setAttribute('tabindex', '-1');
+        else el.removeAttribute('tabindex');
+      });
+    }
+    document.documentElement.dataset.teacherDashboardMode = connectedMode ? 'school-connected' : 'independent';
+    const badge = document.getElementById('teacherDashboardModeBadge');
+    if (badge) {
+      badge.textContent = connectedMode ? 'SCHOOL-CONNECTED TEACHER' : 'INDEPENDENT TEACHER';
+      badge.dataset.mode = connectedMode ? 'school-connected' : 'independent';
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyTeacherModeControls, { once: true });
+  else applyTeacherModeControls();
+  window.addEventListener('teacherAccountContextChanged', applyTeacherModeControls);
+  window.applyTeacherModeControls = applyTeacherModeControls;
 })();
 </script>

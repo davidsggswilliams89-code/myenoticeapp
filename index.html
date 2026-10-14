@@ -4905,10 +4905,12 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     el.textContent=text;el.style.background=type==='success'?'#dcfce7':type==='error'?'#fee2e2':'#fff';el.style.color=type==='success'?'#166534':type==='error'?'#991b1b':'#334155';
   }
   async function refreshTeacherSchoolConnection(){
+    window.teacherConnectionLookupState='checking';
     try{
-      const user=auth.currentUser;if(!user)return;
+      const user=auth.currentUser;if(!user){window.teacherConnectionLookupState='error';return;}
       const qs=await getDocs(query(collection(db,'teacherConnectionRequests'),where('teacherUid','==',user.uid)));
       if(qs.empty){
+        window.teacherConnectionLookupState='independent';
         activeTeacherConnection=null;window.activeTeacherConnection=null;
         renderTeacherAssignments(null);
         const schoolInput=document.getElementById('teacherSchool');if(schoolInput)schoolInput.readOnly=false;
@@ -4921,6 +4923,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       }
       const records=qs.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.updatedAt?.seconds||b.requestedAt?.seconds||0)-(a.updatedAt?.seconds||a.requestedAt?.seconds||0));
       const r=records[0];activeTeacherConnection=r;window.activeTeacherConnection=r;
+      window.teacherConnectionLookupState=['connected','approved','active'].includes(String(r.status||'').toLowerCase())?'connected':'independent';
       renderTeacherAssignments(r);
       window.dispatchEvent(new Event('teacherAccountContextChanged'));
       if(typeof window.applyAssignedClassFilters==='function'&&teacherIsSchoolConnected())window.applyAssignedClassFilters();
@@ -4953,7 +4956,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
           if(memberSnap.exists()){
             const member={id:memberSnap.id,...memberSnap.data()};
             if(['connected','approved','active'].includes(String(member.status||'').toLowerCase())){
-              activeTeacherConnection=member;window.activeTeacherConnection=member;renderTeacherAssignments(member);
+              activeTeacherConnection=member;window.activeTeacherConnection=member;window.teacherConnectionLookupState='connected';renderTeacherAssignments(member);
               window.dispatchEvent(new Event('teacherAccountContextChanged'));
               if(typeof window.applyAssignedClassFilters==='function')window.applyAssignedClassFilters();
               if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
@@ -4966,6 +4969,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
           }
         }
       }catch(fallbackError){console.error('School membership fallback failed:',fallbackError);}
+      window.teacherConnectionLookupState='error';
       showTeacherConnectionStatus('Could not check connection status: '+(e?.code||e?.message||'Firestore access denied')+'. Check read rules for teacherConnectionRequests and schoolTeachers.','error');
     }
   }
@@ -5203,8 +5207,27 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       localStorage.setItem('firebaseTeacherDisplayName',user.displayName||'');
       try{const profile=await ensureTeacherProfile(user);applyFirestoreTeacherProfile(profile,user);}
       catch(err){console.error('Teacher profile sync failed:',err);applyFirestoreTeacherProfile({},user);}
-      // Resolve this account's registrar connection before loading students or assignments.
+      // Phase 3: resolve connection status before loading any student data, then route to the right dashboard.
       await refreshTeacherSchoolConnection();
+      if(window.teacherConnectionLookupState==='connected'){
+        const target=new URL('school-connected-teacher.html',window.location.href);
+        target.searchParams.set('phase3','1');
+        window.location.replace(target.href);
+        return;
+      }
+      if(window.teacherConnectionLookupState==='independent'){
+        const target=new URL('independent-teacher.html',window.location.href);
+        target.searchParams.set('phase3','1');
+        window.location.replace(target.href);
+        return;
+      }
+      if(window.teacherConnectionLookupState==='error'){
+        gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');
+        showPanel(loginForm);
+        message('We could not verify your school connection. Please check your internet connection or try again. For your safety, the system has not selected a dashboard.');
+        document.documentElement.classList.remove('teacher-auth-pending');
+        return;
+      }
       try{if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();}
       catch(err){console.error('Student Firebase query failed during login:',err);}
       if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
