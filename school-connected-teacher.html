@@ -4717,10 +4717,8 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     try{
       try{sessionStorage.removeItem('teacherActiveSection');}catch(_e){}
       try{localStorage.removeItem('firebaseTeacherUID');localStorage.removeItem('firebaseTeacherDisplayName');}catch(_e){}
-      document.documentElement.classList.remove('teacher-auth-pending');
-      gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');
-      showPanel(loginForm);if(subtitle)subtitle.textContent='Sign in to continue';
-      clearMessage();await signOut(auth);
+      await signOut(auth);
+      window.location.replace('index.html');
     }catch(err){message(friendlyError(err));}
   };
 
