@@ -4270,13 +4270,18 @@ window.viewStudentResult=function(index){
   function teacherAssignments(){
     if(typeof window.teacherIsSchoolConnected==="function" && window.teacherIsSchoolConnected()){
       return Array.isArray(window.activeTeacherConnection?.assignedTeachingAssignments)
-        ? window.activeTeacherConnection.assignedTeachingAssignments.map(a=>({subject:String(a.subject||"").trim(),className:String(a.className||a.class||"").trim()})).filter(a=>a.subject&&a.className) : [];
+        ? window.activeTeacherConnection.assignedTeachingAssignments.map(a=>({subject:String(a.subject||a.subjectName||"").trim(),className:String(a.className||a.class||"").trim()})).filter(a=>a.subject&&a.className) : [];
+    }
+    // Use the Firebase-backed My Classes data loaded for this signed-in teacher.
+    if(typeof window.getIndependentTeachingAssignments==="function"){
+      const live=window.getIndependentTeachingAssignments();
+      if(Array.isArray(live)) return live.map(a=>({subject:String(a.subject||a.subjectName||"").trim(),className:String(a.className||a.class||"").trim()})).filter(a=>a.subject&&a.className);
     }
     try{
       const uid=window.firebaseTeacherUID||"unauthenticated";
       const raw=localStorage.getItem("teacherTeachingAssignments_"+uid);
       const parsed=raw?JSON.parse(raw):[];
-      return (Array.isArray(parsed)?parsed:[]).map(a=>({subject:String(a.subject||"").trim(),className:String(a.className||a.class||"").trim()})).filter(a=>a.subject&&a.className);
+      return (Array.isArray(parsed)?parsed:[]).map(a=>({subject:String(a.subject||a.subjectName||"").trim(),className:String(a.className||a.class||"").trim()})).filter(a=>a.subject&&a.className);
     }catch(e){return [];}
   }
   function allStudentClasses(){
@@ -4327,22 +4332,26 @@ window.viewStudentResult=function(index){
     if(!termStart)return null;return Math.max(1,Math.floor((monday-termStart)/604800000)+1);
   }
   function studentAttendanceKey(s,date){return [attendanceSelectedSubject||"General",attendanceSelectedClass||selectedDashboardClass(),selectedDashboardTerm(),String(s[0]),date].join("|");}
+  function attendanceDateIsToday(date){
+    return isoDate(date)===isoDate(new Date());
+  }
   function dayState(s,date){
     const value=attendanceStore()[studentAttendanceKey(s,date)];
+    // Only the current local calendar date is editable. A saved mark today
+    // remains editable; past and future dates are always disabled.
+    if(!attendanceDateIsToday(date)){
+      const dayStart=new Date(date.getFullYear(),date.getMonth(),date.getDate(),0,0,0,0);
+      const now=new Date();
+      const todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate(),0,0,0,0);
+      return dayStart.getTime()<todayStart.getTime()?"locked":"future";
+    }
     if(value==="present"||value===true)return "present";
     if(value==="absent")return "absent";
-    // Each school date is open for that calendar day only. At the next local
-    // midnight it locks automatically, and the new current date becomes open.
-    const now=new Date();
-    const dayStart=new Date(date.getFullYear(),date.getMonth(),date.getDate(),0,0,0,0);
-    const todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate(),0,0,0,0);
-    if(dayStart.getTime()<todayStart.getTime())return "locked";
-    if(dayStart.getTime()>todayStart.getTime())return "future";
     return "open";
   }
   function markAttendance(index,date,value){
     const records=attendanceStudents(),item=records[index];if(!item)return;
-    const state=dayState(item.s,date);if(state!=="open")return;
+    if(!attendanceDateIsToday(date))return;
     const store=attendanceStore();store[studentAttendanceKey(item.s,date)]=value;saveAttendanceStore(store);renderAttendance();
   }
   window.markAttendance=markAttendance;
@@ -4369,7 +4378,7 @@ window.viewStudentResult=function(index){
       const photo=info.photo?'<img class="attendance-student-photo" src="'+safeText(info.photo)+'" alt="Student photo">':'<div class="attendance-student-photo"></div>';
       const cells=days.map(function(dayItem){
         const d=dayItem.date,state=dayState(student,d),dateString=isoDate(d);
-        const disabled=state!=="open";
+        const disabled=!attendanceDateIsToday(d);
         const presentChecked=state==="present"?' checked':'';
         const absentChecked=state==="absent"?' checked':'';
         const lockNote="";
