@@ -4268,21 +4268,44 @@ window.viewStudentResult=function(index){
 
   function safeText(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
   function teacherAssignments(){
+    const normalizeAssignments = raw => {
+      if(!Array.isArray(raw)) return [];
+      const out=[];
+      raw.forEach(a=>{
+        if(!a || typeof a!=="object") return;
+        const subject=String(a.subject||a.subjectName||"").trim();
+        const classes=Array.isArray(a.classes)?a.classes:[a.className||a.class||""];
+        classes.forEach(c=>{
+          const className=String(typeof c==="string"?c:(c&&(c.className||c.name))||"").trim();
+          if(subject&&className&&!out.some(x=>x.subject.toLowerCase()===subject.toLowerCase()&&x.className.toLowerCase()===className.toLowerCase())){
+            out.push({subject,className});
+          }
+        });
+      });
+      return out;
+    };
     if(typeof window.teacherIsSchoolConnected==="function" && window.teacherIsSchoolConnected()){
-      return Array.isArray(window.activeTeacherConnection?.assignedTeachingAssignments)
-        ? window.activeTeacherConnection.assignedTeachingAssignments.map(a=>({subject:String(a.subject||a.subjectName||"").trim(),className:String(a.className||a.class||"").trim()})).filter(a=>a.subject&&a.className) : [];
+      return normalizeAssignments(window.activeTeacherConnection?.assignedTeachingAssignments);
     }
-    // Use the Firebase-backed My Classes data loaded for this signed-in teacher.
-    if(typeof window.getIndependentTeachingAssignments==="function"){
-      const live=window.getIndependentTeachingAssignments();
-      if(Array.isArray(live)) return live.map(a=>({subject:String(a.subject||a.subjectName||"").trim(),className:String(a.className||a.class||"").trim()})).filter(a=>a.subject&&a.className);
-    }
+
+    // Prefer the current Firebase-backed assignments once loaded.
+    // If Firebase data is still loading or temporarily empty, use this teacher's
+    // cached assignments so the attendance subject filter does not appear blank.
+    let live=[];
+    try{
+      if(typeof window.getIndependentTeachingAssignments==="function"){
+        live=normalizeAssignments(window.getIndependentTeachingAssignments());
+      }
+    }catch(e){ console.warn("Could not read live teacher assignments:",e); }
+    if(live.length) return live;
+
     try{
       const uid=window.firebaseTeacherUID||"unauthenticated";
       const raw=localStorage.getItem("teacherTeachingAssignments_"+uid);
-      const parsed=raw?JSON.parse(raw):[];
-      return (Array.isArray(parsed)?parsed:[]).map(a=>({subject:String(a.subject||a.subjectName||"").trim(),className:String(a.className||a.class||"").trim()})).filter(a=>a.subject&&a.className);
-    }catch(e){return [];}
+      const cached=normalizeAssignments(raw?JSON.parse(raw):[]);
+      if(cached.length) return cached;
+    }catch(e){}
+    return live;
   }
   function allStudentClasses(){
     const assignments=teacherAssignments();
@@ -4319,7 +4342,7 @@ window.viewStudentResult=function(index){
     if(!classes.includes(attendanceSelectedClass))attendanceSelectedClass=classes[0];
     if(classSelect){classSelect.innerHTML=classes.map(c=>'<option value="'+safeText(c)+'">'+safeText(c)+'</option>').join("");classSelect.value=attendanceSelectedClass;}
   }
-  window.changeAttendanceSubject=function(value){attendanceSelectedSubject=value;attendanceSelectedClass="";renderAttendance();};
+  window.changeAttendanceSubject=function(value){attendanceSelectedSubject=value;attendanceSelectedClass="";populateAttendanceFilters();renderAttendance();};
   window.changeAttendanceClass=function(value){attendanceSelectedClass=value;renderAttendance();};
   function attendanceStore(){try{return JSON.parse(localStorage.getItem(ATT_KEY)||"{}");}catch(e){return {};}}
   function saveAttendanceStore(data){try{localStorage.setItem(ATT_KEY,JSON.stringify(data));}catch(e){alert("Attendance could not be saved on this device.");}}
@@ -4378,7 +4401,7 @@ window.viewStudentResult=function(index){
       const photo=info.photo?'<img class="attendance-student-photo" src="'+safeText(info.photo)+'" alt="Student photo">':'<div class="attendance-student-photo"></div>';
       const cells=days.map(function(dayItem){
         const d=dayItem.date,state=dayState(student,d),dateString=isoDate(d);
-        const disabled=!attendanceDateIsToday(d);
+        const disabled = !attendanceDateIsToday(d); // Today stays interactive even after a mark is saved.
         const presentChecked=state==="present"?' checked':'';
         const absentChecked=state==="absent"?' checked':'';
         const lockNote="";
