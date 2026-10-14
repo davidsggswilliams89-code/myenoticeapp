@@ -1508,6 +1508,51 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
  .attendance-choice{min-width:130px}
 }
 </style>
+
+<style>
+/* Attendance-only mobile layout corrections */
+#attendanceView .attendance-toolbar{
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;
+  justify-content:flex-start!important;gap:12px!important;padding:14px!important;
+}
+#attendanceView #attendanceWeekLabel{
+  display:block!important;width:100%!important;white-space:normal!important;
+  overflow-wrap:normal!important;word-break:normal!important;line-height:1.35!important;
+  font-size:15px!important;
+}
+#attendanceView #attendanceClassLabel{display:none!important}
+#attendanceView .attendance-top-controls{
+  display:grid!important;grid-template-columns:1fr!important;gap:10px!important;width:100%!important;
+}
+#attendanceView .attendance-filter-label{
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;
+  gap:5px!important;font-size:11px!important;width:100%!important;
+}
+#attendanceView .attendance-filter-label select{
+  width:100%!important;max-width:none!important;height:44px!important;min-height:44px!important;
+  font-size:14px!important;padding:0 11px!important;
+}
+#attendanceView .attendance-refresh{display:none!important}
+#attendanceView .attendance-help{font-size:11px!important}
+#attendanceView .attendance-day-head{width:124px!important;min-width:124px!important}
+#attendanceView .attendance-choice{
+  display:flex!important;flex-direction:row!important;align-items:center!important;
+  justify-content:center!important;gap:12px!important;min-width:104px!important;white-space:nowrap!important;
+}
+#attendanceView .attendance-mark{
+  display:inline-flex!important;flex-direction:row!important;align-items:center!important;
+  justify-content:center!important;gap:3px!important;white-space:nowrap!important;
+}
+#attendanceView .attendance-lock-note{display:none!important}
+#attendanceView .attendance-button-hint{line-height:1.25!important;white-space:nowrap!important}
+@media(max-width:480px){
+  #attendanceView .attendance-toolbar{padding:12px!important}
+  #attendanceView #attendanceWeekLabel{font-size:14px!important}
+  #attendanceView .attendance-day-head{width:124px!important;min-width:124px!important}
+  #attendanceView .attendance-choice{gap:10px!important}
+}
+</style>
+
 </head>
 <body>
 <script>
@@ -2002,13 +2047,13 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
 <div id="attendanceView" class="section-view" style="display:none">
   <div class="section-title">
     <h2>Attendance</h2>
-    <p>Select a subject and class, then mark each student Present or Absent from Monday to Friday. Attendance locks 24 hours after each day begins.</p>
+    <p>Select a subject and class, then mark each student Present or Absent from Monday to Friday.</p>
   </div>
   <div class="attendance-card">
     <div class="attendance-toolbar">
       <div>
         <b id="attendanceWeekLabel">Current Week</b>
-        <small id="attendanceClassLabel">Primary 5</small>
+        <small id="attendanceClassLabel" aria-hidden="true" style="display:none"> </small>
       </div>
       <div class="attendance-top-controls">
         <label class="attendance-filter-label">SUBJECT
@@ -2017,10 +2062,9 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
         <label class="attendance-filter-label">CLASS
           <select id="attendanceClassFilter" onchange="changeAttendanceClass(this.value)"></select>
         </label>
-        <button class="secondary attendance-refresh" type="button" onclick="renderAttendance()">REFRESH</button>
       </div>
     </div>
-    <div class="attendance-help">✓ Present &nbsp;&nbsp; □ Not yet marked &nbsp;&nbsp; <span class="attendance-absent-mark">✕</span> Absent after 24 hours</div>
+    <div class="attendance-help">✓ Present &nbsp;&nbsp; □ Not yet marked &nbsp;&nbsp; <span class="attendance-absent-mark">✕</span> Absent</div>
     <div class="attendance-table-wrap">
       <table class="attendance-table">
         <thead id="attendanceHead"></thead>
@@ -4328,7 +4372,7 @@ window.viewStudentResult=function(index){
         const disabled=state!=="open";
         const presentChecked=state==="present"?' checked':'';
         const absentChecked=state==="absent"?' checked':'';
-        const lockNote=state==="locked"?'<div class="attendance-lock-note">🔒 24-hour limit passed</div>':(state==="future"?'<div class="attendance-lock-note">Not started</div>':'');
+        const lockNote="";
         return '<td class="'+(dayItem.weekStart?'attendance-week-start':'')+'"><div class="attendance-choice">'+
           '<label class="attendance-mark present" title="Present"><input type="checkbox" aria-label="Mark present"'+presentChecked+(disabled?' disabled':'')+' onchange="markAttendance('+i+',new Date(\''+dateString+'T12:00:00\'),\'present\')"><span>✓</span></label>'+
           '<label class="attendance-mark absent" title="Absent"><input type="checkbox" aria-label="Mark absent"'+absentChecked+(disabled?' disabled':'')+' onchange="markAttendance('+i+',new Date(\''+dateString+'T12:00:00\'),\'absent\')"><span>×</span></label></div>'+lockNote+'</td>';
