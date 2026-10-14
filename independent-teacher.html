@@ -1468,7 +1468,6 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
 </style>
 </head>
 <body>
-<div id="teacherDashboardModeBadge" role="status" style="position:fixed;right:10px;bottom:10px;z-index:9998;padding:7px 10px;border-radius:999px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font:700 10px/1.2 Arial,sans-serif;box-shadow:0 2px 8px #00000012;pointer-events:none" aria-live="polite"></div>
 <script>
   /* Mark an existing Firebase session as pending before the dashboard paints.
      This prevents the login overlay/dashboard from flashing during refresh. */
@@ -1811,6 +1810,43 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
   </div>
 
 
+
+  <div class="student-form-card" id="independentAddStudentCard">
+    <div class="cardhead">
+      <h3>➕ Register Personal Student</h3>
+      <span class="status-pill current">Independent Registration</span>
+    </div>
+    <form id="addStudentForm" class="student-form-grid">
+      <div class="field full">
+        <label>STUDENT PHOTO</label>
+        <div class="student-photo-upload">
+          <div id="studentPhotoPreview" class="student-photo-preview"><span>PHOTO</span></div>
+          <div class="student-photo-controls">
+            <label class="photo-btn">📁 CHOOSE PHOTO
+              <input id="newStudentPhoto" type="file" accept="image/*" hidden>
+            </label>
+            <label class="photo-btn">📷 TAKE PHOTO
+              <input id="newStudentCamera" type="file" accept="image/*" capture="user" hidden>
+            </label>
+            <button type="button" class="photo-remove" id="removeStudentPhoto">REMOVE PHOTO</button>
+          </div>
+          <small>Choose an existing photo or take a picture with your phone camera.</small>
+        </div>
+      </div>
+      <div class="field"><label>STUDENT FULL NAME *</label><input id="newStudentName" type="text" placeholder="Enter student's full name" autocomplete="name" required></div>
+      <div class="field"><label>ADMISSION NUMBER *</label><input id="newStudentAdmission" type="text" placeholder="e.g. P5/001" required></div>
+      <div class="field"><label>GENDER *</label><select id="newStudentGender" required><option value="">Select gender</option><option value="Male">Male</option><option value="Female">Female</option></select></div>
+      <div class="field"><label>CLASS *</label><select id="newStudentClass" required><option value="">Select class</option><option value="Primary 1">Primary 1</option><option value="Primary 2">Primary 2</option><option value="Primary 3">Primary 3</option><option value="Primary 4">Primary 4</option><option value="Primary 5">Primary 5</option><option value="Primary 6">Primary 6</option></select></div>
+      <div class="field"><label>DATE OF BIRTH</label><input id="newStudentDob" type="date"></div>
+      <div class="field"><label>PARENT PHONE NUMBER</label><input id="newStudentPhone" type="tel" inputmode="tel" placeholder="Parent or guardian phone number"></div>
+      <div class="field"><label>PARENT / GUARDIAN NAME</label><input id="newStudentGuardian" type="text" placeholder="Enter parent or guardian name"></div>
+      <div class="field full"><label>HOME ADDRESS</label><textarea id="newStudentAddress" placeholder="Enter student's home address"></textarea></div>
+      <div class="field full student-form-actions">
+        <button type="reset" class="secondary" id="resetAddStudentForm">CLEAR FORM</button>
+        <button type="submit" class="primary">ADD STUDENT</button>
+      </div>
+    </form>
+  </div>
 
   <div id="studentFirebaseSourceNote" style="margin:0 0 12px;padding:10px 12px;border:1px solid #cfe4dd;border-radius:10px;background:#f3faf7;color:#35505f;font-size:12px;font-weight:700;">
   🔥 Student records are loaded directly from Firebase for the signed-in teacher. No pre-filled student records are used.
@@ -5533,6 +5569,38 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
 })();
 </script>
 
+
+
+<script>
+/* Independent-only student photo preview and clear control. */
+(function(){
+  var photoInput=document.getElementById("newStudentPhoto");
+  var cameraInput=document.getElementById("newStudentCamera");
+  var preview=document.getElementById("studentPhotoPreview");
+  var removeButton=document.getElementById("removeStudentPhoto");
+  function previewFile(file){
+    if(!file||!preview)return;
+    var reader=new FileReader();
+    reader.onload=function(e){preview.innerHTML='<img src="'+e.target.result+'" alt="Student photo preview">';};
+    reader.readAsDataURL(file);
+  }
+  if(photoInput)photoInput.addEventListener("change",function(){previewFile(this.files&&this.files[0]);});
+  if(cameraInput)cameraInput.addEventListener("change",function(){previewFile(this.files&&this.files[0]);});
+  if(removeButton)removeButton.addEventListener("click",function(){
+    if(photoInput)photoInput.value="";
+    if(cameraInput)cameraInput.value="";
+    if(preview)preview.innerHTML="<span>PHOTO</span>";
+  });
+  var form=document.getElementById("addStudentForm");
+  if(form)form.addEventListener("reset",function(){
+    setTimeout(function(){
+      if(photoInput)photoInput.value="";
+      if(cameraInput)cameraInput.value="";
+      if(preview)preview.innerHTML="<span>PHOTO</span>";
+    },0);
+  });
+})();
+</script>
 </body>
 </html>
 <style>
@@ -5607,35 +5675,5 @@ body.lessons-active #lessonSubscriptionToggle{
       tapLogo();
     }
   });
-})();
-</script>
-
-<script>
-/* Phase 4: mode-based feature and button visibility. UI control only; Firestore rules remain the security boundary. */
-(function () {
-  const mode = String(window.TEACHER_DASHBOARD_MODE || 'independent').toLowerCase();
-  const connectedMode = mode === 'school-connected';
-  function applyTeacherModeControls() {
-    const panel = document.getElementById('independentSchoolConnectionPanel');
-    if (panel) {
-      panel.hidden = connectedMode;
-      panel.setAttribute('aria-hidden', connectedMode ? 'true' : 'false');
-      panel.querySelectorAll('input, button, select, textarea').forEach(el => {
-        el.disabled = connectedMode;
-        if (connectedMode) el.setAttribute('tabindex', '-1');
-        else el.removeAttribute('tabindex');
-      });
-    }
-    document.documentElement.dataset.teacherDashboardMode = connectedMode ? 'school-connected' : 'independent';
-    const badge = document.getElementById('teacherDashboardModeBadge');
-    if (badge) {
-      badge.textContent = connectedMode ? 'SCHOOL-CONNECTED TEACHER' : 'INDEPENDENT TEACHER';
-      badge.dataset.mode = connectedMode ? 'school-connected' : 'independent';
-    }
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyTeacherModeControls, { once: true });
-  else applyTeacherModeControls();
-  window.addEventListener('teacherAccountContextChanged', applyTeacherModeControls);
-  window.applyTeacherModeControls = applyTeacherModeControls;
 })();
 </script>
