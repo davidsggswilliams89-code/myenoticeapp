@@ -2128,9 +2128,53 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
 <div id="myClassesView" class="section-view" style="display:none">
   <div class="section-title">
     <h2>My Classes</h2>
-    <p>Your classes are automatically based on the teaching assignments you saved.</p>
+    <p>Select the subjects you teach and one or more Primary classes for each subject. These assignments are saved for your independent teacher dashboard.</p>
+  </div>
+  <div id="independentAssignmentManager" class="independent-assignment-manager">
+    <div class="iam-form">
+      <h3>➕ Add a Teaching Assignment</h3>
+      <div class="iam-field">
+        <label for="iamSubject">Select Subject</label>
+        <select id="iamSubject"><option value="">Choose a subject</option></select>
+      </div>
+      <div class="iam-field">
+        <label>Select all classes you teach for this subject</label>
+        <div id="iamClasses" class="iam-class-grid"></div>
+      </div>
+      <div class="iam-actions">
+        <button type="button" id="iamSaveBtn" class="iam-save">Save Subject & Classes</button>
+        <button type="button" id="iamClearBtn" class="iam-clear">Clear Selection</button>
+      </div>
+      <p id="iamStatus" class="iam-status" role="status"></p>
+    </div>
+    <div class="iam-saved">
+      <h3>My Saved Subjects & Classes</h3>
+      <p class="iam-help">You can add another subject at any time. A subject can be assigned to multiple classes.</p>
+      <div id="iamSavedList"></div>
+    </div>
   </div>
   <div id="dynamicMyClasses"></div>
+  <style>
+    .independent-assignment-manager{display:grid;gap:14px}
+    .iam-form,.iam-saved{background:#fff;border:1px solid #dce8e4;border-radius:15px;padding:16px;box-shadow:0 3px 12px rgba(16,35,63,.04)}
+    .iam-form h3,.iam-saved h3{margin:0 0 12px;color:#075c51;font-size:19px}
+    .iam-field{margin:0 0 15px}.iam-field label{display:block;margin:0 0 7px;font-size:13px;font-weight:900;color:#334155}
+    .iam-field select{width:100%;min-height:52px;padding:12px;border:1px solid #cbd6e2;border-radius:10px;background:#fff;font:inherit}
+    .iam-class-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+    .iam-class-option{display:flex;align-items:center;gap:9px;min-height:52px;padding:10px;border:2px solid #dce8e4;border-radius:10px;background:#fbfdfc;font-weight:800;color:#17324d}
+    .iam-class-option:has(input:checked){border-color:#078c55;background:#eaf7f2;color:#087c60}
+    .iam-class-option input{width:20px;height:20px;accent-color:#078c55}
+    .iam-actions{display:flex;gap:9px;flex-wrap:wrap}.iam-actions button{min-height:44px;padding:11px 14px;border:0;border-radius:9px;font-weight:900}
+    .iam-save{background:#078c55;color:#fff}.iam-clear{background:#eef2f6;color:#344054}
+    .iam-status{min-height:18px;margin:10px 0 0;font-size:13px;font-weight:800;color:#087c60}
+    .iam-help{font-size:13px;color:#667085;margin:-5px 0 12px}
+    .iam-saved-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid #edf1f4}
+    .iam-saved-row:last-child{border-bottom:0}.iam-saved-row strong{display:block;color:#17324d;font-size:15px}
+    .iam-saved-row small{display:block;color:#087c60;font-weight:800;line-height:1.6;margin-top:4px}
+    .iam-remove{flex:none;background:#fff0f2;color:#d92d43;border:0;border-radius:8px;padding:8px 10px;font-weight:800}
+    .iam-empty{padding:16px;text-align:center;color:#667085;background:#f8fafc;border:1px dashed #cbd6e2;border-radius:10px}
+    @media(max-width:600px){.iam-form,.iam-saved{padding:13px}.iam-class-grid{grid-template-columns:1fr 1fr}.iam-saved-row{gap:8px}.iam-saved-row strong{font-size:14px}.iam-remove{padding:8px}}
+  </style>
 </div>
 
 <div id="myTimetableView" class="section-view" style="display:none">
@@ -5602,6 +5646,76 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       if(preview)preview.innerHTML="<span>PHOTO</span>";
     },0);
   });
+})();
+</script>
+
+<script>
+/* Independent teacher: locally managed subject/class assignments.
+   School-connected accounts continue to use registrar assignments only. */
+(function(){
+  const subjects=['Agricultural Science','Basic Science & Technology','Basic Technology','Christian Religious Studies','Civic Education','Computer Studies','Cultural & Creative Arts','English Studies','French','Hausa','Home Economics','Igbo','Islamic Religious Studies','Mathematics','Physical & Health Education','Religious Studies','Security Education','Social Studies','Yoruba'];
+  const classes=['Primary 1','Primary 2','Primary 3','Primary 4','Primary 5','Primary 6'];
+  const $=id=>document.getElementById(id);
+  const escapeHTML=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  function connected(){return typeof window.teacherIsSchoolConnected==='function'&&window.teacherIsSchoolConnected();}
+  function key(){return 'teacherTeachingAssignments_'+(window.firebaseTeacherUID||'unauthenticated');}
+  function read(){
+    try{
+      const raw=localStorage.getItem(key());
+      const arr=raw?JSON.parse(raw):[];
+      return Array.isArray(arr)?arr.map(a=>({subject:String(a.subject||'').trim(),className:String(a.className||a.class||'').trim()})).filter(a=>a.subject&&a.className):[];
+    }catch(e){return [];}
+  }
+  function renderSaved(){
+    const host=$('iamSavedList'); if(!host)return;
+    if(connected()){
+      const manager=$('independentAssignmentManager'); if(manager)manager.style.display='none';
+      return;
+    }
+    const data=read(),groups=[];
+    data.forEach(a=>{let g=groups.find(x=>x.subject.toLowerCase()===a.subject.toLowerCase());if(!g){g={subject:a.subject,classes:[]};groups.push(g)}if(!g.classes.includes(a.className))g.classes.push(a.className)});
+    host.innerHTML=groups.length?groups.map(g=>'<div class="iam-saved-row"><div><strong>'+escapeHTML(g.subject)+'</strong><small>'+g.classes.map(escapeHTML).join(' · ')+'</small></div><button type="button" class="iam-remove" data-remove="'+escapeHTML(g.subject)+'">Remove</button></div>').join(''):'<div class="iam-empty">No subjects saved yet. Select a subject and its classes above to begin.</div>';
+    host.querySelectorAll('[data-remove]').forEach(btn=>btn.addEventListener('click',()=>removeSubject(btn.getAttribute('data-remove'))));
+  }
+  function notifyChanges(){
+    window.dispatchEvent(new Event('teacherAssignmentsUpdated'));
+    if(typeof window.loadDashboardTeacherSubjects==='function')window.loadDashboardTeacherSubjects();
+    if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
+  }
+  function save(){
+    if(connected()){const st=$('iamStatus');if(st)st.textContent='Your school connection is active. Subjects and classes are managed by your registrar.';return;}
+    const subject=$('iamSubject')?.value||'';
+    const selected=Array.from(document.querySelectorAll('#iamClasses input:checked')).map(x=>x.value);
+    const status=$('iamStatus');
+    if(!subject){if(status)status.textContent='Please select a subject.';return;}
+    if(!selected.length){if(status)status.textContent='Please select at least one class.';return;}
+    const data=read().filter(a=>a.subject.toLowerCase()!==subject.toLowerCase());
+    selected.forEach(className=>data.push({subject,className}));
+    localStorage.setItem(key(),JSON.stringify(data));
+    if(status)status.textContent=subject+' saved for '+selected.join(', ')+'.';
+    renderSaved();notifyChanges();
+    $('iamSubject').value='';
+    document.querySelectorAll('#iamClasses input').forEach(x=>x.checked=false);
+  }
+  function removeSubject(subject){
+    if(connected())return;
+    localStorage.setItem(key(),JSON.stringify(read().filter(a=>a.subject.toLowerCase()!==String(subject).toLowerCase())));
+    const status=$('iamStatus');if(status)status.textContent=subject+' removed from your teaching assignments.';
+    renderSaved();notifyChanges();
+  }
+  function init(){
+    const select=$('iamSubject'),classesHost=$('iamClasses');
+    if(!select||!classesHost)return;
+    select.innerHTML='<option value="">Choose a subject</option>'+subjects.map(x=>'<option value="'+escapeHTML(x)+'">'+escapeHTML(x)+'</option>').join('');
+    classesHost.innerHTML=classes.map(x=>'<label class="iam-class-option"><input type="checkbox" value="'+escapeHTML(x)+'"><span>'+escapeHTML(x)+'</span></label>').join('');
+    $('iamSaveBtn')?.addEventListener('click',save);
+    $('iamClearBtn')?.addEventListener('click',()=>{if(select)select.value='';classesHost.querySelectorAll('input').forEach(x=>x.checked=false);const st=$('iamStatus');if(st)st.textContent='Selection cleared.';});
+    renderSaved();
+    if(connected()){$('independentAssignmentManager').style.display='none';}
+  }
+  window.addEventListener('teacherAssignmentsUpdated',renderSaved);
+  window.addEventListener('load',init);
+  window.renderIndependentTeachingAssignments=renderSaved;
 })();
 </script>
 </body>
