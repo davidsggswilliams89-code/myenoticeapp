@@ -1,8 +1,9 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Primary School Curriculum</title><style>*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f3f7f6;color:#173d3a}.top{background:#087b68;color:#fff;padding:28px 18px;text-align:center}.top h1{margin:0 0 8px;font-size:28px}.top p{margin:0;opacity:.92}.container{max-width:900px;margin:auto;padding:18px}.note{background:#fff8df;border-left:5px solid #d5a900;padding:14px;border-radius:10px;margin-bottom:18px}.filters{background:#fff;padding:15px;border-radius:14px;display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;box-shadow:0 3px 15px #0001}select{padding:10px;border:1px solid #d8e4e1;border-radius:8px;min-width:180px}.class-section{background:#fff;border-radius:18px;padding:18px;margin:20px 0;box-shadow:0 4px 18px #0000000d}.section-head{display:flex;justify-content:space-between;gap:15px;align-items:center;border-bottom:1px solid #e5eeee;padding-bottom:15px}.badge{display:inline-block;background:#087b68;color:#fff;padding:7px 12px;border-radius:999px;font-weight:bold;font-size:13px}.section-head h1{margin:10px 0 3px;font-size:24px}.section-head p{margin:0;color:#687c7a}.summary{background:#e8f7f3;border-radius:12px;padding:12px 16px;text-align:center}.summary b{display:block;font-size:25px;color:#087b68}.summary small{color:#55706c}.week{border:1px solid #e1e9e7;border-radius:14px;margin-top:15px;overflow:hidden}.week-title{background:#edf8f5;padding:13px 15px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}.week-title span{font-weight:bold;color:#087b68}.week-title h2{margin:0;font-size:18px;flex:1}.week-title em{font-size:12px;color:#6d7c79}.period{padding:14px 15px;border-top:1px solid #edf0ef}.period-head{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}.period-head span{background:#0d8d78;color:#fff;padding:5px 9px;border-radius:7px;font-size:12px;font-weight:bold}.period-head b{font-size:16px;line-height:1.4}.period ul{margin:10px 0 12px 20px;padding:0;color:#536663}.period li{margin:5px 0}.source-note{font-size:13px;color:#657976;background:#f7fbfa;padding:10px 12px;border-radius:8px}.week summary{cursor:pointer;list-style:none}.week summary::-webkit-details-marker{display:none}.period h3{margin:5px 0 10px;color:#087b68}.period details{margin:8px 0}.footer{text-align:center;color:#6d7c79;padding:20px;font-size:12px}</style></head><body><header class="top"><h1>📚 Primary School Curriculum</h1><p>Curriculum source • Primary 4–6 • Subjects and terms</p></header><main class="container"><div class="note"><b>This is the curriculum source used by the Teacher Dashboard.</b><br>The Lesson Library in <code>index.html</code> reads the structured data below. The visible page lets you inspect exactly what has been added.</div><div class="filters"><select id="viewClass"><option value="">All Classes</option></select><select id="viewSubject"><option value="">All Subjects</option></select><select id="viewTerm"><option value="">All Terms</option><option>First Term</option><option>Second Term</option><option>Third Term</option></select></div><div id="preview"></div></main><div class="footer">Curriculum source • Data is embedded in this HTML for the dashboard to query.</div><script id="curriculum-data" type="application/json">
 
 
+
 {
-  "version": 11,
+  "version": 12,
   "records": [
     {
       "className": "Primary 5",
@@ -1690,7 +1691,7 @@
       "className": "Primary 4",
       "subject": "Hausa",
       "term": "First Term",
-      "sourceNote": "An tsara wannan sashe bisa hoton tsarin koyarwar Hausa Language na Primary Four da aka bayar. An kiyaye sunayen maudu'ai da abubuwan da hoton ya nuna; wuraren da rubutu bai fito sarai ba an rubuta su a taƙaice ba tare da ƙirƙirar ƙarin maudu'ai ba.",
+      "sourceNote": "Primary 4 Hausa Language — First Term. An tsara darussa 9 cikakku. Dukkan lesson notes da lesson plans na wannan zangon suna cikin wannan bayanan curriculum; babu takaita darussa zuwa makonni 1–4 a wannan tushen.",
       "curriculum": [
         {
           "topic": "Kidaya",
@@ -1698,27 +1699,65 @@
             {
               "title": "Faɗar Alƙaluman Ƙidaya daga 51 zuwa 100",
               "subcontents": [
-                "Faɗar alƙaluman ƙidaya daga 51–100"
+                "Ƙidaya tana nuna adadin abubuwa.",
+                "Lambobi suna da jerin da ya kamata a bi.",
+                "A karanta lambobi daga 51 zuwa 100 da furuci mai kyau."
               ],
               "periodLabel": "Period 1"
-            },
-            {
-              "title": "Tantance Alƙaluman Ƙidaya daga 51 zuwa 100",
-              "subcontents": [
-                "Tantancewa da karanta alƙaluman ƙidaya daga 51–100"
-              ],
-              "periodLabel": "Period 2"
             }
           ]
         },
         {
-          "topic": "Insha'i na Baka",
+          "topic": "Kidaya",
           "periods": [
             {
-              "title": "Ma'anar Insha'i na Baka",
+              "title": "Tantance Alƙaluman Ƙidaya daga 51 zuwa 100",
               "subcontents": [
-                "Ma'anar insha'i na baka",
-                "Bayar da bayanai ko labarai tare da tambayoyi a ƙarshe"
+                "Tantancewa yana taimaka wa ɗalibi gane lamba da sunanta.",
+                "Lambar da ta gabata tana zuwa kafin wata lamba; wadda za ta biyo baya tana zuwa bayanta.",
+                "Ana cike guraben lambobi ta bin jerinsu."
+              ],
+              "periodLabel": "Period 1"
+            }
+          ]
+        },
+        {
+          "topic": "Insha’in Baka",
+          "periods": [
+            {
+              "title": "Ma’anar Insha’in Baka da Muhimmancinsa",
+              "subcontents": [
+                "Insha’in baka shi ne bayyana tunani ko bayani ta baki.",
+                "Yana inganta magana, sauraro da ƙarfin hali.",
+                "Magana mai kyau tana buƙatar tsari, furuci da ladabi."
+              ],
+              "periodLabel": "Period 1"
+            }
+          ]
+        },
+        {
+          "topic": "Insha’in Baka",
+          "periods": [
+            {
+              "title": "Ba da Labari da Bayyana Bayanai",
+              "subcontents": [
+                "Labari yana da gabatarwa, tsakiyar labari da ƙarshe.",
+                "A jera abubuwan da suka faru bisa tsarinsu.",
+                "A yi amfani da jimloli masu ma’ana da furuci mai kyau."
+              ],
+              "periodLabel": "Period 1"
+            }
+          ]
+        },
+        {
+          "topic": "Insha’in Baka",
+          "periods": [
+            {
+              "title": "Sauraro, Fahimta da Amsa Tambayoyi",
+              "subcontents": [
+                "Sauraro mai kyau yana buƙatar natsuwa da mayar da hankali.",
+                "A kula da mutane, wuri, lokaci da abubuwan da suka faru.",
+                "Amsa tambaya bisa labari, ba zato ba."
               ],
               "periodLabel": "Period 1"
             }
@@ -1728,18 +1767,27 @@
           "topic": "Gajerun Wasannin Kwaikwayo",
           "periods": [
             {
-              "title": "Karanta Gajerun Wasannin Kwaikwayo",
+              "title": "Ma’ana da Abubuwan da Ke Cikin Wasan Kwaikwayo",
               "subcontents": [
-                "Karanta wasu wasannin kwaikwayo daga littafi"
+                "Wasan kwaikwayo yana nuna labari ta hanyar magana da aiki.",
+                "Jarumai da tattaunawa muhimman abubuwa ne a wasan.",
+                "Wasan kwaikwayo na iya koyar da tarbiyya da haɗin kai."
               ],
               "periodLabel": "Period 1"
-            },
+            }
+          ]
+        },
+        {
+          "topic": "Gajerun Wasannin Kwaikwayo",
+          "periods": [
             {
-              "title": "Misalan Wasan Kwaikwayo",
+              "title": "Karatun Wasan Kwaikwayo da Gane Saƙonsa",
               "subcontents": [
-                "Bayar da misalan wasan kwaikwayo"
+                "A karanta maganganun jarumai a sarari.",
+                "Saƙon wasa shi ne darasi da ake koya daga wasan.",
+                "Haɗin kai da mutunta abokan wasa suna da muhimmanci."
               ],
-              "periodLabel": "Period 2"
+              "periodLabel": "Period 1"
             }
           ]
         },
@@ -1747,10 +1795,25 @@
           "topic": "Aure",
           "periods": [
             {
-              "title": "Bayanin Aure da Matakan Yin Aure",
+              "title": "Ma’anar Aure da Muhimmancin Iyali",
               "subcontents": [
-                "Bayanin aure",
-                "Bayanin matakan yin aure"
+                "Aure tsarin zamantakewa ne tsakanin manya bisa dokoki da al’adu masu dacewa.",
+                "Iyali na bayar da kulawa, tarbiyya da tallafi.",
+                "Gaskiya, haƙuri da mutunta juna suna taimaka wa zaman lafiya."
+              ],
+              "periodLabel": "Period 1"
+            }
+          ]
+        },
+        {
+          "topic": "Aure",
+          "periods": [
+            {
+              "title": "Matakan Gabaɗaya na Gudanar da Aure da Alhakin Iyali",
+              "subcontents": [
+                "Matakan aure suna bambanta bisa al’ada, addini da dokoki.",
+                "Tattaunawa da mutunta juna suna da muhimmanci.",
+                "Iyali suna buƙatar kulawa, gaskiya da ɗaukar alhaki."
               ],
               "periodLabel": "Period 1"
             }
@@ -1763,114 +1826,180 @@
           "period": 1,
           "topic": "Kidaya",
           "subtopic": "Faɗar Alƙaluman Ƙidaya daga 51 zuwa 100",
-          "introduction": "A wannan darasi, ɗalibai za su koyi faɗar alƙaluman ƙidaya daga 51 zuwa 100 ta hanyar bayani, misalai da ayyukan aji.",
-          "content": "<h3>Ma'anar ƙidaya</h3><p>Ƙidaya ita ce faɗa ko rubuta lambobi cikin tsari. Ana amfani da ƙidaya wajen sanin adadin mutane, kayayyaki da sauran abubuwa.</p><h3>Ƙidaya daga 51 zuwa 100</h3><p>Dalibai su karanta lambobi daga hamsin da ɗaya zuwa ɗari. Malami zai jagoranci ƙidaya a jere, sannan ya nuna lambobi a katuna ko a allo domin a karanta su.</p><p>A wajen tantancewa, ɗalibai za su gane lambar da malami ya nuna, su faɗi lambar da ta gabata ko wadda za ta biyo baya, sannan su cike lambobin da suka ɓace.</p>",
+          "introduction": "A wannan darasi, ɗalibai za su karanta da faɗin lambobi daga 51 zuwa 100, su gane yadda ake jera su, sannan su yi amfani da su wajen ƙidaya abubuwa.",
+          "content": "<h3>Ma’anar ƙidaya</h3><p>Ƙidaya ita ce faɗa ko rubuta lambobi cikin tsari domin sanin adadin mutane, dabbobi, kayayyaki ko wasu abubuwa. Ana amfani da ƙidaya a gida, a kasuwa, a makaranta da sauran wurare.</p><h3>Faɗar lambobi daga 51 zuwa 100</h3><p>Ɗalibai su karanta lambobi a jere daga hamsin da ɗaya zuwa ɗari. Malami ya rubuta lambobi a allo, ya karanta su a hankali, sannan ɗalibai su maimaita. A kula da furuci da bambancin lambobi kamar 56, 65, 76 da 87.</p><h3>Misalai da aiki</h3><p>Malami ya nuna katunan lambobi kamar 51, 64, 78, 90 da 100. Ɗalibai su faɗi kowace lamba, su ƙidaya abubuwa a rukuni, sannan su rubuta lambobi biyar da aka faɗa musu.</p>",
           "keyPoints": [
-            "Faɗar alƙaluman ƙidaya daga 51–100",
-            "Ɗalibai su yi amfani da abin da suka koya wajen amsa tambayoyi da yin aikin aji."
+            "Ƙidaya tana nuna adadin abubuwa.",
+            "Lambobi suna da jerin da ya kamata a bi.",
+            "A karanta lambobi daga 51 zuwa 100 da furuci mai kyau."
           ],
-          "summary": "An kammala darasin faɗar alƙaluman ƙidaya daga 51 zuwa 100. Ɗalibai su tuna da ma'anoni da misalan da aka tattauna.",
+          "summary": "Ƙidaya ita ce faɗa ko rubuta lambobi cikin tsari. A wannan darasi an karanta lambobi daga 51 zuwa 100.",
           "evaluation": [
-            "Faɗi lambobi daga 51 zuwa 60 a jere.",
-            "Wace lamba ce take zuwa bayan 79?",
-            "Rubuta lambobi biyar tsakanin 51 da 100."
+            "Mene ne ƙidaya?",
+            "Faɗi lambobi 51 zuwa 60.",
+            "Rubuta lambobi uku tsakanin 70 da 90."
           ],
-          "assignment": "Rubuta ko bayyana muhimman abubuwa uku da aka koya a darasin “Faɗar Alƙaluman Ƙidaya daga 51 zuwa 100”."
-        },
-        {
-          "week": 1,
-          "period": 2,
-          "topic": "Kidaya",
-          "subtopic": "Tantance Alƙaluman Ƙidaya daga 51 zuwa 100",
-          "introduction": "A wannan darasi, ɗalibai za su koyi tantance alƙaluman ƙidaya daga 51 zuwa 100 ta hanyar bayani, misalai da ayyukan aji.",
-          "content": "<h3>Ma'anar ƙidaya</h3><p>Ƙidaya ita ce faɗa ko rubuta lambobi cikin tsari. Ana amfani da ƙidaya wajen sanin adadin mutane, kayayyaki da sauran abubuwa.</p><h3>Ƙidaya daga 51 zuwa 100</h3><p>Dalibai su karanta lambobi daga hamsin da ɗaya zuwa ɗari. Malami zai jagoranci ƙidaya a jere, sannan ya nuna lambobi a katuna ko a allo domin a karanta su.</p><p>A wajen tantancewa, ɗalibai za su gane lambar da malami ya nuna, su faɗi lambar da ta gabata ko wadda za ta biyo baya, sannan su cike lambobin da suka ɓace.</p>",
-          "keyPoints": [
-            "Tantancewa da karanta alƙaluman ƙidaya daga 51–100",
-            "Ɗalibai su yi amfani da abin da suka koya wajen amsa tambayoyi da yin aikin aji."
-          ],
-          "summary": "An kammala darasin tantance alƙaluman ƙidaya daga 51 zuwa 100. Ɗalibai su tuna da ma'anoni da misalan da aka tattauna.",
-          "evaluation": [
-            "Faɗi lambobi daga 51 zuwa 60 a jere.",
-            "Wace lamba ce take zuwa bayan 79?",
-            "Rubuta lambobi biyar tsakanin 51 da 100."
-          ],
-          "assignment": "Rubuta ko bayyana muhimman abubuwa uku da aka koya a darasin “Tantance Alƙaluman Ƙidaya daga 51 zuwa 100”."
+          "assignment": "Rubuta lambobi goma daga 51 zuwa 100 da sunayensu a Hausa."
         },
         {
           "week": 2,
           "period": 1,
-          "topic": "Insha'i na Baka",
-          "subtopic": "Ma'anar Insha'i na Baka",
-          "introduction": "A wannan darasi, ɗalibai za su koyi ma'anar insha'i na baka ta hanyar bayani, misalai da ayyukan aji.",
-          "content": "<h3>Ma'anar insha'i na baka</h3><p>Insha'i na baka shi ne bayyana tunani, bayani ko labari ta hanyar magana ba tare da rubutawa ba. Ana amfani da shi wajen koyon magana mai tsari da bayyana ra'ayi.</p><p>Lokacin ba da labari, mai magana ya kamata ya bayyana abin da ya faru a jere, ya yi amfani da kalmomi masu sauƙi, kuma ya saurari tambayoyin masu sauraro.</p><h3>Misali</h3><p>Dalibi zai ba da labarin yadda ya shirya zuwa makaranta, sannan abokan aji su yi tambayoyi game da labarin.</p>",
+          "topic": "Kidaya",
+          "subtopic": "Tantance Alƙaluman Ƙidaya daga 51 zuwa 100",
+          "introduction": "Darasin ya ƙarfafa karatu da tantance lambobi daga 51 zuwa 100, gano lambar da ta gabata da wadda za ta biyo baya, da cike lambobin da suka ɓace.",
+          "content": "<h3>Tantance lambobi</h3><p>Tantance lamba yana nufin gane ta, faɗin sunanta, rubuta ta da bambance ta da sauran lambobi. Bayan an karanta lamba, za a iya gano wadda take gabanta da wadda take bayanta.</p><h3>Jerin lambobi</h3><p>Misali, bayan 58 akwai 59, sannan 60. Kafin 75 akwai 74, bayan 75 kuma akwai 76. Idan an rubuta 81, 82, __, 84, lambar da ta ɓace ita ce 83.</p><h3>Aikin tantancewa</h3><p>Malami ya rubuta jerin lambobi masu gurbi a allo. Ɗalibai su cike guraben, su karanta lambobin, sannan su kwatanta lambobin da suka fi girma ko ƙanƙanta.</p>",
           "keyPoints": [
-            "Ma'anar insha'i na baka",
-            "Ɗalibai su yi amfani da abin da suka koya wajen amsa tambayoyi da yin aikin aji."
+            "Tantancewa yana taimaka wa ɗalibi gane lamba da sunanta.",
+            "Lambar da ta gabata tana zuwa kafin wata lamba; wadda za ta biyo baya tana zuwa bayanta.",
+            "Ana cike guraben lambobi ta bin jerinsu."
           ],
-          "summary": "An kammala darasin ma'anar insha'i na baka. Ɗalibai su tuna da ma'anoni da misalan da aka tattauna.",
+          "summary": "An yi atisaye kan gane, karantawa da jera lambobi daga 51 zuwa 100.",
           "evaluation": [
-            "Mene ne insha'i na baka?",
-            "Ka ba da misalin labarin da za a iya bayarwa da baki.",
-            "Me ya kamata mai ba da labari ya yi?"
+            "Wace lamba ce bayan 69?",
+            "Wace lamba ce kafin 91?",
+            "Cika gurbin: 86, 87, __, 89."
           ],
-          "assignment": "Rubuta ko bayyana muhimman abubuwa uku da aka koya a darasin “Ma'anar Insha'i na Baka”."
+          "assignment": "Ƙirƙiri jerin lambobi uku masu gurbi, ka cike su da amsoshi."
         },
         {
           "week": 3,
           "period": 1,
-          "topic": "Gajerun Wasannin Kwaikwayo",
-          "subtopic": "Karanta Gajerun Wasannin Kwaikwayo",
-          "introduction": "A wannan darasi, ɗalibai za su koyi karanta gajerun wasannin kwaikwayo ta hanyar bayani, misalai da ayyukan aji.",
-          "content": "<p>Malami zai gabatar da ma'anar maudu'in, ya yi bayani da misalai masu dacewa da matakin Primary 4, sannan ɗalibai su yi aikin fahimta.</p>",
+          "topic": "Insha’in Baka",
+          "subtopic": "Ma’anar Insha’in Baka da Muhimmancinsa",
+          "introduction": "A wannan darasi, ɗalibai za su fahimci ma’anar insha’in baka da yadda ake amfani da magana wajen bayyana tunani, labari ko bayani.",
+          "content": "<h3>Ma’anar insha’in baka</h3><p>Insha’in baka shi ne bayyana tunani, labari ko bayani da baki cikin tsari domin masu sauraro su fahimta. Ana amfani da shi a tattaunawa, ba da labari, bayyana abin da ya faru da amsa tambayoyi.</p><h3>Muhimmancinsa</h3><p>Insha’in baka yana taimaka wa ɗalibi ya yi magana da ƙarfin hali, ya faɗi ra’ayinsa, ya inganta furuci, ya saurari wasu kuma ya tsara bayanai. Yana kuma taimakawa wajen koyon sababbin kalmomi da sadarwa cikin ladabi.</p><h3>Abubuwan da ke inganta magana</h3><p>A yi magana a sarari, a yi amfani da kalmomin da suka dace, a bi tsari, a saurari mai magana kuma a guji katse mutane.</p>",
           "keyPoints": [
-            "Karanta wasu wasannin kwaikwayo daga littafi",
-            "Ɗalibai su yi amfani da abin da suka koya wajen amsa tambayoyi da yin aikin aji."
+            "Insha’in baka shi ne bayyana tunani ko bayani ta baki.",
+            "Yana inganta magana, sauraro da ƙarfin hali.",
+            "Magana mai kyau tana buƙatar tsari, furuci da ladabi."
           ],
-          "summary": "An kammala darasin karanta gajerun wasannin kwaikwayo. Ɗalibai su tuna da ma'anoni da misalan da aka tattauna.",
+          "summary": "Insha’in baka yana taimaka wa mutum ya bayyana tunani da bayani a sarari domin wasu su fahimta.",
           "evaluation": [
-            "Mene ne karin magana?",
-            "Ka ba da misalan karin magana guda biyu.",
-            "Bayyana ma'anar ɗaya daga cikin karin maganganun."
+            "Mene ne insha’in baka?",
+            "Ambaci muhimmancinsa guda biyu.",
+            "Faɗi halaye biyu na mai magana mai kyau."
           ],
-          "assignment": "Rubuta ko bayyana muhimman abubuwa uku da aka koya a darasin “Karanta Gajerun Wasannin Kwaikwayo”."
-        },
-        {
-          "week": 3,
-          "period": 2,
-          "topic": "Gajerun Wasannin Kwaikwayo",
-          "subtopic": "Misalan Wasan Kwaikwayo",
-          "introduction": "A wannan darasi, ɗalibai za su koyi misalan wasan kwaikwayo ta hanyar bayani, misalai da ayyukan aji.",
-          "content": "<h3>Ma'anar wasan kwaikwayo</h3><p>Wasan kwaikwayo shi ne kwaikwayon halin mutane ko abubuwan da ke faruwa domin nishaɗi ko koyar da darasi. Ana iya yin sa a aji ta hanyar raba ɗalibai zuwa matsayi daban-daban.</p><p>Misali, ɗalibai za su iya kwaikwayon malami da ɗalibi, mai sayarwa da mai saye, ko yadda ake gaisuwa cikin ladabi. A karatu, a kula da lafazi, fahimta da bin jeren abubuwan da ke faruwa.</p>",
-          "keyPoints": [
-            "Bayar da misalan wasan kwaikwayo",
-            "Ɗalibai su yi amfani da abin da suka koya wajen amsa tambayoyi da yin aikin aji."
-          ],
-          "summary": "An kammala darasin misalan wasan kwaikwayo. Ɗalibai su tuna da ma'anoni da misalan da aka tattauna.",
-          "evaluation": [
-            "Mene ne wasan kwaikwayo?",
-            "Ka ba da misalai biyu na wasan kwaikwayo.",
-            "Me ya kamata a kula da shi yayin kwaikwayo?"
-          ],
-          "assignment": "Rubuta ko bayyana muhimman abubuwa uku da aka koya a darasin “Misalan Wasan Kwaikwayo”."
+          "assignment": "Yi shiri don ba da ɗan bayani na minti ɗaya game da iyalinka ko makaranta."
         },
         {
           "week": 4,
           "period": 1,
-          "topic": "Aure",
-          "subtopic": "Bayanin Aure da Matakan Yin Aure",
-          "introduction": "A wannan darasi, ɗalibai za su koyi bayanin aure da matakan yin aure ta hanyar bayani, misalai da ayyukan aji.",
-          "content": "Ma'anar aure\nAure shi ne haɗin kai na zamantakewa tsakanin ma'aurata bisa al'ada da dokokin da suka dace. Aure yana da alhaki, mutunta juna da kula da iyali.\nMatakan yin aure\nA al'ummar Hausawa, ana iya samun neman aure, bincike da amincewar iyalai, sa rana, daurin aure da shagulgulan da suka dace. Matakai na iya bambanta bisa iyali, addini da al'ada.\nYa kamata a tattauna wannan batu cikin mutunci, ba tare da nuna wariya ko tilastawa ba.",
+          "topic": "Insha’in Baka",
+          "subtopic": "Ba da Labari da Bayyana Bayanai",
+          "introduction": "Ɗalibai za su koyi tsara labari da gabatar da shi a jere, daga gabatarwa zuwa abin da ya faru da ƙarshe.",
+          "content": "<h3>Tsarin labari</h3><p>Labari mai tsari yana da gabatarwa, tsakiyar labari da ƙarshe. Gabatarwa tana bayyana mutane ko wurin da labari ya shafa. Tsakiyar labari tana bayyana abin da ya faru, yayin da ƙarshe yake nuna yadda labarin ya ƙare.</p><h3>Yadda ake ba da labari</h3><p>A fara da gabatar da batun, a jera abubuwan da suka faru yadda suka biyo juna, sannan a yi amfani da jimloli masu ma’ana. Ya dace a yi magana a sarari kuma a guji ƙara bayanan da ba su dace da labarin ba.</p><h3>Misali</h3><p>“Da safe na tashi na shirya zuwa makaranta. Na gaisa da malamaina, na halarci darasi, sannan na koma gida bayan an tashi.” Wannan labari yana da tsari kuma abubuwan sun biyo juna.</p>",
           "keyPoints": [
-            "Bayanin aure",
-            "Ɗalibai su yi amfani da abin da suka koya wajen amsa tambayoyi da yin aikin aji."
+            "Labari yana da gabatarwa, tsakiyar labari da ƙarshe.",
+            "A jera abubuwan da suka faru bisa tsarinsu.",
+            "A yi amfani da jimloli masu ma’ana da furuci mai kyau."
           ],
-          "summary": "An kammala darasin bayanin aure da matakan yin aure. Ɗalibai su tuna da ma'anoni da misalan da aka tattauna.",
+          "summary": "Ba da labari mai kyau yana buƙatar tsari, jera abubuwa da magana a sarari.",
+          "evaluation": [
+            "Ambaci sassa uku na labari.",
+            "Me ya sa ake jera abubuwan labari?",
+            "Ba da ɗan labari mai jimloli uku."
+          ],
+          "assignment": "Rubuta ko shirya ɗan labari game da ranar da ka yi farin ciki."
+        },
+        {
+          "week": 5,
+          "period": 1,
+          "topic": "Insha’in Baka",
+          "subtopic": "Sauraro, Fahimta da Amsa Tambayoyi",
+          "introduction": "Darasin yana koyar da sauraro da kyau, gano muhimman bayanai a labari da amsa tambayoyi bisa abin da aka ji.",
+          "content": "<h3>Sauraro mai kyau</h3><p>Sauraro mai kyau shi ne mayar da hankali ga mai magana domin fahimtar saƙonsa. Mai sauraro ya guji hayaniya, ya jira mai magana ya gama sannan ya amsa.</p><h3>Gano muhimman bayanai</h3><p>Yayin sauraron labari, a kula da sunayen mutane, wurare, lokaci, abin da ya faru da dalilin abin da ya faru. Waɗannan bayanai suna taimakawa wajen amsa tambayoyi da ba da labarin daidai.</p><h3>Amsa tambayoyi</h3><p>Malami ya karanta gajeren labari sau ɗaya ko biyu. Ɗalibai su amsa tambayoyi cikin cikakkun jimloli kuma su dogara da bayanan da ke cikin labarin.</p>",
+          "keyPoints": [
+            "Sauraro mai kyau yana buƙatar natsuwa da mayar da hankali.",
+            "A kula da mutane, wuri, lokaci da abubuwan da suka faru.",
+            "Amsa tambaya bisa labari, ba zato ba."
+          ],
+          "summary": "Sauraro da kyau yana taimaka wa ɗalibai su fahimci labari kuma su amsa tambayoyi daidai.",
+          "evaluation": [
+            "Me ake nufi da sauraro mai kyau?",
+            "Ambaci bayanai uku da za a kula da su a labari.",
+            "Me ya kamata a yi kafin amsa tambaya?"
+          ],
+          "assignment": "Ka saurari labari daga malami ko iyaye, sannan ka rubuta amsoshin tambayoyi uku game da shi."
+        },
+        {
+          "week": 6,
+          "period": 1,
+          "topic": "Gajerun Wasannin Kwaikwayo",
+          "subtopic": "Ma’ana da Abubuwan da Ke Cikin Wasan Kwaikwayo",
+          "introduction": "Ɗalibai za su fahimci ma’anar wasan kwaikwayo da abubuwan da ake samu a cikinsa.",
+          "content": "<h3>Ma’anar wasan kwaikwayo</h3><p>Wasan kwaikwayo shi ne gabatar da labari ko wani yanayi ta hanyar magana da ayyukan jarumai a gaban masu kallo ko masu sauraro. Ana iya yin sa a aji, a makaranta ko a wani taro.</p><h3>Abubuwan da ke cikin wasan kwaikwayo</h3><p>Wasan kwaikwayo na iya ƙunsar jarumai, tattaunawa, wuri, abin da ya faru da saƙo. Jarumai su ne mutanen da ke taka rawa. Tattaunawa ita ce maganganun da suke yi, yayin da saƙo yake nuna darasin da wasan ke koyarwa.</p><h3>Amfanin wasan kwaikwayo</h3><p>Yana taimaka wa ɗalibai su yi magana a sarari, su yi aiki tare, su ƙara ƙarfin hali kuma su fahimci halaye masu kyau kamar gaskiya, ladabi da taimakon juna.</p>",
+          "keyPoints": [
+            "Wasan kwaikwayo yana nuna labari ta hanyar magana da aiki.",
+            "Jarumai da tattaunawa muhimman abubuwa ne a wasan.",
+            "Wasan kwaikwayo na iya koyar da tarbiyya da haɗin kai."
+          ],
+          "summary": "Wasan kwaikwayo hanya ce ta gabatar da labari ta hanyar jarumai, tattaunawa da ayyuka.",
+          "evaluation": [
+            "Mene ne wasan kwaikwayo?",
+            "Ambaci abubuwa uku da ke cikinsa.",
+            "Faɗi amfanin wasan kwaikwayo guda biyu."
+          ],
+          "assignment": "Rubuta sunayen jarumai biyu da za su iya fitowa a wasan kwaikwayo game da makaranta."
+        },
+        {
+          "week": 7,
+          "period": 1,
+          "topic": "Gajerun Wasannin Kwaikwayo",
+          "subtopic": "Karatun Wasan Kwaikwayo da Gane Saƙonsa",
+          "introduction": "A wannan darasi, ɗalibai za su karanta gajeren wasan kwaikwayo, su rarrabe matsayin jarumai kuma su bayyana saƙon wasan.",
+          "content": "<h3>Karatun wasan</h3><p>Yayin karanta wasan kwaikwayo, kowane ɗalibi ya karanta maganar jarumin da aka ba shi. A furta kalmomi a sarari, a tsaya inda ya dace, kuma a saurari sauran jarumai domin tattaunawar ta gudana cikin tsari.</p><h3>Gane saƙon wasan</h3><p>Saƙon wasa shi ne darasi ko tunanin da marubuci yake son masu kallo su fahimta. Wasan da ya nuna yaro yana taimaka wa abokinsa na iya koyar da tausayi da haɗin kai. Wasan da ya nuna gaskiya na iya koyar da faɗin gaskiya da ɗaukar alhaki.</p><h3>Shiga rawa</h3><p>Ɗalibai su raba matsayin jarumai, su karanta ko gabatar da maganganu, sannan su tattauna abin da suka koya. A girmama kowane ɗan wasa kuma a guji yi wa aboki dariya saboda kuskuren karatu.</p>",
+          "keyPoints": [
+            "A karanta maganganun jarumai a sarari.",
+            "Saƙon wasa shi ne darasi da ake koya daga wasan.",
+            "Haɗin kai da mutunta abokan wasa suna da muhimmanci."
+          ],
+          "summary": "Karanta wasan kwaikwayo yana taimaka wa ɗalibai su fahimci jarumai da saƙon da wasan ke isarwa.",
+          "evaluation": [
+            "Me ake nufi da saƙon wasa?",
+            "Wane saƙo ne wasan taimakon aboki zai iya koyarwa?",
+            "Ambaci halaye biyu na ɗan wasa nagari."
+          ],
+          "assignment": "Tare da aboki, ku shirya gajeren tattaunawa mai jimloli huɗu kan gaskiya ko taimakon juna."
+        },
+        {
+          "week": 8,
+          "period": 1,
+          "topic": "Aure",
+          "subtopic": "Ma’anar Aure da Muhimmancin Iyali",
+          "introduction": "Darasin yana bayyana ma’anar aure a matsayin tsarin zamantakewa na manya, tare da jaddada mutunta juna, iyali da ɗaukar nauyi.",
+          "content": "<h3>Ma’anar aure</h3><p>Aure wata yarjejeniya ce ta zamantakewa tsakanin manya wadda ake gudanarwa bisa dokoki, al’ada da addinin da suka dace. Hanyoyin gudanar da aure suna iya bambanta tsakanin al’ummomi da iyalai.</p><h3>Muhimmancin iyali</h3><p>Iyali na taimaka wa yara wajen samun kulawa, tarbiyya, ilimi da tallafi. A cikin iyali, gaskiya, haƙuri, taimakon juna, mutunta juna da tattaunawa suna taimakawa wajen zaman lafiya.</p><h3>Alhaki da mutunta juna</h3><p>Manya suna da alhakin kula da iyali, samar da kariya da koyar da yara halaye nagari. Ya kamata a tattauna batun aure cikin ladabi, ba tare da raina al’ada ko addinin wani ba.</p>",
+          "keyPoints": [
+            "Aure tsarin zamantakewa ne tsakanin manya bisa dokoki da al’adu masu dacewa.",
+            "Iyali na bayar da kulawa, tarbiyya da tallafi.",
+            "Gaskiya, haƙuri da mutunta juna suna taimaka wa zaman lafiya."
+          ],
+          "summary": "Aure da iyali suna da matsayi a zamantakewa; mutunta juna da ɗaukar alhaki suna taimaka wa zaman lafiya.",
           "evaluation": [
             "Mene ne aure?",
-            "Ambaci wasu matakai na yin aure a al'adar da ka sani.",
-            "Me ya sa mutunta juna yake da muhimmanci?"
+            "Ambaci ayyuka biyu da iyali ke yi wa yara.",
+            "Faɗi halaye uku da ke taimaka wa zaman lafiya a iyali."
           ],
-          "assignment": "Rubuta ko bayyana muhimman abubuwa uku da aka koya a darasin “Bayanin Aure da Matakan Yin Aure”."
+          "assignment": "Rubuta halaye biyar da ke taimaka wa iyali su zauna cikin zaman lafiya."
+        },
+        {
+          "week": 9,
+          "period": 1,
+          "topic": "Aure",
+          "subtopic": "Matakan Gabaɗaya na Gudanar da Aure da Alhakin Iyali",
+          "introduction": "Darasin yana gabatar da matakai na gama-gari da ake iya samu wajen gudanar da aure, tare da bayyana cewa al’adu da dokoki suna bambanta.",
+          "content": "<h3>Matakai na gama-gari</h3><p>Matakan gudanar da aure suna bambanta bisa al’ada, addini, dokoki da shawarar iyalai. A wasu al’ummomi ana iya samun neman aure, tattaunawar iyalai, amincewa, cika sharuddan da suka dace, da gudanar da bikin aure. Ba lallai ne kowace al’umma ta bi matakai iri ɗaya ba.</p><h3>Shirye-shirye da ladabi</h3><p>Shirye-shiryen aure na iya haɗawa da tattaunawa tsakanin iyalai, tsara lokaci, shirya bukukuwa da tabbatar da cewa an bi dokokin da suka dace. Ya kamata a gudanar da tattaunawa cikin gaskiya da mutunta juna.</p><h3>Alhakin iyali</h3><p>Bayan aure, manya suna da alhakin kula da juna, gudanar da gida, tattaunawa kan matsaloli cikin natsuwa da kula da yara idan suna da su. Ilimi, mutunta juna da ɗaukar alhaki suna taimaka wa iyali.</p>",
+          "keyPoints": [
+            "Matakan aure suna bambanta bisa al’ada, addini da dokoki.",
+            "Tattaunawa da mutunta juna suna da muhimmanci.",
+            "Iyali suna buƙatar kulawa, gaskiya da ɗaukar alhaki."
+          ],
+          "summary": "An tattauna matakai na gama-gari na gudanar da aure da muhimmancin bin dokoki, al’ada da mutunta juna.",
+          "evaluation": [
+            "Ambaci matakai uku da za a iya samu wajen gudanar da aure.",
+            "Me ya sa matakan aure suke bambanta?",
+            "Ambaci alhaki biyu da ke taimaka wa iyali."
+          ],
+          "assignment": "Rubuta sakin layi game da muhimmancin gaskiya, haƙuri da mutunta juna a iyali."
         }
       ],
       "lessonPlans": [
@@ -1880,113 +2009,170 @@
           "duration": "Minti 40",
           "topic": "Kidaya",
           "subtopic": "Faɗar Alƙaluman Ƙidaya daga 51 zuwa 100",
-          "previous": "Ɗalibai suna da wasu ilimomi na yau da kullum game da magana, karatu da al'adun Hausawa.",
-          "objectives": "1. Ɗalibai su bayyana faɗar alƙaluman ƙidaya daga 51 zuwa 100.\n2. Ɗalibai su bayar da misalai masu dacewa.\n3. Ɗalibai su amsa tambayoyi game da darasin.",
-          "materials": "Littafin Hausa, allo da alli/marker, katunan kalmomi ko hotuna masu dacewa da darasi.",
-          "reference": "Duba shafi na manhaja (kamar yadda aka nuna a tsarin koyarwa); littafin Hausa na Primary 4.",
-          "entry": "Malami zai yi tambayoyi masu sauƙi kan abin da ɗalibai suka sani game da maudu'in.",
-          "content": "<h3>Ma'anar ƙidaya</h3><p>Ƙidaya ita ce faɗa ko rubuta lambobi cikin tsari. Ana amfani da ƙidaya wajen sanin adadin mutane, kayayyaki da sauran abubuwa.</p><h3>Ƙidaya daga 51 zuwa 100</h3><p>Dalibai su karanta lambobi daga hamsin da ɗaya zuwa ɗari. Malami zai jagoranci ƙidaya a jere, sannan ya nuna lambobi a katuna ko a allo domin a karanta su.</p><p>A wajen tantancewa, ɗalibai za su gane lambar da malami ya nuna, su faɗi lambar da ta gabata ko wadda za ta biyo baya, sannan su cike lambobin da suka ɓace.</p>",
-          "presentation": "<p><b>Mataki na 1:</b> Malami ya gabatar da maudu'i tare da tambayoyin farko.</p><p><b>Mataki na 2:</b> Malami ya yi bayani, ya rubuta muhimman kalmomi ko misalai a allo.</p><p><b>Mataki na 3:</b> Ɗalibai su karanta, su tattauna ko su yi kwaikwayo/aiki bisa maudu'in.</p><p><b>Mataki na 4:</b> Malami ya gyara kurakurai tare da taƙaita muhimman bayanai.</p>",
-          "teacher": "<p>Ya gabatar da darasi, ya yi bayani da misalai, ya jagoranci ayyukan ɗalibai, ya yi tambayoyi kuma ya gyara kurakurai.</p>",
-          "pupils": "<p>Za su saurara, su amsa tambayoyi, su yi aikin da aka ba su, su karanta ko su bayyana misalai bisa maudu'in.</p>",
-          "evaluation": "<ol><li>Faɗi lambobi daga 51 zuwa 60 a jere.</li><li>Wace lamba ce take zuwa bayan 79?</li><li>Rubuta lambobi biyar tsakanin 51 da 100.</li></ol>",
-          "conclusion": "<p>Malami ya sake jaddada muhimman bayanai sannan ya tabbatar da cewa ɗalibai sun fahimci darasin.</p>",
-          "assignment": "<p>Rubuta ko bayyana muhimman abubuwa uku da aka koya a darasin “Faɗar Alƙaluman Ƙidaya daga 51 zuwa 100”.</p>"
-        },
-        {
-          "week": 1,
-          "period": 2,
-          "duration": "Minti 40",
-          "topic": "Kidaya",
-          "subtopic": "Tantance Alƙaluman Ƙidaya daga 51 zuwa 100",
-          "previous": "Ɗalibai suna da wasu ilimomi na yau da kullum game da magana, karatu da al'adun Hausawa.",
-          "objectives": "1. Ɗalibai su bayyana tantance alƙaluman ƙidaya daga 51 zuwa 100.\n2. Ɗalibai su bayar da misalai masu dacewa.\n3. Ɗalibai su amsa tambayoyi game da darasin.",
-          "materials": "Littafin Hausa, allo da alli/marker, katunan kalmomi ko hotuna masu dacewa da darasi.",
-          "reference": "Duba shafi na manhaja (kamar yadda aka nuna a tsarin koyarwa); littafin Hausa na Primary 4.",
-          "entry": "Malami zai yi tambayoyi masu sauƙi kan abin da ɗalibai suka sani game da maudu'in.",
-          "content": "<h3>Ma'anar ƙidaya</h3><p>Ƙidaya ita ce faɗa ko rubuta lambobi cikin tsari. Ana amfani da ƙidaya wajen sanin adadin mutane, kayayyaki da sauran abubuwa.</p><h3>Ƙidaya daga 51 zuwa 100</h3><p>Dalibai su karanta lambobi daga hamsin da ɗaya zuwa ɗari. Malami zai jagoranci ƙidaya a jere, sannan ya nuna lambobi a katuna ko a allo domin a karanta su.</p><p>A wajen tantancewa, ɗalibai za su gane lambar da malami ya nuna, su faɗi lambar da ta gabata ko wadda za ta biyo baya, sannan su cike lambobin da suka ɓace.</p>",
-          "presentation": "<p><b>Mataki na 1:</b> Malami ya gabatar da maudu'i tare da tambayoyin farko.</p><p><b>Mataki na 2:</b> Malami ya yi bayani, ya rubuta muhimman kalmomi ko misalai a allo.</p><p><b>Mataki na 3:</b> Ɗalibai su karanta, su tattauna ko su yi kwaikwayo/aiki bisa maudu'in.</p><p><b>Mataki na 4:</b> Malami ya gyara kurakurai tare da taƙaita muhimman bayanai.</p>",
-          "teacher": "<p>Ya gabatar da darasi, ya yi bayani da misalai, ya jagoranci ayyukan ɗalibai, ya yi tambayoyi kuma ya gyara kurakurai.</p>",
-          "pupils": "<p>Za su saurara, su amsa tambayoyi, su yi aikin da aka ba su, su karanta ko su bayyana misalai bisa maudu'in.</p>",
-          "evaluation": "<ol><li>Faɗi lambobi daga 51 zuwa 60 a jere.</li><li>Wace lamba ce take zuwa bayan 79?</li><li>Rubuta lambobi biyar tsakanin 51 da 100.</li></ol>",
-          "conclusion": "<p>Malami ya sake jaddada muhimman bayanai sannan ya tabbatar da cewa ɗalibai sun fahimci darasin.</p>",
-          "assignment": "<p>Rubuta ko bayyana muhimman abubuwa uku da aka koya a darasin “Tantance Alƙaluman Ƙidaya daga 51 zuwa 100”.</p>"
+          "previous": "Ɗalibai suna da ilimin yau da kullum da ya shafi maudu’in daga gida, makaranta ko darussan baya.",
+          "objectives": "1. Ɗalibai su bayyana ma’anar ƙidaya.\n2. Ɗalibai su karanta lambobi daga 51 zuwa 100.\n3. Ɗalibai su rubuta lambobi da aka faɗa musu.",
+          "materials": "Katin lambobi, jadawalin ƙidaya, allo da alli/marker, littafin Hausa.",
+          "reference": "Tsarin koyarwa na Hausa Language, Primary 4, First Term; littafin Hausa da makaranta ta amince da shi.",
+          "entry": "Malami ya yi tambayoyi masu sauƙi domin gano abin da ɗalibai suka sani game da maudu’in.",
+          "content": "<h3>Ma’anar ƙidaya</h3><p>Ƙidaya ita ce faɗa ko rubuta lambobi cikin tsari domin sanin adadin mutane, dabbobi, kayayyaki ko wasu abubuwa. Ana amfani da ƙidaya a gida, a kasuwa, a makaranta da sauran wurare.</p><h3>Faɗar lambobi daga 51 zuwa 100</h3><p>Ɗalibai su karanta lambobi a jere daga hamsin da ɗaya zuwa ɗari. Malami ya rubuta lambobi a allo, ya karanta su a hankali, sannan ɗalibai su maimaita. A kula da furuci da bambancin lambobi kamar 56, 65, 76 da 87.</p><h3>Misalai da aiki</h3><p>Malami ya nuna katunan lambobi kamar 51, 64, 78, 90 da 100. Ɗalibai su faɗi kowace lamba, su ƙidaya abubuwa a rukuni, sannan su rubuta lambobi biyar da aka faɗa musu.</p>",
+          "presentation": "Mataki na 1: Malami ya gabatar da maudu’i ta hanyar tambayoyin farko.\nMataki na 2: Malami ya yi bayani kan ma’anoni da muhimman bayanai, ya rubuta su a allo.\nMataki na 3: Malami ya nuna misalai ko hotuna, sannan ya jagoranci aikin ɗalibai.\nMataki na 4: Ɗalibai sun gabatar da amsoshi; malami ya gyara kurakurai kuma ya taƙaita darasi.",
+          "teacher": "Malami zai gabatar da darasi, ya yi bayani da misalai, ya jagoranci ayyukan ɗalibai, ya yi tambayoyi kuma ya gyara kurakurai.",
+          "pupils": "Ɗalibai za su saurara, su amsa tambayoyi, su tattauna, su yi aikin aji kuma su rubuta muhimman bayanai.",
+          "evaluation": "1. Mene ne ƙidaya?\n2. Faɗi lambobi 51 zuwa 60.\n3. Rubuta lambobi uku tsakanin 70 da 90.",
+          "conclusion": "Ƙidaya ita ce faɗa ko rubuta lambobi cikin tsari. A wannan darasi an karanta lambobi daga 51 zuwa 100.",
+          "assignment": "Rubuta lambobi goma daga 51 zuwa 100 da sunayensu a Hausa."
         },
         {
           "week": 2,
           "period": 1,
           "duration": "Minti 40",
-          "topic": "Insha'i na Baka",
-          "subtopic": "Ma'anar Insha'i na Baka",
-          "previous": "Ɗalibai suna da wasu ilimomi na yau da kullum game da magana, karatu da al'adun Hausawa.",
-          "objectives": "1. Ɗalibai su bayyana ma'anar insha'i na baka.\n2. Ɗalibai su bayar da misalai masu dacewa.\n3. Ɗalibai su amsa tambayoyi game da darasin.",
-          "materials": "Littafin Hausa, allo da alli/marker, katunan kalmomi ko hotuna masu dacewa da darasi.",
-          "reference": "Duba shafi na manhaja (kamar yadda aka nuna a tsarin koyarwa); littafin Hausa na Primary 4.",
-          "entry": "Malami zai yi tambayoyi masu sauƙi kan abin da ɗalibai suka sani game da maudu'in.",
-          "content": "<h3>Ma'anar insha'i na baka</h3><p>Insha'i na baka shi ne bayyana tunani, bayani ko labari ta hanyar magana ba tare da rubutawa ba. Ana amfani da shi wajen koyon magana mai tsari da bayyana ra'ayi.</p><p>Lokacin ba da labari, mai magana ya kamata ya bayyana abin da ya faru a jere, ya yi amfani da kalmomi masu sauƙi, kuma ya saurari tambayoyin masu sauraro.</p><h3>Misali</h3><p>Dalibi zai ba da labarin yadda ya shirya zuwa makaranta, sannan abokan aji su yi tambayoyi game da labarin.</p>",
-          "presentation": "<p><b>Mataki na 1:</b> Malami ya gabatar da maudu'i tare da tambayoyin farko.</p><p><b>Mataki na 2:</b> Malami ya yi bayani, ya rubuta muhimman kalmomi ko misalai a allo.</p><p><b>Mataki na 3:</b> Ɗalibai su karanta, su tattauna ko su yi kwaikwayo/aiki bisa maudu'in.</p><p><b>Mataki na 4:</b> Malami ya gyara kurakurai tare da taƙaita muhimman bayanai.</p>",
-          "teacher": "<p>Ya gabatar da darasi, ya yi bayani da misalai, ya jagoranci ayyukan ɗalibai, ya yi tambayoyi kuma ya gyara kurakurai.</p>",
-          "pupils": "<p>Za su saurara, su amsa tambayoyi, su yi aikin da aka ba su, su karanta ko su bayyana misalai bisa maudu'in.</p>",
-          "evaluation": "<ol><li>Mene ne insha'i na baka?</li><li>Ka ba da misalin labarin da za a iya bayarwa da baki.</li><li>Me ya kamata mai ba da labari ya yi?</li></ol>",
-          "conclusion": "<p>Malami ya sake jaddada muhimman bayanai sannan ya tabbatar da cewa ɗalibai sun fahimci darasin.</p>",
-          "assignment": "<p>Rubuta ko bayyana muhimman abubuwa uku da aka koya a darasin “Ma&#x27;anar Insha&#x27;i na Baka”.</p>"
+          "topic": "Kidaya",
+          "subtopic": "Tantance Alƙaluman Ƙidaya daga 51 zuwa 100",
+          "previous": "Ɗalibai suna da ilimin yau da kullum da ya shafi maudu’in daga gida, makaranta ko darussan baya.",
+          "objectives": "1. Ɗalibai su tantance lambobi daga 51 zuwa 100.\n2. Ɗalibai su faɗi lambar da ta gabata da wadda za ta biyo baya.\n3. Ɗalibai su cike guraben lambobi da suka ɓace.",
+          "materials": "Katin lambobi, jadawalin ƙidaya, allo da littafin Hausa.",
+          "reference": "Tsarin koyarwa na Hausa Language, Primary 4, First Term; littafin Hausa da makaranta ta amince da shi.",
+          "entry": "Malami ya yi tambayoyi masu sauƙi domin gano abin da ɗalibai suka sani game da maudu’in.",
+          "content": "<h3>Tantance lambobi</h3><p>Tantance lamba yana nufin gane ta, faɗin sunanta, rubuta ta da bambance ta da sauran lambobi. Bayan an karanta lamba, za a iya gano wadda take gabanta da wadda take bayanta.</p><h3>Jerin lambobi</h3><p>Misali, bayan 58 akwai 59, sannan 60. Kafin 75 akwai 74, bayan 75 kuma akwai 76. Idan an rubuta 81, 82, __, 84, lambar da ta ɓace ita ce 83.</p><h3>Aikin tantancewa</h3><p>Malami ya rubuta jerin lambobi masu gurbi a allo. Ɗalibai su cike guraben, su karanta lambobin, sannan su kwatanta lambobin da suka fi girma ko ƙanƙanta.</p>",
+          "presentation": "Mataki na 1: Malami ya gabatar da maudu’i ta hanyar tambayoyin farko.\nMataki na 2: Malami ya yi bayani kan ma’anoni da muhimman bayanai, ya rubuta su a allo.\nMataki na 3: Malami ya nuna misalai ko hotuna, sannan ya jagoranci aikin ɗalibai.\nMataki na 4: Ɗalibai sun gabatar da amsoshi; malami ya gyara kurakurai kuma ya taƙaita darasi.",
+          "teacher": "Malami zai gabatar da darasi, ya yi bayani da misalai, ya jagoranci ayyukan ɗalibai, ya yi tambayoyi kuma ya gyara kurakurai.",
+          "pupils": "Ɗalibai za su saurara, su amsa tambayoyi, su tattauna, su yi aikin aji kuma su rubuta muhimman bayanai.",
+          "evaluation": "1. Wace lamba ce bayan 69?\n2. Wace lamba ce kafin 91?\n3. Cika gurbin: 86, 87, __, 89.",
+          "conclusion": "An yi atisaye kan gane, karantawa da jera lambobi daga 51 zuwa 100.",
+          "assignment": "Ƙirƙiri jerin lambobi uku masu gurbi, ka cike su da amsoshi."
         },
         {
           "week": 3,
           "period": 1,
           "duration": "Minti 40",
-          "topic": "Gajerun Wasannin Kwaikwayo",
-          "subtopic": "Karanta Gajerun Wasannin Kwaikwayo",
-          "previous": "Ɗalibai suna da wasu ilimomi na yau da kullum game da magana, karatu da al'adun Hausawa.",
-          "objectives": "1. Ɗalibai su bayyana karanta gajerun wasannin kwaikwayo.\n2. Ɗalibai su bayar da misalai masu dacewa.\n3. Ɗalibai su amsa tambayoyi game da darasin.",
-          "materials": "Littafin Hausa, allo da alli/marker, katunan kalmomi ko hotuna masu dacewa da darasi.",
-          "reference": "Duba shafi na manhaja (kamar yadda aka nuna a tsarin koyarwa); littafin Hausa na Primary 4.",
-          "entry": "Malami zai yi tambayoyi masu sauƙi kan abin da ɗalibai suka sani game da maudu'in.",
-          "content": "<p>Malami zai gabatar da ma'anar maudu'in, ya yi bayani da misalai masu dacewa da matakin Primary 4, sannan ɗalibai su yi aikin fahimta.</p>",
-          "presentation": "<p><b>Mataki na 1:</b> Malami ya gabatar da maudu'i tare da tambayoyin farko.</p><p><b>Mataki na 2:</b> Malami ya yi bayani, ya rubuta muhimman kalmomi ko misalai a allo.</p><p><b>Mataki na 3:</b> Ɗalibai su karanta, su tattauna ko su yi kwaikwayo/aiki bisa maudu'in.</p><p><b>Mataki na 4:</b> Malami ya gyara kurakurai tare da taƙaita muhimman bayanai.</p>",
-          "teacher": "<p>Ya gabatar da darasi, ya yi bayani da misalai, ya jagoranci ayyukan ɗalibai, ya yi tambayoyi kuma ya gyara kurakurai.</p>",
-          "pupils": "<p>Za su saurara, su amsa tambayoyi, su yi aikin da aka ba su, su karanta ko su bayyana misalai bisa maudu'in.</p>",
-          "evaluation": "<ol><li>Mene ne karin magana?</li><li>Ka ba da misalan karin magana guda biyu.</li><li>Bayyana ma'anar ɗaya daga cikin karin maganganun.</li></ol>",
-          "conclusion": "<p>Malami ya sake jaddada muhimman bayanai sannan ya tabbatar da cewa ɗalibai sun fahimci darasin.</p>",
-          "assignment": "<p>Rubuta ko bayyana muhimman abubuwa uku da aka koya a darasin “Karanta Gajerun Wasannin Kwaikwayo”.</p>"
-        },
-        {
-          "week": 3,
-          "period": 2,
-          "duration": "Minti 40",
-          "topic": "Gajerun Wasannin Kwaikwayo",
-          "subtopic": "Misalan Wasan Kwaikwayo",
-          "previous": "Ɗalibai suna da wasu ilimomi na yau da kullum game da magana, karatu da al'adun Hausawa.",
-          "objectives": "1. Ɗalibai su bayyana misalan wasan kwaikwayo.\n2. Ɗalibai su bayar da misalai masu dacewa.\n3. Ɗalibai su amsa tambayoyi game da darasin.",
-          "materials": "Littafin Hausa, allo da alli/marker, katunan kalmomi ko hotuna masu dacewa da darasi.",
-          "reference": "Duba shafi na manhaja (kamar yadda aka nuna a tsarin koyarwa); littafin Hausa na Primary 4.",
-          "entry": "Malami zai yi tambayoyi masu sauƙi kan abin da ɗalibai suka sani game da maudu'in.",
-          "content": "<h3>Ma'anar wasan kwaikwayo</h3><p>Wasan kwaikwayo shi ne kwaikwayon halin mutane ko abubuwan da ke faruwa domin nishaɗi ko koyar da darasi. Ana iya yin sa a aji ta hanyar raba ɗalibai zuwa matsayi daban-daban.</p><p>Misali, ɗalibai za su iya kwaikwayon malami da ɗalibi, mai sayarwa da mai saye, ko yadda ake gaisuwa cikin ladabi. A karatu, a kula da lafazi, fahimta da bin jeren abubuwan da ke faruwa.</p>",
-          "presentation": "<p><b>Mataki na 1:</b> Malami ya gabatar da maudu'i tare da tambayoyin farko.</p><p><b>Mataki na 2:</b> Malami ya yi bayani, ya rubuta muhimman kalmomi ko misalai a allo.</p><p><b>Mataki na 3:</b> Ɗalibai su karanta, su tattauna ko su yi kwaikwayo/aiki bisa maudu'in.</p><p><b>Mataki na 4:</b> Malami ya gyara kurakurai tare da taƙaita muhimman bayanai.</p>",
-          "teacher": "<p>Ya gabatar da darasi, ya yi bayani da misalai, ya jagoranci ayyukan ɗalibai, ya yi tambayoyi kuma ya gyara kurakurai.</p>",
-          "pupils": "<p>Za su saurara, su amsa tambayoyi, su yi aikin da aka ba su, su karanta ko su bayyana misalai bisa maudu'in.</p>",
-          "evaluation": "<ol><li>Mene ne wasan kwaikwayo?</li><li>Ka ba da misalai biyu na wasan kwaikwayo.</li><li>Me ya kamata a kula da shi yayin kwaikwayo?</li></ol>",
-          "conclusion": "<p>Malami ya sake jaddada muhimman bayanai sannan ya tabbatar da cewa ɗalibai sun fahimci darasin.</p>",
-          "assignment": "<p>Rubuta ko bayyana muhimman abubuwa uku da aka koya a darasin “Misalan Wasan Kwaikwayo”.</p>"
+          "topic": "Insha’in Baka",
+          "subtopic": "Ma’anar Insha’in Baka da Muhimmancinsa",
+          "previous": "Ɗalibai suna da ilimin yau da kullum da ya shafi maudu’in daga gida, makaranta ko darussan baya.",
+          "objectives": "1. Ɗalibai su bayyana ma’anar insha’in baka.\n2. Ɗalibai su ambaci muhimmancinsa guda biyu ko fiye.\n3. Ɗalibai su bayyana halaye na magana mai kyau.",
+          "materials": "Hotuna, katunan kalmomi, allo da littafin Hausa.",
+          "reference": "Tsarin koyarwa na Hausa Language, Primary 4, First Term; littafin Hausa da makaranta ta amince da shi.",
+          "entry": "Malami ya yi tambayoyi masu sauƙi domin gano abin da ɗalibai suka sani game da maudu’in.",
+          "content": "<h3>Ma’anar insha’in baka</h3><p>Insha’in baka shi ne bayyana tunani, labari ko bayani da baki cikin tsari domin masu sauraro su fahimta. Ana amfani da shi a tattaunawa, ba da labari, bayyana abin da ya faru da amsa tambayoyi.</p><h3>Muhimmancinsa</h3><p>Insha’in baka yana taimaka wa ɗalibi ya yi magana da ƙarfin hali, ya faɗi ra’ayinsa, ya inganta furuci, ya saurari wasu kuma ya tsara bayanai. Yana kuma taimakawa wajen koyon sababbin kalmomi da sadarwa cikin ladabi.</p><h3>Abubuwan da ke inganta magana</h3><p>A yi magana a sarari, a yi amfani da kalmomin da suka dace, a bi tsari, a saurari mai magana kuma a guji katse mutane.</p>",
+          "presentation": "Mataki na 1: Malami ya gabatar da maudu’i ta hanyar tambayoyin farko.\nMataki na 2: Malami ya yi bayani kan ma’anoni da muhimman bayanai, ya rubuta su a allo.\nMataki na 3: Malami ya nuna misalai ko hotuna, sannan ya jagoranci aikin ɗalibai.\nMataki na 4: Ɗalibai sun gabatar da amsoshi; malami ya gyara kurakurai kuma ya taƙaita darasi.",
+          "teacher": "Malami zai gabatar da darasi, ya yi bayani da misalai, ya jagoranci ayyukan ɗalibai, ya yi tambayoyi kuma ya gyara kurakurai.",
+          "pupils": "Ɗalibai za su saurara, su amsa tambayoyi, su tattauna, su yi aikin aji kuma su rubuta muhimman bayanai.",
+          "evaluation": "1. Mene ne insha’in baka?\n2. Ambaci muhimmancinsa guda biyu.\n3. Faɗi halaye biyu na mai magana mai kyau.",
+          "conclusion": "Insha’in baka yana taimaka wa mutum ya bayyana tunani da bayani a sarari domin wasu su fahimta.",
+          "assignment": "Yi shiri don ba da ɗan bayani na minti ɗaya game da iyalinka ko makaranta."
         },
         {
           "week": 4,
           "period": 1,
           "duration": "Minti 40",
+          "topic": "Insha’in Baka",
+          "subtopic": "Ba da Labari da Bayyana Bayanai",
+          "previous": "Ɗalibai suna da ilimin yau da kullum da ya shafi maudu’in daga gida, makaranta ko darussan baya.",
+          "objectives": "1. Ɗalibai su ambaci sassan labari.\n2. Ɗalibai su tsara labari cikin jere.\n3. Ɗalibai su ba da gajeren labari da baki.",
+          "materials": "Hotuna masu jerin abubuwa, katunan tambayoyi, allo.",
+          "reference": "Tsarin koyarwa na Hausa Language, Primary 4, First Term; littafin Hausa da makaranta ta amince da shi.",
+          "entry": "Malami ya yi tambayoyi masu sauƙi domin gano abin da ɗalibai suka sani game da maudu’in.",
+          "content": "<h3>Tsarin labari</h3><p>Labari mai tsari yana da gabatarwa, tsakiyar labari da ƙarshe. Gabatarwa tana bayyana mutane ko wurin da labari ya shafa. Tsakiyar labari tana bayyana abin da ya faru, yayin da ƙarshe yake nuna yadda labarin ya ƙare.</p><h3>Yadda ake ba da labari</h3><p>A fara da gabatar da batun, a jera abubuwan da suka faru yadda suka biyo juna, sannan a yi amfani da jimloli masu ma’ana. Ya dace a yi magana a sarari kuma a guji ƙara bayanan da ba su dace da labarin ba.</p><h3>Misali</h3><p>“Da safe na tashi na shirya zuwa makaranta. Na gaisa da malamaina, na halarci darasi, sannan na koma gida bayan an tashi.” Wannan labari yana da tsari kuma abubuwan sun biyo juna.</p>",
+          "presentation": "Mataki na 1: Malami ya gabatar da maudu’i ta hanyar tambayoyin farko.\nMataki na 2: Malami ya yi bayani kan ma’anoni da muhimman bayanai, ya rubuta su a allo.\nMataki na 3: Malami ya nuna misalai ko hotuna, sannan ya jagoranci aikin ɗalibai.\nMataki na 4: Ɗalibai sun gabatar da amsoshi; malami ya gyara kurakurai kuma ya taƙaita darasi.",
+          "teacher": "Malami zai gabatar da darasi, ya yi bayani da misalai, ya jagoranci ayyukan ɗalibai, ya yi tambayoyi kuma ya gyara kurakurai.",
+          "pupils": "Ɗalibai za su saurara, su amsa tambayoyi, su tattauna, su yi aikin aji kuma su rubuta muhimman bayanai.",
+          "evaluation": "1. Ambaci sassa uku na labari.\n2. Me ya sa ake jera abubuwan labari?\n3. Ba da ɗan labari mai jimloli uku.",
+          "conclusion": "Ba da labari mai kyau yana buƙatar tsari, jera abubuwa da magana a sarari.",
+          "assignment": "Rubuta ko shirya ɗan labari game da ranar da ka yi farin ciki."
+        },
+        {
+          "week": 5,
+          "period": 1,
+          "duration": "Minti 40",
+          "topic": "Insha’in Baka",
+          "subtopic": "Sauraro, Fahimta da Amsa Tambayoyi",
+          "previous": "Ɗalibai suna da ilimin yau da kullum da ya shafi maudu’in daga gida, makaranta ko darussan baya.",
+          "objectives": "1. Ɗalibai su bayyana ma’anar sauraro mai kyau.\n2. Ɗalibai su gano muhimman bayanai daga labari.\n3. Ɗalibai su amsa tambayoyin fahimta.",
+          "materials": "Gajeren labari, katunan tambayoyi, allo.",
+          "reference": "Tsarin koyarwa na Hausa Language, Primary 4, First Term; littafin Hausa da makaranta ta amince da shi.",
+          "entry": "Malami ya yi tambayoyi masu sauƙi domin gano abin da ɗalibai suka sani game da maudu’in.",
+          "content": "<h3>Sauraro mai kyau</h3><p>Sauraro mai kyau shi ne mayar da hankali ga mai magana domin fahimtar saƙonsa. Mai sauraro ya guji hayaniya, ya jira mai magana ya gama sannan ya amsa.</p><h3>Gano muhimman bayanai</h3><p>Yayin sauraron labari, a kula da sunayen mutane, wurare, lokaci, abin da ya faru da dalilin abin da ya faru. Waɗannan bayanai suna taimakawa wajen amsa tambayoyi da ba da labarin daidai.</p><h3>Amsa tambayoyi</h3><p>Malami ya karanta gajeren labari sau ɗaya ko biyu. Ɗalibai su amsa tambayoyi cikin cikakkun jimloli kuma su dogara da bayanan da ke cikin labarin.</p>",
+          "presentation": "Mataki na 1: Malami ya gabatar da maudu’i ta hanyar tambayoyin farko.\nMataki na 2: Malami ya yi bayani kan ma’anoni da muhimman bayanai, ya rubuta su a allo.\nMataki na 3: Malami ya nuna misalai ko hotuna, sannan ya jagoranci aikin ɗalibai.\nMataki na 4: Ɗalibai sun gabatar da amsoshi; malami ya gyara kurakurai kuma ya taƙaita darasi.",
+          "teacher": "Malami zai gabatar da darasi, ya yi bayani da misalai, ya jagoranci ayyukan ɗalibai, ya yi tambayoyi kuma ya gyara kurakurai.",
+          "pupils": "Ɗalibai za su saurara, su amsa tambayoyi, su tattauna, su yi aikin aji kuma su rubuta muhimman bayanai.",
+          "evaluation": "1. Me ake nufi da sauraro mai kyau?\n2. Ambaci bayanai uku da za a kula da su a labari.\n3. Me ya kamata a yi kafin amsa tambaya?",
+          "conclusion": "Sauraro da kyau yana taimaka wa ɗalibai su fahimci labari kuma su amsa tambayoyi daidai.",
+          "assignment": "Ka saurari labari daga malami ko iyaye, sannan ka rubuta amsoshin tambayoyi uku game da shi."
+        },
+        {
+          "week": 6,
+          "period": 1,
+          "duration": "Minti 40",
+          "topic": "Gajerun Wasannin Kwaikwayo",
+          "subtopic": "Ma’ana da Abubuwan da Ke Cikin Wasan Kwaikwayo",
+          "previous": "Ɗalibai suna da ilimin yau da kullum da ya shafi maudu’in daga gida, makaranta ko darussan baya.",
+          "objectives": "1. Ɗalibai su bayyana ma’anar wasan kwaikwayo.\n2. Ɗalibai su gano abubuwan da ke cikin wasan kwaikwayo.\n3. Ɗalibai su ambaci amfaninsa.",
+          "materials": "Littafin Hausa, rubutaccen gajeren wasa, katunan sunayen jarumai.",
+          "reference": "Tsarin koyarwa na Hausa Language, Primary 4, First Term; littafin Hausa da makaranta ta amince da shi.",
+          "entry": "Malami ya yi tambayoyi masu sauƙi domin gano abin da ɗalibai suka sani game da maudu’in.",
+          "content": "<h3>Ma’anar wasan kwaikwayo</h3><p>Wasan kwaikwayo shi ne gabatar da labari ko wani yanayi ta hanyar magana da ayyukan jarumai a gaban masu kallo ko masu sauraro. Ana iya yin sa a aji, a makaranta ko a wani taro.</p><h3>Abubuwan da ke cikin wasan kwaikwayo</h3><p>Wasan kwaikwayo na iya ƙunsar jarumai, tattaunawa, wuri, abin da ya faru da saƙo. Jarumai su ne mutanen da ke taka rawa. Tattaunawa ita ce maganganun da suke yi, yayin da saƙo yake nuna darasin da wasan ke koyarwa.</p><h3>Amfanin wasan kwaikwayo</h3><p>Yana taimaka wa ɗalibai su yi magana a sarari, su yi aiki tare, su ƙara ƙarfin hali kuma su fahimci halaye masu kyau kamar gaskiya, ladabi da taimakon juna.</p>",
+          "presentation": "Mataki na 1: Malami ya gabatar da maudu’i ta hanyar tambayoyin farko.\nMataki na 2: Malami ya yi bayani kan ma’anoni da muhimman bayanai, ya rubuta su a allo.\nMataki na 3: Malami ya nuna misalai ko hotuna, sannan ya jagoranci aikin ɗalibai.\nMataki na 4: Ɗalibai sun gabatar da amsoshi; malami ya gyara kurakurai kuma ya taƙaita darasi.",
+          "teacher": "Malami zai gabatar da darasi, ya yi bayani da misalai, ya jagoranci ayyukan ɗalibai, ya yi tambayoyi kuma ya gyara kurakurai.",
+          "pupils": "Ɗalibai za su saurara, su amsa tambayoyi, su tattauna, su yi aikin aji kuma su rubuta muhimman bayanai.",
+          "evaluation": "1. Mene ne wasan kwaikwayo?\n2. Ambaci abubuwa uku da ke cikinsa.\n3. Faɗi amfanin wasan kwaikwayo guda biyu.",
+          "conclusion": "Wasan kwaikwayo hanya ce ta gabatar da labari ta hanyar jarumai, tattaunawa da ayyuka.",
+          "assignment": "Rubuta sunayen jarumai biyu da za su iya fitowa a wasan kwaikwayo game da makaranta."
+        },
+        {
+          "week": 7,
+          "period": 1,
+          "duration": "Minti 40",
+          "topic": "Gajerun Wasannin Kwaikwayo",
+          "subtopic": "Karatun Wasan Kwaikwayo da Gane Saƙonsa",
+          "previous": "Ɗalibai suna da ilimin yau da kullum da ya shafi maudu’in daga gida, makaranta ko darussan baya.",
+          "objectives": "1. Ɗalibai su karanta maganganun wasan kwaikwayo.\n2. Ɗalibai su bayyana saƙon wasan.\n3. Ɗalibai su nuna haɗin kai yayin gabatarwa.",
+          "materials": "Rubutun wasan kwaikwayo, katunan matsayin jarumai, kujeru.",
+          "reference": "Tsarin koyarwa na Hausa Language, Primary 4, First Term; littafin Hausa da makaranta ta amince da shi.",
+          "entry": "Malami ya yi tambayoyi masu sauƙi domin gano abin da ɗalibai suka sani game da maudu’in.",
+          "content": "<h3>Karatun wasan</h3><p>Yayin karanta wasan kwaikwayo, kowane ɗalibi ya karanta maganar jarumin da aka ba shi. A furta kalmomi a sarari, a tsaya inda ya dace, kuma a saurari sauran jarumai domin tattaunawar ta gudana cikin tsari.</p><h3>Gane saƙon wasan</h3><p>Saƙon wasa shi ne darasi ko tunanin da marubuci yake son masu kallo su fahimta. Wasan da ya nuna yaro yana taimaka wa abokinsa na iya koyar da tausayi da haɗin kai. Wasan da ya nuna gaskiya na iya koyar da faɗin gaskiya da ɗaukar alhaki.</p><h3>Shiga rawa</h3><p>Ɗalibai su raba matsayin jarumai, su karanta ko gabatar da maganganu, sannan su tattauna abin da suka koya. A girmama kowane ɗan wasa kuma a guji yi wa aboki dariya saboda kuskuren karatu.</p>",
+          "presentation": "Mataki na 1: Malami ya gabatar da maudu’i ta hanyar tambayoyin farko.\nMataki na 2: Malami ya yi bayani kan ma’anoni da muhimman bayanai, ya rubuta su a allo.\nMataki na 3: Malami ya nuna misalai ko hotuna, sannan ya jagoranci aikin ɗalibai.\nMataki na 4: Ɗalibai sun gabatar da amsoshi; malami ya gyara kurakurai kuma ya taƙaita darasi.",
+          "teacher": "Malami zai gabatar da darasi, ya yi bayani da misalai, ya jagoranci ayyukan ɗalibai, ya yi tambayoyi kuma ya gyara kurakurai.",
+          "pupils": "Ɗalibai za su saurara, su amsa tambayoyi, su tattauna, su yi aikin aji kuma su rubuta muhimman bayanai.",
+          "evaluation": "1. Me ake nufi da saƙon wasa?\n2. Wane saƙo ne wasan taimakon aboki zai iya koyarwa?\n3. Ambaci halaye biyu na ɗan wasa nagari.",
+          "conclusion": "Karanta wasan kwaikwayo yana taimaka wa ɗalibai su fahimci jarumai da saƙon da wasan ke isarwa.",
+          "assignment": "Tare da aboki, ku shirya gajeren tattaunawa mai jimloli huɗu kan gaskiya ko taimakon juna."
+        },
+        {
+          "week": 8,
+          "period": 1,
+          "duration": "Minti 40",
           "topic": "Aure",
-          "subtopic": "Bayanin Aure da Matakan Yin Aure",
-          "previous": "Ɗalibai suna da wasu ilimomi na yau da kullum game da magana, karatu da al'adun Hausawa.",
-          "objectives": "1. Ɗalibai su bayyana bayanin aure da matakan yin aure.\n2. Ɗalibai su bayar da misalai masu dacewa.\n3. Ɗalibai su amsa tambayoyi game da darasin.",
-          "materials": "Littafin Hausa, allo da alli/marker, katunan kalmomi ko hotuna masu dacewa da darasi.",
-          "reference": "Duba shafi na manhaja (kamar yadda aka nuna a tsarin koyarwa); littafin Hausa na Primary 4.",
-          "entry": "Malami zai yi tambayoyi masu sauƙi kan abin da ɗalibai suka sani game da maudu'in.",
-          "content": "Ma'anar aure\nAure shi ne haɗin kai na zamantakewa tsakanin ma'aurata bisa al'ada da dokokin da suka dace. Aure yana da alhaki, mutunta juna da kula da iyali.\nMatakan yin aure\nA al'ummar Hausawa, ana iya samun neman aure, bincike da amincewar iyalai, sa rana, daurin aure da shagulgulan da suka dace. Matakai na iya bambanta bisa iyali, addini da al'ada.\nYa kamata a tattauna wannan batu cikin mutunci, ba tare da nuna wariya ko tilastawa ba.",
-          "presentation": "Mataki na 1:\n Malami ya gabatar da maudu'i tare da tambayoyin farko.\nMataki na 2:\n Malami ya yi bayani, ya rubuta muhimman kalmomi ko misalai a allo.\nMataki na 3:\n Ɗalibai su karanta, su tattauna ko su yi kwaikwayo/aiki bisa maudu'in.\nMataki na 4:\n Malami ya gyara kurakurai tare da taƙaita muhimman bayanai.",
-          "teacher": "Ya gabatar da darasi, ya yi bayani da misalai, ya jagoranci ayyukan ɗalibai, ya yi tambayoyi kuma ya gyara kurakurai.",
-          "pupils": "Za su saurara, su amsa tambayoyi, su yi aikin da aka ba su, su karanta ko su bayyana misalai bisa maudu'in.",
-          "evaluation": "Mene ne aure?\nAmbaci wasu matakai na yin aure a al'adar da ka sani.\nMe ya sa mutunta juna yake da muhimmanci?",
-          "conclusion": "Malami ya sake jaddada muhimman bayanai sannan ya tabbatar da cewa ɗalibai sun fahimci darasin.",
-          "assignment": "Rubuta ko bayyana muhimman abubuwa uku da aka koya a darasin “Bayanin Aure da Matakan Yin Aure”."
+          "subtopic": "Ma’anar Aure da Muhimmancin Iyali",
+          "previous": "Ɗalibai suna da ilimin yau da kullum da ya shafi maudu’in daga gida, makaranta ko darussan baya.",
+          "objectives": "1. Ɗalibai su bayyana ma’anar aure cikin sauƙi.\n2. Ɗalibai su ambaci muhimmancin iyali.\n3. Ɗalibai su gano halaye masu kyau da ke taimaka wa zaman lafiya.",
+          "materials": "Hotunan iyali masu dacewa, littafin Hausa, allo.",
+          "reference": "Tsarin koyarwa na Hausa Language, Primary 4, First Term; littafin Hausa da makaranta ta amince da shi.",
+          "entry": "Malami ya yi tambayoyi masu sauƙi domin gano abin da ɗalibai suka sani game da maudu’in.",
+          "content": "<h3>Ma’anar aure</h3><p>Aure wata yarjejeniya ce ta zamantakewa tsakanin manya wadda ake gudanarwa bisa dokoki, al’ada da addinin da suka dace. Hanyoyin gudanar da aure suna iya bambanta tsakanin al’ummomi da iyalai.</p><h3>Muhimmancin iyali</h3><p>Iyali na taimaka wa yara wajen samun kulawa, tarbiyya, ilimi da tallafi. A cikin iyali, gaskiya, haƙuri, taimakon juna, mutunta juna da tattaunawa suna taimakawa wajen zaman lafiya.</p><h3>Alhaki da mutunta juna</h3><p>Manya suna da alhakin kula da iyali, samar da kariya da koyar da yara halaye nagari. Ya kamata a tattauna batun aure cikin ladabi, ba tare da raina al’ada ko addinin wani ba.</p>",
+          "presentation": "Mataki na 1: Malami ya gabatar da maudu’i ta hanyar tambayoyin farko.\nMataki na 2: Malami ya yi bayani kan ma’anoni da muhimman bayanai, ya rubuta su a allo.\nMataki na 3: Malami ya nuna misalai ko hotuna, sannan ya jagoranci aikin ɗalibai.\nMataki na 4: Ɗalibai sun gabatar da amsoshi; malami ya gyara kurakurai kuma ya taƙaita darasi.",
+          "teacher": "Malami zai gabatar da darasi, ya yi bayani da misalai, ya jagoranci ayyukan ɗalibai, ya yi tambayoyi kuma ya gyara kurakurai.",
+          "pupils": "Ɗalibai za su saurara, su amsa tambayoyi, su tattauna, su yi aikin aji kuma su rubuta muhimman bayanai.",
+          "evaluation": "1. Mene ne aure?\n2. Ambaci ayyuka biyu da iyali ke yi wa yara.\n3. Faɗi halaye uku da ke taimaka wa zaman lafiya a iyali.",
+          "conclusion": "Aure da iyali suna da matsayi a zamantakewa; mutunta juna da ɗaukar alhaki suna taimaka wa zaman lafiya.",
+          "assignment": "Rubuta halaye biyar da ke taimaka wa iyali su zauna cikin zaman lafiya."
+        },
+        {
+          "week": 9,
+          "period": 1,
+          "duration": "Minti 40",
+          "topic": "Aure",
+          "subtopic": "Matakan Gabaɗaya na Gudanar da Aure da Alhakin Iyali",
+          "previous": "Ɗalibai suna da ilimin yau da kullum da ya shafi maudu’in daga gida, makaranta ko darussan baya.",
+          "objectives": "1. Ɗalibai su ambaci matakai na gama-gari da ake iya samu wajen gudanar da aure.\n2. Ɗalibai su bayyana dalilin bambancin al’adu.\n3. Ɗalibai su ambaci alhakin iyali da halaye masu kyau.",
+          "materials": "Jadawalin matakai, hotuna masu dacewa, littafin Hausa.",
+          "reference": "Tsarin koyarwa na Hausa Language, Primary 4, First Term; littafin Hausa da makaranta ta amince da shi.",
+          "entry": "Malami ya yi tambayoyi masu sauƙi domin gano abin da ɗalibai suka sani game da maudu’in.",
+          "content": "<h3>Matakai na gama-gari</h3><p>Matakan gudanar da aure suna bambanta bisa al’ada, addini, dokoki da shawarar iyalai. A wasu al’ummomi ana iya samun neman aure, tattaunawar iyalai, amincewa, cika sharuddan da suka dace, da gudanar da bikin aure. Ba lallai ne kowace al’umma ta bi matakai iri ɗaya ba.</p><h3>Shirye-shirye da ladabi</h3><p>Shirye-shiryen aure na iya haɗawa da tattaunawa tsakanin iyalai, tsara lokaci, shirya bukukuwa da tabbatar da cewa an bi dokokin da suka dace. Ya kamata a gudanar da tattaunawa cikin gaskiya da mutunta juna.</p><h3>Alhakin iyali</h3><p>Bayan aure, manya suna da alhakin kula da juna, gudanar da gida, tattaunawa kan matsaloli cikin natsuwa da kula da yara idan suna da su. Ilimi, mutunta juna da ɗaukar alhaki suna taimaka wa iyali.</p>",
+          "presentation": "Mataki na 1: Malami ya gabatar da maudu’i ta hanyar tambayoyin farko.\nMataki na 2: Malami ya yi bayani kan ma’anoni da muhimman bayanai, ya rubuta su a allo.\nMataki na 3: Malami ya nuna misalai ko hotuna, sannan ya jagoranci aikin ɗalibai.\nMataki na 4: Ɗalibai sun gabatar da amsoshi; malami ya gyara kurakurai kuma ya taƙaita darasi.",
+          "teacher": "Malami zai gabatar da darasi, ya yi bayani da misalai, ya jagoranci ayyukan ɗalibai, ya yi tambayoyi kuma ya gyara kurakurai.",
+          "pupils": "Ɗalibai za su saurara, su amsa tambayoyi, su tattauna, su yi aikin aji kuma su rubuta muhimman bayanai.",
+          "evaluation": "1. Ambaci matakai uku da za a iya samu wajen gudanar da aure.\n2. Me ya sa matakan aure suke bambanta?\n3. Ambaci alhaki biyu da ke taimaka wa iyali.",
+          "conclusion": "An tattauna matakai na gama-gari na gudanar da aure da muhimmancin bin dokoki, al’ada da mutunta juna.",
+          "assignment": "Rubuta sakin layi game da muhimmancin gaskiya, haƙuri da mutunta juna a iyali."
         }
       ]
     },
@@ -3153,6 +3339,7 @@
 }
 
 
+
 </script><script>
 const DATA=JSON.parse(document.getElementById('curriculum-data').textContent);
 const classSelect=document.getElementById('viewClass'), subjectSelect=document.getElementById('viewSubject'), termSelect=document.getElementById('viewTerm');
@@ -3171,8 +3358,8 @@ function render(){
  root.innerHTML=recs.map(r=>{
   const curriculum=r.curriculum||[], notes=r.lessonNotes||[], plans=r.lessonPlans||[];
   const weekHtml=curriculum.map((w,i)=>`<section class="week"><div class="week-title"><span>WEEK ${i+1}</span><h2>${w.topic}</h2><em>${(w.periods||[]).length} period(s)</em></div>${(w.periods||[]).map(p=>`<div class="period"><div class="period-head"><span>${p.periodLabel||'Period'}</span><b>${p.title}</b></div><ul>${(p.subcontents||[]).map(x=>`<li>${x}</li>`).join('')}</ul></div>`).join('')}</section>`).join('');
-  const noteHtml=notes.length?`<details class="week"><summary class="week-title"><span>LESSON NOTES</span><h2>Lesson Notes (${notes.length})</h2></summary>${notes.map(n=>`<div class="period"><h3>Week ${n.week} • Period ${n.period}: ${n.subtopic}</h3><p>${n.introduction||''}</p><div>${n.content||''}</div><b>Key points</b><ul>${(n.keyPoints||[]).map(x=>`<li>${x}</li>`).join('')}</ul><p><b>Summary:</b> ${n.summary||''}</p><b>Evaluation</b><ol>${(n.evaluation||[]).map(x=>`<li>${x}</li>`).join('')}</ol><p><b>Assignment:</b> ${n.assignment||''}</p></div>`).join('')}</details>`:'';
-  const planHtml=plans.length?`<details class="week"><summary class="week-title"><span>LESSON PLANS</span><h2>Lesson Plans (${plans.length})</h2></summary>${plans.map(p=>`<div class="period"><h3>Week ${p.week} • Period ${p.period}: ${p.subtopic}</h3><p><b>Duration:</b> ${p.duration}</p><p><b>Previous knowledge:</b> ${p.previous}</p><p><b>Objectives:</b><br>${(p.objectives||'').replace(/\n/g,'<br>')}</p><p><b>Materials:</b> ${p.materials}</p><p><b>Reference:</b> ${p.reference}</p><p><b>Entry behaviour:</b> ${p.entry}</p><b>Content</b><div>${p.content||''}</div><b>Presentation</b><div>${p.presentation||''}</div><p><b>Teacher’s activities</b></p><div>${p.teacher||''}</div><p><b>Pupils’ activities</b></p><div>${p.pupils||''}</div><b>Evaluation</b><div>${p.evaluation||''}</div><b>Conclusion</b><div>${p.conclusion||''}</div><b>Assignment</b><div>${p.assignment||''}</div></div>`).join('')}</details>`:'';
+  const noteHtml=notes.length?`<details class="week" open><summary class="week-title"><span>LESSON NOTES</span><h2>Lesson Notes (${notes.length})</h2></summary>${notes.map(n=>`<div class="period"><h3>Week ${n.week} • Period ${n.period}: ${n.subtopic}</h3><p>${n.introduction||''}</p><div>${n.content||''}</div><b>Key points</b><ul>${(n.keyPoints||[]).map(x=>`<li>${x}</li>`).join('')}</ul><p><b>Summary:</b> ${n.summary||''}</p><b>Evaluation</b><ol>${(n.evaluation||[]).map(x=>`<li>${x}</li>`).join('')}</ol><p><b>Assignment:</b> ${n.assignment||''}</p></div>`).join('')}</details>`:'';
+  const planHtml=plans.length?`<details class="week" open><summary class="week-title"><span>LESSON PLANS</span><h2>Lesson Plans (${plans.length})</h2></summary>${plans.map(p=>`<div class="period"><h3>Week ${p.week} • Period ${p.period}: ${p.subtopic}</h3><p><b>Duration:</b> ${p.duration}</p><p><b>Previous knowledge:</b> ${p.previous}</p><p><b>Objectives:</b><br>${(p.objectives||'').replace(/\n/g,'<br>')}</p><p><b>Materials:</b> ${p.materials}</p><p><b>Reference:</b> ${p.reference}</p><p><b>Entry behaviour:</b> ${p.entry}</p><b>Content</b><div>${p.content||''}</div><b>Presentation</b><div>${p.presentation||''}</div><p><b>Teacher’s activities</b></p><div>${p.teacher||''}</div><p><b>Pupils’ activities</b></p><div>${p.pupils||''}</div><b>Evaluation</b><div>${p.evaluation||''}</div><b>Conclusion</b><div>${p.conclusion||''}</div><b>Assignment</b><div>${p.assignment||''}</div></div>`).join('')}</details>`:'';
   const empty=(!curriculum.length&&!notes.length&&!plans.length)?`<div class="note">${r.sourceNote||'No curriculum has been added for this term yet.'}</div>`:'';
   return `<section class="class-section"><div class="section-head"><div><span class="badge">${r.className}</span><h1>${r.subject}</h1><p>${r.term} Curriculum</p></div><div class="summary"><b>${curriculum.length}</b><small>weekly contents</small></div></div>${r.sourceNote?`<p class="source-note">${r.sourceNote}</p>`:''}${weekHtml}${noteHtml}${planHtml}${empty}</section>`;
  }).join('')||'<div class="note">No curriculum added for this selection yet.</div>';
