@@ -6154,3 +6154,142 @@ body.lessons-active #lessonSubscriptionToggle{
 
 </style>
 
+
+
+<style id="attendance-layout-final-fix">
+/* Attendance section only: stable student column, compact controls, smooth day-by-day swipe. */
+#attendanceView .attendance-table-wrap{
+  width:100%!important;
+  max-width:100%!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  -webkit-overflow-scrolling:touch!important;
+  overscroll-behavior-x:contain!important;
+  scroll-behavior:smooth!important;
+  scroll-snap-type:x proximity!important;
+  touch-action:pan-x pan-y!important;
+}
+#attendanceView .attendance-table{
+  width:max-content!important;
+  min-width:100%!important;
+  table-layout:fixed!important;
+  border-collapse:separate!important;
+  border-spacing:0!important;
+}
+#attendanceView .attendance-table th.attendance-student-head,
+#attendanceView .attendance-table td.attendance-student-cell{
+  position:sticky!important;
+  left:0!important;
+  z-index:8!important;
+  width:224px!important;
+  min-width:224px!important;
+  max-width:224px!important;
+  background:#fff!important;
+  padding:7px 8px!important;
+  white-space:normal!important;
+  overflow:hidden!important;
+  box-shadow:5px 0 8px rgba(16,35,63,.07)!important;
+}
+#attendanceView .attendance-table th.attendance-student-head{
+  z-index:10!important;
+  background:#f7fafc!important;
+  text-align:center!important;
+}
+#attendanceView .attendance-table .attendance-student{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:8px!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:58px!important;
+}
+#attendanceView .attendance-table .attendance-student-photo{
+  display:block!important;
+  flex:0 0 34px!important;
+  width:34px!important;
+  min-width:34px!important;
+  height:40px!important;
+  object-fit:cover!important;
+  margin:0!important;
+  border-radius:7px!important;
+}
+#attendanceView .attendance-table .attendance-student-name{
+  flex:1 1 auto!important;
+  min-width:0!important;
+  width:auto!important;
+  max-width:100%!important;
+  font-size:12px!important;
+  line-height:1.25!important;
+  font-weight:800!important;
+  text-align:left!important;
+  white-space:normal!important;
+  overflow-wrap:break-word!important;
+  word-break:normal!important;
+  overflow:hidden!important;
+}
+#attendanceView .attendance-table th.attendance-day-head,
+#attendanceView .attendance-table td:not(.attendance-student-cell){
+  width:158px!important;
+  min-width:158px!important;
+  max-width:158px!important;
+  scroll-snap-align:start!important;
+  scroll-snap-stop:normal!important;
+}
+#attendanceView .attendance-table th.attendance-day-head{
+  position:relative!important;
+  z-index:2!important;
+  text-align:center!important;
+  white-space:normal!important;
+  padding:9px 5px!important;
+}
+#attendanceView .attendance-table td:not(.attendance-student-cell){
+  text-align:center!important;
+  overflow:hidden!important;
+  padding:7px 5px!important;
+}
+#attendanceView .attendance-table .attendance-status-actions{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  justify-content:center!important;
+  gap:4px!important;
+  width:100%!important;
+  min-width:0!important;
+}
+#attendanceView .attendance-table .attendance-status-btn{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:3px!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:29px!important;
+  padding:4px 3px!important;
+  border-radius:7px!important;
+  font-size:10px!important;
+  line-height:1.15!important;
+  white-space:nowrap!important;
+  touch-action:manipulation!important;
+}
+#attendanceView .attendance-table .attendance-status-btn span{font-size:9px!important}
+#attendanceView .attendance-table th,
+#attendanceView .attendance-table td{vertical-align:middle!important}
+@media(max-width:480px){
+  #attendanceView .attendance-table{min-width:0!important}
+  #attendanceView .attendance-table th.attendance-student-head,
+  #attendanceView .attendance-table td.attendance-student-cell{
+    width:224px!important;min-width:224px!important;max-width:224px!important;
+  }
+  #attendanceView .attendance-table th.attendance-day-head,
+  #attendanceView .attendance-table td:not(.attendance-student-cell){
+    width:158px!important;min-width:158px!important;max-width:158px!important;
+  }
+  #attendanceView .attendance-table .attendance-student-photo{
+    flex-basis:32px!important;width:32px!important;min-width:32px!important;height:38px!important;
+  }
+  #attendanceView .attendance-table .attendance-student-name{font-size:12px!important}
+  #attendanceView .attendance-table .attendance-status-btn{min-height:28px!important;font-size:10px!important}
+}
+</style>
