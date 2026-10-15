@@ -4340,14 +4340,22 @@ window.viewStudentResult=function(index){
     if(dayStart.getTime()>todayStart.getTime())return "future";
     return "open";
   }
-  function markAttendance(index,date,value){
+  function markAttendance(index,date,value,isChecked=true){
     const records=attendanceStudents(),item=records[index];if(!item)return;
     const now=new Date();
     const selectedDay=new Date(date.getFullYear(),date.getMonth(),date.getDate());
     const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
     // Attendance can only be changed on the current local calendar date.
     if(selectedDay.getTime()!==today.getTime())return;
-    const store=attendanceStore();store[studentAttendanceKey(item.s,date)]=value;saveAttendanceStore(store);renderAttendance();
+    const store=attendanceStore(),key=studentAttendanceKey(item.s,date);
+    // One status per student/day: selecting Present clears Absent and vice versa.
+    // Clicking the already-selected checkbox again clears the status.
+    if(isChecked===false){
+      if(store[key]===value || (value==="present" && store[key]===true)) delete store[key];
+    }else{
+      store[key]=value;
+    }
+    saveAttendanceStore(store);renderAttendance();
   }
   window.markAttendance=markAttendance;
   window.toggleAttendance=function(index,date){markAttendance(index,date,"present");};
@@ -4381,8 +4389,8 @@ window.viewStudentResult=function(index){
         const absentChecked=state==="absent"?' checked':'';
         const lockNote="";
         return '<td class="'+(dayItem.weekStart?'attendance-week-start':'')+'"><div class="attendance-choice">'+
-          '<label class="attendance-mark present" title="Present"><input type="checkbox" aria-label="Mark present"'+presentChecked+(disabled?' disabled':'')+' onchange="markAttendance('+i+',new Date(\''+dateString+'T12:00:00\'),\'present\')"><span>✓</span></label>'+
-          '<label class="attendance-mark absent" title="Absent"><input type="checkbox" aria-label="Mark absent"'+absentChecked+(disabled?' disabled':'')+' onchange="markAttendance('+i+',new Date(\''+dateString+'T12:00:00\'),\'absent\')"><span>×</span></label></div>'+lockNote+'</td>';
+          '<label class="attendance-mark present" title="Present"><input type="checkbox" aria-label="Mark present"'+presentChecked+(disabled?' disabled':'')+' onchange="markAttendance('+i+',new Date(\''+dateString+'T12:00:00\'),\'present\',this.checked)"><span>✓</span></label>'+
+          '<label class="attendance-mark absent" title="Absent"><input type="checkbox" aria-label="Mark absent"'+absentChecked+(disabled?' disabled':'')+' onchange="markAttendance('+i+',new Date(\''+dateString+'T12:00:00\'),\'absent\',this.checked)"><span>×</span></label></div>'+lockNote+'</td>';
       }).join("");
       return '<tr><td>'+photo+'</td><td><div class="attendance-student"><div class="attendance-student-name">'+safeText(student[1])+'</div></div></td>'+cells+'</tr>';
     }).join("");
