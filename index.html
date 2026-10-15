@@ -3387,6 +3387,30 @@ function printDocument(content){
 
 
 
+
+<script id="lesson-library-week-access-fix">
+(function(){
+  function enableLessonLibraryButtons(root){
+    (root || document).querySelectorAll('.library-period-actions .library-action').forEach(function(button){
+      if(button.disabled) button.disabled = false;
+      if(button.hasAttribute('disabled')) button.removeAttribute('disabled');
+      if(button.getAttribute('aria-disabled') === 'true') button.setAttribute('aria-disabled','false');
+      button.style.opacity = '1';
+      button.style.filter = 'none';
+      button.style.cursor = 'pointer';
+      button.style.pointerEvents = 'auto';
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    enableLessonLibraryButtons();
+    var target = document.getElementById('courseContentsList');
+    if(target){
+      new MutationObserver(function(){ enableLessonLibraryButtons(target); })
+        .observe(target, {childList:true, subtree:true});
+    }
+  });
+})();
+</script>
 </body></html>`);
  w.document.close();w.focus();setTimeout(()=>w.print(),250);
 }
@@ -5542,42 +5566,5 @@ body.lessons-active #lessonSubscriptionToggle{
       tapLogo();
     }
   });
-})();
-</script>
-
-<!-- Lesson button activation fix: remove week/period disabled state only. Subscription gate remains unchanged. -->
-<style id="lesson-buttons-active-fix">
-  .library-period-actions .library-action.library-plan:not(:disabled){background:#078c55!important;color:#fff!important;opacity:1!important;filter:none!important;cursor:pointer!important;pointer-events:auto!important}
-  .library-period-actions .library-action.library-note:not(:disabled){background:#1476e8!important;color:#fff!important;opacity:1!important;filter:none!important;cursor:pointer!important;pointer-events:auto!important}
-  .library-period-actions .library-action:disabled{opacity:1!important;filter:none!important;cursor:pointer!important;pointer-events:auto!important}
-</style>
-<script id="lesson-buttons-active-fix-script">
-(function(){
-  function activateLessonButtons(root){
-    (root||document).querySelectorAll('.library-period-actions .library-action').forEach(function(button){
-      button.disabled=false;
-      button.removeAttribute('disabled');
-      button.removeAttribute('aria-disabled');
-      if((button.getAttribute('title')||'').toLowerCase().includes('week 1 to week 3')) button.removeAttribute('title');
-      button.style.opacity='1';
-      button.style.cursor='pointer';
-      button.style.filter='none';
-      button.style.pointerEvents='auto';
-    });
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){activateLessonButtons();});
-  else activateLessonButtons();
-  var observer=new MutationObserver(function(mutations){
-    mutations.forEach(function(m){
-      m.addedNodes.forEach(function(node){
-        if(node.nodeType===1){
-          if(node.matches&&node.matches('.library-period-actions .library-action')) activateLessonButtons(node.parentNode||document);
-          activateLessonButtons(node);
-        }
-      });
-      if(m.target&&m.target.nodeType===1) activateLessonButtons(m.target);
-    });
-  });
-  observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','aria-disabled','style','title']});
 })();
 </script>
