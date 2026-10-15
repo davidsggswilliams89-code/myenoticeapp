@@ -2321,7 +2321,7 @@ function applyCurriculumSelection(){
   const selectedTerm=document.getElementById('lessonLibraryTerm')?.value || 'First Term';
   const selectedSubject=document.getElementById('lessonLibrarySubject')?.value || '';
   const record=curriculumCatalog.find(function(item){
-    return item.className===selectedClass && item.term===selectedTerm && (!selectedSubject || item.subject===selectedSubject);
+    return item.className===selectedClass && item.term===selectedTerm && (!selectedSubject || String(item.subject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()===String(selectedSubject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim());
   });
   curriculum=record && Array.isArray(record.curriculum) ? record.curriculum : [];
   if(curriculum.length){
@@ -2825,7 +2825,7 @@ function getActiveLessonData(type="Lesson Plan"){
   const selectedTerm=document.getElementById('lessonLibraryTerm')?.value || 'First Term';
   const selectedSubject=document.getElementById('lessonLibrarySubject')?.value || '';
   const activeRecord=(curriculumCatalog||[]).find(function(item){
-    return item.className===selectedClass && item.term===selectedTerm && (!selectedSubject || item.subject===selectedSubject);
+    return item.className===selectedClass && item.term===selectedTerm && (!selectedSubject || String(item.subject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()===String(selectedSubject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim());
   });
   const weekNumber=(Number(selectedLesson.topicIndex)||0)+1;
   const periodNumber=(Number(selectedLesson.periodIndex)||0)+1;
@@ -2932,7 +2932,7 @@ function lessonForm(type,index=0){
   return `<div class="lesson-note">
     <div class="note-box">
       <b>📖 Complete Nigerian Primary School Lesson Note</b>
-      <p style="margin:5px 0 0">Detailed teaching content for use during the actual lesson. The topic and sub-topic are taken from the selected class, subject and term in the curriculum source.</p>
+      <p style="margin:5px 0 0">Detailed teaching content for use during the actual lesson. The curriculum topic/sub-topic is taken from the project's Primary 5 First Term Basic Science & Technology curriculum.</p>
     </div>
 
     <h4>1. Lesson Information</h4>
@@ -3454,7 +3454,8 @@ renderCurriculum();renderStudents();renderResults();
     panel?.scrollIntoView({behavior:'smooth',block:'start'});
   };
 
-  window.updateLessonLibrary=function(){
+  window.updateLessonLibrary=async function(){
+    if(typeof window.loadTeacherFirestoreSubscriptions==='function') await window.loadTeacherFirestoreSubscriptions();
     renderSummary();
     const box=document.getElementById('courseContentsList'),empty=document.getElementById('lessonLibraryEmpty');
     if(!box)return;
@@ -3465,13 +3466,41 @@ renderCurriculum();renderStudents();renderResults();
 
     // Lesson access is granted only when this teacher has an active yearly
     // subscription for both the selected subject and the selected class.
+    function hasSubjectClassSubscription(subject, cls){
+      if(!subject || !cls) return false;
+      const uid=window.firebaseTeacherUID||'';
+      if(!uid) return false;
+      const records=Array.isArray(window.firestoreSubscriptionCache)?window.firestoreSubscriptionCache:[];
+      const now=Date.now();
+      const norm=v=>String(v||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();
+      const subjectOption=librarySubject?.selectedOptions?.[0];
+      const subjectId=subjectOption?.dataset?.subjectId||'';
+      return records.some(record=>{
+        if(String(record.teacherUid||'')!==uid || String(record.status||'').toLowerCase()!=='active') return false;
+        const start=record.startsAt?.toDate?record.startsAt.toDate().getTime():Date.parse(record.startsAt||record.approvedAt||0);
+        const end=record.expiresAt?.toDate?record.expiresAt.toDate().getTime():Date.parse(record.expiresAt||0);
+        if(Number.isFinite(start)&&start>now) return false;
+        if(!Number.isFinite(end)||end<=now) return false;
+        const sameSubject=(subjectId&&record.subjectId&&String(subjectId)===String(record.subjectId)) || norm(record.subject)===norm(subject);
+        const classes=Array.isArray(record.classes)?record.classes:[];
+        return sameSubject && classes.some(value=>norm(value)===norm(cls));
+      });
+    }
     const selectedRecord=curriculumCatalog.find(function(item){
-      return item.className===selectedClass && item.term===selectedTerm && item.subject===selectedSubject;
+      return item.className===selectedClass && item.term===selectedTerm && String(item.subject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()===String(selectedSubject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();
     });
 
+    if(!hasSubjectClassSubscription(selectedSubject, selectedClass)){
+      box.innerHTML='';
+      if(empty){
+        empty.style.display='block';
+        empty.innerHTML='<div style="max-width:620px;margin:auto;padding:8px 2px"><div style="font-size:38px;margin-bottom:8px">🔒</div><b style="font-size:19px;color:#17324d">Subscribe to access lesson plans and lesson notes</b><button type="button" class="subscription-action" style="max-width:300px" onclick="openSubscriptionForLessonSelection()">💳 Subscribe to this subject</button></div>';
+      }
+      return;
+    }
     const classMatches=curriculumCatalog.some(function(item){return item.className===selectedClass;});
     const termMatches=curriculumCatalog.some(function(item){return item.className===selectedClass && item.term===selectedTerm;});
-    const subjectMatches=curriculumCatalog.some(function(item){return item.className===selectedClass && item.term===selectedTerm && item.subject===selectedSubject;});
+    const subjectMatches=curriculumCatalog.some(function(item){return item.className===selectedClass && item.term===selectedTerm && String(item.subject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()===String(selectedSubject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();});
     const curriculumMatches=!!selectedRecord && Array.isArray(curriculum) && curriculum.length>0;
     let visible=0;
     box.innerHTML=curriculumMatches ? curriculum.map(function(c,i){
@@ -4458,11 +4487,29 @@ window.viewStudentResult=function(index){
     if(!info.name)return [];
     return assignmentPairs().filter(a=>(info.id&&a.subjectId===info.id)||a.subject.toLowerCase()===info.name.toLowerCase());
   }
-  function readSubs(){try{const x=JSON.parse(localStorage.getItem(scopedKey(SUB_KEY))||'[]');return Array.isArray(x)?x:[]}catch(e){return[]}}
-  function writeSubs(v){localStorage.setItem(scopedKey(SUB_KEY),JSON.stringify(v))}
-  function activeSubs(){return readSubs().filter(x=>x.status==='Active')}
+  window.firestoreSubscriptionCache=window.firestoreSubscriptionCache||[];
+  function readSubs(){return Array.isArray(window.firestoreSubscriptionCache)?window.firestoreSubscriptionCache:[]}
+  function writeSubs(v){/* Subscription entitlements are managed only by the admin portal in Firestore. */}
+  function activeSubs(){const now=Date.now();return readSubs().filter(x=>String(x.status||'').toLowerCase()==='active'&&(!x.expiresAt||Date.parse(x.expiresAt?.toDate?x.expiresAt.toDate().toISOString():x.expiresAt)>now))}
   function isActive(s,id=''){return activeSubs().some(x=>(id&&x.subjectId&&String(x.subjectId)===String(id))||String(x.subject).toLowerCase()===String(s).toLowerCase())}
   function getActive(s,id=''){return activeSubs().find(x=>(id&&x.subjectId&&String(x.subjectId)===String(id))||String(x.subject).toLowerCase()===String(s).toLowerCase())}
+  window.loadTeacherFirestoreSubscriptions=async function(force=false){
+    const uid=window.firebaseTeacherUID,db=window.teacherFirestore,fn=window.firebaseFirestoreFns;
+    if(!uid||!db||!fn){window.firestoreSubscriptionCache=[];return [];}
+    if(window._subscriptionLoadUid===uid&&!force&&window._subscriptionLoadDone)return window.firestoreSubscriptionCache;
+    try{
+      const q=fn.query(fn.collection(db,'subscriptions'),fn.where('teacherUid','==',uid));
+      const snap=await fn.getDocs(q),now=Date.now();
+      window.firestoreSubscriptionCache=snap.docs.map(d=>({id:d.id,...d.data()})).filter(x=>{
+        if(String(x.teacherUid||'')!==uid||String(x.status||'').toLowerCase()!=='active')return false;
+        const start=x.startsAt?.toDate?x.startsAt.toDate().getTime():Date.parse(x.startsAt||x.approvedAt||0);
+        const end=x.expiresAt?.toDate?x.expiresAt.toDate().getTime():Date.parse(x.expiresAt||0);
+        return (!Number.isFinite(start)||start<=now)&&Number.isFinite(end)&&end>now;
+      });
+      window._subscriptionLoadUid=uid;window._subscriptionLoadDone=true;
+    }catch(e){console.error('Unable to load Firestore subscriptions:',e);window.firestoreSubscriptionCache=[];}
+    return window.firestoreSubscriptionCache;
+  };
 
   function renderSubscriptionSubjectOptions(){
     const el=document.getElementById('subscriptionSubjectSelect');if(!el)return;
@@ -4540,26 +4587,67 @@ window.viewStudentResult=function(index){
     if(msg)msg.style.display=record?'flex':'none';if(msgText&&sub)msgText.textContent='You already have an active yearly subscription for '+sub+'.';
   };
 
-  window.startSubscription=function(){
+  window.startSubscription=async function(){
     const info=selectedSubjectInfo(),sub=info.name;
     const checks=Array.from(document.querySelectorAll('#subscriptionClassChoices input:checked'));
     let classes=checks.map(x=>x.value);
     if(!sub){alert('Please select a subject.');return}
     if(!classes.length){alert('Please select at least one assigned class.');return}
+    if(!window.firebaseTeacherUID||!window.teacherFirestore||!window.firebaseFirestoreFns){alert('Please sign in before requesting a subscription.');return}
     if(isRegistrarConnected()){
       const allowed=new Set(pairsForSubject(info).map(a=>a.className));
       classes=classes.filter(c=>allowed.has(c));
       if(!classes.length){alert('No selected class is assigned to this subject by the registrar.');return}
     }
-    const subs=readSubs(),existing=subs.find(x=>((info.id&&x.subjectId&&String(x.subjectId)===String(info.id))||String(x.subject).toLowerCase()===sub.toLowerCase())&&x.status==='Active');
-    if(existing){existing.subject=sub;existing.subjectId=info.id||existing.subjectId||'';existing.classes=Array.from(new Set((existing.classes||[]).filter(c=>!isRegistrarConnected()||pairsForSubject(info).some(a=>a.className===c)).concat(classes)));writeSubs(subs);syncAssignments();populateDashboardSubjectFilter();populateDashboardClassFilter();renderDashboardSubscriptions();updateSubscriptionPage();alert(sub+' is already subscribed. The selected assigned classes have been saved.');return}
-    // Existing frontend subscription activation is retained; payment-gateway verification is still separate.
-    subs.push({subject:sub,subjectId:info.id||'',classes:Array.from(new Set(classes)),amount:fee,duration:'1 Year',status:'Active',schoolId:isRegistrarConnected()?(window.activeTeacherConnection?.schoolId||''):'',teacherUid:window.firebaseTeacherUID||'',createdAt:new Date().toISOString(),expiresAt:new Date(Date.now()+365*86400000).toISOString()});
-    writeSubs(subs);syncAssignments();populateDashboardSubjectFilter();populateDashboardClassFilter();renderDashboardSubscriptions();updateSubscriptionPage();
-    alert('Subscription successful: '+sub+'\nClasses: '+classes.join(', ')+'\n₦'+fee.toLocaleString()+' for 1 year.');
+    const uid=window.firebaseTeacherUID;
+    const existing=activeSubs().find(x=>((info.id&&x.subjectId&&String(x.subjectId)===String(info.id))||String(x.subject||'').toLowerCase()===sub.toLowerCase())&&(x.classes||[]).some(c=>classes.includes(c)));
+    if(existing){alert('An active subscription already exists for some of these classes. Contact the administrator if you need to add classes.');return}
+    const teacherEmail=window.teacherFirebaseAuth?.currentUser?.email||'';
+    const teacherName=document.querySelector('[data-teacher-name]')?.textContent?.trim()||window.teacherProfileName||teacherEmail||'Teacher';
+    const amount=fee;
+    const paymentReference='MSB-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,7).toUpperCase();
+    try{
+      const requestRef=await window.firebaseFirestoreFns.addDoc(window.firebaseFirestoreFns.collection(window.teacherFirestore,'subscriptionRequests'),{
+        teacherUid:uid,teacherEmail,teacherName,subject:sub,subjectId:info.id||'',classes:Array.from(new Set(classes)),amount,
+        paymentReference,requestId:'',status:'pending',createdAt:window.firebaseFirestoreFns.serverTimestamp(),requestedAt:new Date().toISOString(),
+        paymentMethod:'bank_transfer',receiptStatus:'awaiting_receipt'
+      });
+      const classText=Array.from(new Set(classes)).join(', ');
+      const moneyText='₦'+Number(amount).toLocaleString('en-NG');
+      const waMessage='Hello MySchoolBook Admin. I have made a subscription payment.\nTeacher: '+teacherName+'\nEmail: '+(teacherEmail||'Not provided')+'\nTeacher UID: '+uid+'\nRequest ID: '+requestRef.id+'\nPayment Reference: '+paymentReference+'\nSubject: '+sub+'\nClasses: '+classText+'\nDuration: 1 year\nAmount Paid: '+moneyText+'\nPlease verify my payment and activate this subscription. I will attach my payment receipt to this WhatsApp message.';
+      const overlay=document.createElement('div');
+      overlay.id='msbPaymentModal';
+      overlay.style.cssText='position:fixed;inset:0;z-index:100000;background:rgba(9,27,35,.65);display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto';
+      overlay.innerHTML=`<div style="width:min(560px,100%);max-height:94vh;overflow:auto;background:#fff;border-radius:18px;padding:20px;color:#17324d;box-shadow:0 20px 60px #0003;font-family:Arial,sans-serif">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h2 style="margin:0;color:#087c60;font-size:22px">Complete Your Subscription</h2><button type="button" id="msbClosePayment" style="background:#eef2f6;border-radius:50%;width:36px;height:36px;font-size:22px">×</button></div>
+        <p style="color:#667085;margin:8px 0 14px">Your request has been recorded. Make the transfer below, then send your receipt.</p>
+        <div style="background:#f2faf6;border:1px solid #d4eee1;border-radius:12px;padding:14px;margin-bottom:14px">
+          <div><b>Teacher:</b> ${String(teacherName).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</div>
+          <div><b>Subject:</b> ${String(sub).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</div>
+          <div><b>Class(es):</b> ${classText}</div><div><b>Duration:</b> 1 year</div>
+          <div style="font-size:21px;font-weight:800;color:#087c60;margin-top:7px">Amount: ${moneyText}</div>
+          <div style="margin-top:8px"><b>Payment Reference:</b> <span style="font-weight:800">${paymentReference}</span></div>
+          <div style="font-size:12px;color:#667085;margin-top:3px">Request ID: ${requestRef.id}</div>
+        </div>
+        <h3 style="margin:0 0 8px">Bank Transfer Details</h3>
+        <div style="border:1px solid #dfe7ef;border-radius:12px;padding:14px;line-height:1.9">
+          <div><b>Bank:</b> OPay Mobile Banking</div><div><b>Account Name:</b> Abubakar Yahaya</div>
+          <div style="font-size:19px;font-weight:800;letter-spacing:.5px"><b>Account Number:</b> 8133839892</div>
+        </div>
+        <div style="background:#fff7e6;border:1px solid #f1dfb6;border-radius:10px;padding:12px;margin:13px 0;font-size:13px">After transferring, press the button below. WhatsApp will open with your reference and subscription details. Attach your bank receipt image before sending.</div>
+        <button type="button" id="msbSendReceipt" style="width:100%;padding:14px;background:#159b56;color:#fff;border-radius:10px;font-weight:800;font-size:15px">📲 SEND RECEIPT ON WHATSAPP</button>
+        <button type="button" id="msbCopyReference" style="width:100%;padding:11px;background:#eef2f6;color:#17324d;border-radius:10px;margin-top:8px;font-weight:700">Copy Payment Reference</button>
+        <p style="font-size:12px;color:#667085;margin:12px 0 0">Your subscription stays pending until the administrator verifies the bank transfer and approves it. WhatsApp does not attach the receipt automatically.</p>
+      </div>`;
+      document.body.appendChild(overlay);
+      overlay.querySelector('#msbClosePayment').onclick=()=>overlay.remove();
+      overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});
+      overlay.querySelector('#msbSendReceipt').onclick=()=>window.open('https://wa.me/2348133839892?text='+encodeURIComponent(waMessage),'_blank','noopener');
+      overlay.querySelector('#msbCopyReference').onclick=async()=>{try{await navigator.clipboard.writeText(paymentReference);alert('Payment reference copied: '+paymentReference)}catch{prompt('Copy this payment reference:',paymentReference)}};
+    }catch(e){console.error(e);alert('Could not submit your subscription request. Please check your connection and Firebase Firestore Rules, then try again.');}
   };
 
-  window.openSubjectSubscription=function(){const target=document.querySelectorAll('.topnav-item')[4]||null;showSection('profileView',target);const profilePage=document.querySelector('#profileView .teacher-profile-page'),subscription=document.getElementById('subscriptionView');if(profilePage)profilePage.style.display='block';if(subscription)subscription.style.display='block';renderSubscriptionSubjectOptions();renderSubscriptionClasses();updateSubscriptionPage();window.scrollTo({top:0,behavior:'smooth'});};
+    window.openSubjectSubscription=function(){const target=document.querySelectorAll('.topnav-item')[4]||null;showSection('profileView',target);const profilePage=document.querySelector('#profileView .teacher-profile-page'),subscription=document.getElementById('subscriptionView');if(profilePage)profilePage.style.display='block';if(subscription)subscription.style.display='block';renderSubscriptionSubjectOptions();renderSubscriptionClasses();updateSubscriptionPage();window.scrollTo({top:0,behavior:'smooth'});};
   window.openTeachingAssignment=window.openSubjectSubscription;
   window.closeProfileAssignment=function(){openTeacherProfile()};
   const subjectSelect=document.getElementById('subscriptionSubjectSelect');
@@ -4567,9 +4655,14 @@ window.viewStudentResult=function(index){
   const all=document.getElementById('subscriptionSelectAllClasses');
   if(all)all.addEventListener('click',function(){const checks=Array.from(document.querySelectorAll('#subscriptionClassChoices input:not(:disabled)'));const checked=checks.length&&checks.every(x=>x.checked);checks.forEach(x=>x.checked=!checked);all.textContent=checked?'Select All':'Clear All';updateSubscriptionPage()});
   window.loadTeachingAssignments=function(){renderSubscriptionSubjectOptions();renderSubscriptionClasses();syncAssignments();populateDashboardSubjectFilter();populateDashboardClassFilter();renderDashboardSubscriptions();updateSubscriptionPage()};
-  window.addEventListener('teacherAccountContextChanged',function(){renderSubscriptionSubjectOptions();renderSubscriptionClasses();updateSubscriptionPage()});
-  document.addEventListener('DOMContentLoaded',function(){renderSubscriptionSubjectOptions();renderSubscriptionClasses();syncAssignments();populateDashboardSubjectFilter();populateDashboardClassFilter();renderDashboardSubscriptions();updateSubscriptionPage()});
-  renderSubscriptionSubjectOptions();renderSubscriptionClasses();syncAssignments();populateDashboardSubjectFilter();populateDashboardClassFilter();renderDashboardSubscriptions();
+  async function refreshSubscriptionUI(){
+    await window.loadTeacherFirestoreSubscriptions(true);
+    renderSubscriptionSubjectOptions();renderSubscriptionClasses();syncAssignments();populateDashboardSubjectFilter();populateDashboardClassFilter();renderDashboardSubscriptions();updateSubscriptionPage();
+    if(typeof window.updateLessonLibrary==='function')await window.updateLessonLibrary();
+  }
+  window.addEventListener('teacherAccountContextChanged',function(){refreshSubscriptionUI()});
+  document.addEventListener('DOMContentLoaded',function(){refreshSubscriptionUI()});
+  refreshSubscriptionUI();
 })();
 document.addEventListener("DOMContentLoaded",loadTeacherSettings);
 </script>
@@ -5418,3 +5511,36 @@ body.lessons-active #lessonSubscriptionToggle{
   body.lessons-active .main{padding-top:64px !important;padding-left:8px !important;padding-right:8px !important;}
 }
 </style>
+
+<style>
+  #firebaseAuthGate .auth-logo{cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+  #firebaseAuthGate .auth-logo:focus-visible{outline:3px solid #087f5b;outline-offset:4px}
+</style>
+<script>
+(function(){
+  const logo = document.querySelector('#firebaseAuthGate .auth-logo');
+  if (!logo) return;
+  let taps = 0;
+  let resetTimer = null;
+  logo.setAttribute('role','button');
+  logo.setAttribute('tabindex','0');
+  logo.setAttribute('aria-label','App logo');
+  function tapLogo(){
+    taps += 1;
+    clearTimeout(resetTimer);
+    if (taps >= 10) {
+      taps = 0;
+      window.location.href = new URL('subscription-admin-portal.html', window.location.href).href;
+      return;
+    }
+    resetTimer = setTimeout(function(){ taps = 0; }, 4000);
+  }
+  logo.addEventListener('click', tapLogo);
+  logo.addEventListener('keydown', function(event){
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      tapLogo();
+    }
+  });
+})();
+</script>
