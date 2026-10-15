@@ -1585,6 +1585,18 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
  #attendanceView .attendance-table td:not(.attendance-student-cell){width:210px!important;min-width:210px!important;max-width:210px!important;scroll-margin-left:190px!important}
 }
 </style>
+<style>
+/* Independent teacher's personal timetable form */
+.independent-timetable-create{padding-bottom:14px}
+.independent-timetable-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:14px}
+.independent-timetable-field{min-width:0}
+.independent-timetable-field label{display:block;font-size:12px;font-weight:900;color:#526171;margin:0 0 6px}
+.independent-timetable-field input{width:100%;min-height:48px;padding:10px 12px;border:1px solid #cbd6e2;border-radius:10px;background:#fff;color:#17324d;font:inherit}
+.independent-timetable-field input:focus{outline:2px solid rgba(7,140,85,.18);border-color:#078c55}
+.independent-timetable-add{grid-column:1/-1;min-height:48px;border-radius:10px;background:#078c55;color:#fff;font-weight:900;padding:12px 16px}
+.independent-timetable-delete{background:#fff0f2;color:#b42318;border:1px solid #fecaca;border-radius:7px;padding:7px 10px;font-weight:800}
+@media(max-width:600px){.independent-timetable-form{grid-template-columns:1fr;padding:12px}.independent-timetable-add{grid-column:auto}}
+</style>
 </head>
 <body>
 <script>
@@ -2300,8 +2312,18 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
 </div>
 
 <div id="myTimetableView" class="section-view" style="display:none">
-  <div class="section-title"><h2>My Timetable</h2><p></p></div>
-  <div class="card"><div id="teacherTimetableMessage" class="empty">Checking your school connection…</div><div class="tablewrap"><table class="schedule-table"><thead><tr><th>Day / Date</th><th>Time</th><th>Class</th><th>Subject</th><th>Venue</th><th>Term / Session</th></tr></thead><tbody id="teacherTimetableRows"><tr><td colspan="6" class="empty">Loading timetable…</td></tr></tbody></table></div></div>
+  <div class="section-title"><h2>My Timetable</h2><p>Create and manage your own teaching timetable. Today's entries will appear on your dashboard.</p></div>
+  <div class="card independent-timetable-create">
+    <div class="cardhead"><h3>Add Timetable Entry</h3></div>
+    <form id="independentTimetableForm" class="independent-timetable-form">
+      <div class="independent-timetable-field"><label for="independentTimetableSubject">SUBJECT</label><input id="independentTimetableSubject" name="subject" type="text" placeholder="e.g. Basic Science" required maxlength="100"></div>
+      <div class="independent-timetable-field"><label for="independentTimetableDate">DATE</label><input id="independentTimetableDate" name="date" type="date" required></div>
+      <div class="independent-timetable-field"><label for="independentTimetableTime">TIME</label><input id="independentTimetableTime" name="time" type="time" required></div>
+      <div class="independent-timetable-field"><label for="independentTimetableClass">CLASS</label><input id="independentTimetableClass" name="className" type="text" placeholder="e.g. Primary 5" required maxlength="80"></div>
+      <button class="independent-timetable-add" type="submit">＋ Add to Timetable</button>
+    </form>
+  </div>
+  <div class="card"><div id="teacherTimetableMessage" class="empty">Your timetable entries will appear here.</div><div class="tablewrap"><table class="schedule-table"><thead><tr><th>Day / Date</th><th>Time</th><th>Class</th><th>Subject</th><th>Venue</th><th>Term / Session</th><th>Action</th></tr></thead><tbody id="teacherTimetableRows"><tr><td colspan="7" class="empty">No timetable entries yet. Use the form above to add one.</td></tr></tbody></table></div></div>
 </div>
 
 <div id="examTimetableView" class="section-view" style="display:none">
@@ -5323,6 +5345,74 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   window.loadTeacherAcademicSession=loadTeacherAcademicSession;
 
 
+  function independentTimetableStorageKey(){
+    const uid=auth.currentUser&&auth.currentUser.uid;
+    return 'independentTeacherTimetable_v1_'+(uid||'local');
+  }
+  function getIndependentTimetableEntries(){
+    try{const value=JSON.parse(localStorage.getItem(independentTimetableStorageKey())||'[]');return Array.isArray(value)?value:[];}
+    catch(e){console.warn('Could not read personal timetable',e);return[];}
+  }
+  function saveIndependentTimetableEntries(entries){
+    localStorage.setItem(independentTimetableStorageKey(),JSON.stringify(entries));
+  }
+  function formatTimetableDate(iso){
+    if(!iso)return '';
+    const d=new Date(iso+'T12:00:00');
+    return Number.isNaN(d.getTime())?iso:d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short',year:'numeric'});
+  }
+  function renderIndependentTimetable(){
+    const body=document.getElementById('teacherTimetableRows');
+    if(!body)return;
+    const entries=getIndependentTimetableEntries().sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.time||'').localeCompare(b.time||''));
+    body.replaceChildren();
+    if(!entries.length){
+      const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=7;td.className='empty';td.textContent='No timetable entries yet. Use the form above to add one.';tr.append(td);body.append(tr);
+      setTimetableMessage('teacherTimetableMessage','');
+      return;
+    }
+    entries.forEach(entry=>{
+      const tr=document.createElement('tr');
+      safeCell(tr,formatTimetableDate(entry.date));
+      safeCell(tr,entry.time||'—');
+      safeCell(tr,entry.className||'—');
+      safeCell(tr,entry.subject||'—');
+      safeCell(tr,'—');
+      safeCell(tr,'Independent timetable');
+      const td=document.createElement('td'),btn=document.createElement('button');
+      btn.type='button';btn.className='independent-timetable-delete';btn.textContent='Delete';
+      btn.addEventListener('click',()=>{
+        if(!confirm('Delete this timetable entry?'))return;
+        saveIndependentTimetableEntries(getIndependentTimetableEntries().filter(item=>item.id!==entry.id));
+        renderIndependentTimetable();renderTeacherTodayAgenda();
+      });
+      td.append(btn);tr.append(td);body.append(tr);
+    });
+    setTimetableMessage('teacherTimetableMessage',entries.length+' personal timetable entr'+(entries.length===1?'y':'ies')+'.');
+  }
+  function setupIndependentTimetableForm(){
+    const form=document.getElementById('independentTimetableForm');
+    if(!form||form.dataset.bound==='1')return;
+    form.dataset.bound='1';
+    const dateInput=document.getElementById('independentTimetableDate');
+    if(dateInput&&!dateInput.value){
+      const now=new Date();dateInput.value=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
+    }
+    form.addEventListener('submit',event=>{
+      event.preventDefault();
+      const subject=document.getElementById('independentTimetableSubject').value.trim();
+      const date=document.getElementById('independentTimetableDate').value;
+      const time=document.getElementById('independentTimetableTime').value;
+      const className=document.getElementById('independentTimetableClass').value.trim();
+      if(!subject||!date||!time||!className){alert('Please complete the subject, date, time, and class.');return;}
+      const entries=getIndependentTimetableEntries();
+      entries.push({id:'tt_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8),subject,date,time,className,createdAt:new Date().toISOString()});
+      try{saveIndependentTimetableEntries(entries);}catch(e){alert('Could not save this timetable entry in this browser.');return;}
+      form.reset();
+      if(dateInput){const now=new Date();dateInput.value=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');}
+      renderIndependentTimetable();renderTeacherTodayAgenda();
+    });
+  }
   function renderTeacherTodayAgenda(){
     const host=document.getElementById('todayAgendaItems');
     const dateLabel=document.getElementById('todayAgendaDate');
@@ -5332,6 +5422,11 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     const weekday=now.toLocaleDateString('en-GB',{weekday:'long'});
     if(dateLabel)dateLabel.textContent=now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
     const items=[];
+    if((window.TEACHER_DASHBOARD_MODE||'independent')==='independent'){
+      getIndependentTimetableEntries().filter(entry=>entry.date===todayISO).forEach(entry=>{
+        items.push({kind:'lesson',time:entry.time||'Time not specified',cls:entry.className||'',subject:entry.subject||'Teaching Period',venue:'',title:entry.subject||'Teaching Period',extra:'Teaching'});
+      });
+    }
     function dateMatches(raw,allowWeekday){
       const value=String(raw||'').trim();
       if(!value)return false;
@@ -5365,7 +5460,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
           extra:isDuty?'Invigilation':isExam?'Examination':'Teaching'});
       });
     }
-    readRows('teacherTimetableRows','lesson');
+    if((window.TEACHER_DASHBOARD_MODE||'independent')!=='independent')readRows('teacherTimetableRows','lesson');
     readRows('teacherExamTimetableRows','exam');
     readRows('teacherInvigilationRows','duty');
     const rank={lesson:0,exam:1,duty:2};
@@ -5397,6 +5492,15 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     const lessonBody=document.getElementById('teacherTimetableRows'),examBody=document.getElementById('teacherExamTimetableRows'),dutyBody=document.getElementById('teacherInvigilationRows');
     if(!lessonBody||!examBody)return;
     const user=auth.currentUser;
+    if((window.TEACHER_DASHBOARD_MODE||'independent')==='independent'){
+      setupIndependentTimetableForm();
+      renderIndependentTimetable();
+      if(examBody)examBody.innerHTML='<tr><td colspan="7" class="empty">Examination timetable is managed separately.</td></tr>';
+      if(dutyBody)dutyBody.innerHTML='<tr><td colspan="7" class="empty">No school invigilation timetable in independent mode.</td></tr>';
+      setTimetableMessage('teacherExamTimetableMessage','');
+      renderTeacherTodayAgenda();
+      return;
+    }
     if(!user){setTimetableMessage('teacherTimetableMessage','Sign in to view your timetable.',true);renderTeacherTodayAgenda();return;}
     try{
       if(!activeTeacherConnection||activeTeacherConnection.status!=='connected')await refreshTeacherSchoolConnection();
