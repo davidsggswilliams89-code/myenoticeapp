@@ -4359,15 +4359,14 @@ window.viewStudentResult=function(index){
     return isoDate(date)===isoDate(new Date());
   }
   function dayState(s,date){
-    const value=attendanceStore()[studentAttendanceKey(s,date)];
-    // Only the current local calendar date is editable. A saved mark today
-    // remains editable; past and future dates are always disabled.
+    // Past and future dates are locked; today's saved mark remains editable.
     if(!attendanceDateIsToday(date)){
       const dayStart=new Date(date.getFullYear(),date.getMonth(),date.getDate(),0,0,0,0);
       const now=new Date();
       const todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate(),0,0,0,0);
       return dayStart.getTime()<todayStart.getTime()?"locked":"future";
     }
+    const value=attendanceStore()[studentAttendanceKey(s,date)];
     if(value==="present"||value===true)return "present";
     if(value==="absent")return "absent";
     return "open";
@@ -4375,7 +4374,10 @@ window.viewStudentResult=function(index){
   function markAttendance(index,date,value){
     const records=attendanceStudents(),item=records[index];if(!item)return;
     if(!attendanceDateIsToday(date))return;
-    const store=attendanceStore();store[studentAttendanceKey(item.s,date)]=value;saveAttendanceStore(store);renderAttendance();
+    const store=attendanceStore();
+    store[studentAttendanceKey(item.s,date)]=value;
+    saveAttendanceStore(store);
+    renderAttendance();
   }
   window.markAttendance=markAttendance;
   window.toggleAttendance=function(index,date){markAttendance(index,date,"present");};
@@ -4405,12 +4407,23 @@ window.viewStudentResult=function(index){
         const presentChecked=state==="present"?' checked':'';
         const absentChecked=state==="absent"?' checked':'';
         const lockNote="";
-        return '<td class="'+(dayItem.weekStart?'attendance-week-start':'')+'"><div class="attendance-choice">'+
+        return '<td class="'+(dayItem.weekStart?'attendance-week-start ':'')+(attendanceDateIsToday(d)?'attendance-today-cell':'')+'" data-attendance-date="'+dateString+'"><div class="attendance-choice">'+
           '<label class="attendance-mark present" title="Present"><input type="checkbox" aria-label="Mark present"'+presentChecked+(disabled?' disabled':'')+' onchange="markAttendance('+i+',new Date(\''+dateString+'T12:00:00\'),\'present\')"><span>✓</span></label>'+
           '<label class="attendance-mark absent" title="Absent"><input type="checkbox" aria-label="Mark absent"'+absentChecked+(disabled?' disabled':'')+' onchange="markAttendance('+i+',new Date(\''+dateString+'T12:00:00\'),\'absent\')"><span>×</span></label></div>'+lockNote+'</td>';
       }).join("");
       return '<tr><td>'+photo+'</td><td><div class="attendance-student"><div class="attendance-student-name">'+safeText(student[1])+'</div></div></td>'+cells+'</tr>';
     }).join("");
+    // Keep today's column visible on mobile and after filter changes.
+    requestAnimationFrame(function(){
+      const todayCell=body.querySelector('[data-attendance-date="'+isoDate(new Date())+'"]');
+      const wrap=document.querySelector('.attendance-table-wrap');
+      if(todayCell && wrap){
+        const wrapRect=wrap.getBoundingClientRect();
+        const cellRect=todayCell.getBoundingClientRect();
+        wrap.scrollLeft += cellRect.left - wrapRect.left - Math.min(100,wrap.clientWidth*0.15);
+      }
+    });
+
   };
   const cls=document.getElementById("classSelect"),term=document.getElementById("termSelect");
   if(cls)cls.addEventListener("change",function(){attendanceSelectedClass="";setTimeout(renderAttendance,0);});
@@ -6017,5 +6030,10 @@ body.lessons-active #lessonSubscriptionToggle{
 #attendanceView .attendance-mark input{width:22px!important;height:22px!important;margin:0!important}
 #attendanceView .attendance-button-hint{display:none!important}
 @media(max-width:480px){#attendanceView .attendance-help{gap:6px 12px!important;padding:11px 8px!important}#attendanceView .attendance-student-name{font-size:14px!important}#attendanceView .attendance-choice{gap:8px!important}}
+
+/* Attendance: highlight today's column and make the active day easy to locate. */
+.attendance-table td.attendance-today-cell{background:#f0fdf4!important;border-left:2px solid #078c55!important;border-right:2px solid #078c55!important}
+.attendance-table td.attendance-today-cell .attendance-mark input{border-color:#078c55}
+.attendance-table td.attendance-today-cell .attendance-mark{opacity:1!important}
 </style>
 
