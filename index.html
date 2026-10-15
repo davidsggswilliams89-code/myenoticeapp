@@ -3388,29 +3388,6 @@ function printDocument(content){
 
 
 
-<script id="lesson-library-week-access-fix">
-(function(){
-  function enableLessonLibraryButtons(root){
-    (root || document).querySelectorAll('.library-period-actions .library-action').forEach(function(button){
-      if(button.disabled) button.disabled = false;
-      if(button.hasAttribute('disabled')) button.removeAttribute('disabled');
-      if(button.getAttribute('aria-disabled') === 'true') button.setAttribute('aria-disabled','false');
-      button.style.opacity = '1';
-      button.style.filter = 'none';
-      button.style.cursor = 'pointer';
-      button.style.pointerEvents = 'auto';
-    });
-  }
-  document.addEventListener('DOMContentLoaded', function(){
-    enableLessonLibraryButtons();
-    var target = document.getElementById('courseContentsList');
-    if(target){
-      new MutationObserver(function(){ enableLessonLibraryButtons(target); })
-        .observe(target, {childList:true, subtree:true});
-    }
-  });
-})();
-</script>
 </body></html>`);
  w.document.close();w.focus();setTimeout(()=>w.print(),250);
 }
@@ -5492,6 +5469,35 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
 })();
 </script>
 
+
+<script id="lesson-library-week-access-fix">
+(function(){
+  // Repair only Lesson Plan / Lesson Note controls in the lesson library.
+  function enableLessonLibraryButtons(root){
+    (root || document).querySelectorAll('#courseContentsList .library-period-actions .library-action').forEach(function(button){
+      button.disabled = false;
+      button.removeAttribute('disabled');
+      button.setAttribute('aria-disabled','false');
+      button.style.opacity = '1';
+      button.style.filter = 'none';
+      button.style.cursor = 'pointer';
+      button.style.pointerEvents = 'auto';
+    });
+  }
+  function init(){
+    enableLessonLibraryButtons();
+    var target = document.getElementById('courseContentsList');
+    if(target && !target.dataset.lessonButtonObserver){
+      target.dataset.lessonButtonObserver = 'active';
+      new MutationObserver(function(){ enableLessonLibraryButtons(target); })
+        .observe(target, {childList:true, subtree:true, attributes:true, attributeFilter:['disabled','aria-disabled','style']});
+    }
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+  window.addEventListener('load', init);
+})();
+</script>
 </body>
 </html>
 <style>
