@@ -2328,9 +2328,20 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
 </div>
 
 <div id="examTimetableView" class="section-view" style="display:none">
-  <div class="section-title"><h2>My Examination Timetable</h2><p></p></div>
+  <div class="section-title"><h2>My Examination Timetable</h2><p>Your school-assigned examinations appear first. Your personal examination entries are private to your account.</p></div>
   <div class="card"><div class="cardhead"><h3>My Subject Examinations</h3></div><div id="teacherExamTimetableMessage" class="empty">Checking your school connection…</div><div class="tablewrap"><table><thead><tr><th>Date</th><th>Time</th><th>Class</th><th>Subject</th><th>Venue</th><th>Invigilator / Duty</th><th>Term / Session</th></tr></thead><tbody id="teacherExamTimetableRows"><tr><td colspan="7" class="empty">Loading examination timetable…</td></tr></tbody></table></div></div>
+  <div class="card"><div class="cardhead"><h3>My Personal Examination Timetable</h3></div><div id="personalExamTimetableStatus" class="empty" style="display:none"></div><div class="tablewrap"><table><thead><tr><th>Date</th><th>Time</th><th>Class</th><th>Subject</th><th>Action</th></tr></thead><tbody id="personalExamTimetableRows"><tr><td colspan="5" class="empty">Loading your personal examination timetable…</td></tr></tbody></table></div></div>
   <div class="card"><div class="cardhead"><h3>My Examinations to Invigilate</h3></div><div class="tablewrap"><table><thead><tr><th>Date</th><th>Time</th><th>Class</th><th>Subject</th><th>Venue</th><th>Duty</th><th>Term / Session</th></tr></thead><tbody id="teacherInvigilationRows"><tr><td colspan="7" class="empty">Loading invigilation duties…</td></tr></tbody></table></div></div>
+  <div class="card independent-timetable-create">
+    <div class="cardhead"><h3>Create Personal Examination Timetable</h3></div>
+    <form id="personalExamTimetableForm" class="independent-timetable-form">
+      <div class="independent-timetable-field"><label for="personalExamDate">DATE</label><input id="personalExamDate" name="date" type="date" required></div>
+      <div class="independent-timetable-field"><label for="personalExamTime">TIME</label><input id="personalExamTime" name="time" type="time" required></div>
+      <div class="independent-timetable-field"><label for="personalExamSubject">SUBJECT</label><select id="personalExamSubject" name="subject" required><option value="">Choose a subject from My Classes</option></select></div>
+      <div class="independent-timetable-field"><label for="personalExamClass">CLASS</label><select id="personalExamClass" name="className" required disabled><option value="">Select a subject first</option></select></div>
+      <button class="independent-timetable-add" type="submit">＋ Save Examination Timetable</button>
+    </form>
+  </div>
 </div>
 
 <div id="academicSessionView" class="section-view" style="display:none">
@@ -5346,6 +5357,97 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   window.loadTeacherAcademicSession=loadTeacherAcademicSession;
 
 
+  let personalExamTimetableCache=[];
+  function personalExamCollectionRef(uid){
+    return collection(db,'teachers',uid,'personalExamTimetable');
+  }
+  function personalExamDateLabel(iso){
+    if(!iso)return '—';
+    const d=new Date(iso+'T12:00:00');
+    return Number.isNaN(d.getTime())?iso:d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  }
+  function renderPersonalExamTimetable(){
+    const body=document.getElementById('personalExamTimetableRows');
+    const status=document.getElementById('personalExamTimetableStatus');
+    if(!body)return;
+    body.replaceChildren();
+    const entries=[...personalExamTimetableCache].sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.time||'').localeCompare(String(b.time||'')));
+    if(!entries.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=5;td.className='empty';td.textContent='No personal examination entries yet. Use the form below to create one.';tr.append(td);body.append(tr);}
+    else entries.forEach(entry=>{
+      const tr=document.createElement('tr');safeCell(tr,personalExamDateLabel(entry.date));safeCell(tr,entry.time||'—');safeCell(tr,entry.className||'—');safeCell(tr,entry.subject||'—');
+      const td=document.createElement('td'),btn=document.createElement('button');btn.type='button';btn.className='independent-timetable-delete';btn.textContent='Delete';
+      btn.addEventListener('click',async()=>{
+        const user=auth.currentUser;if(!user){alert('Please sign in again to delete this entry.');return;}
+        if(!confirm('Delete this personal examination timetable entry?'))return;
+        btn.disabled=true;
+        try{await deleteDoc(doc(db,'teachers',user.uid,'personalExamTimetable',entry.id));personalExamTimetableCache=personalExamTimetableCache.filter(x=>x.id!==entry.id);renderPersonalExamTimetable();renderTeacherTodayAgenda();}
+        catch(err){console.error('Personal examination delete failed:',err);alert('Could not delete this entry. Check your Firestore permissions and try again.');btn.disabled=false;}
+      });td.append(btn);tr.append(td);body.append(tr);
+    });
+    if(status){status.style.display='none';status.textContent='';}
+  }
+  async function loadPersonalExamTimetable(){
+    const body=document.getElementById('personalExamTimetableRows');
+    const user=auth.currentUser;
+    if(!body||!user)return;
+    try{
+      const snap=await getDocs(personalExamCollectionRef(user.uid));
+      personalExamTimetableCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+      renderPersonalExamTimetable();renderTeacherTodayAgenda();
+    }catch(err){
+      console.error('Personal examination timetable load failed:',err);
+      body.innerHTML='<tr><td colspan="5" class="empty">Could not load your personal timetable. Check Firestore permissions for teachers/{uid}/personalExamTimetable.</td></tr>';
+    }
+  }
+  function setupPersonalExamTimetableForm(){
+    const form=document.getElementById('personalExamTimetableForm');
+    if(!form||form.dataset.bound==='1')return;
+    form.dataset.bound='1';
+    const subjectSelect=document.getElementById('personalExamSubject');
+    const classSelect=document.getElementById('personalExamClass');
+    function assignments(){try{return typeof window.getIndependentTeachingAssignments==='function'?window.getIndependentTeachingAssignments():[];}catch(_e){return[];}}
+    function refreshClasses(){
+      if(!subjectSelect||!classSelect)return;
+      const subject=subjectSelect.value,old=classSelect.value;
+      const classes=[...new Set(assignments().filter(a=>String(a.subject||'').trim()===subject).map(a=>String(a.className||a.class||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+      classSelect.replaceChildren(new Option(subject?(classes.length?'Choose a class':'No classes assigned to this subject'):'Select a subject first',''));
+      classes.forEach(c=>classSelect.add(new Option(c,c)));
+      classSelect.disabled=!subject||!classes.length;
+      if(old&&classes.includes(old))classSelect.value=old;
+    }
+    function refreshSubjects(){
+      const old=subjectSelect.value;
+      const subjects=[...new Set(assignments().map(a=>String(a.subject||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+      subjectSelect.replaceChildren(new Option(subjects.length?'Choose a subject from My Classes':'No subjects saved in My Classes',''));
+      subjects.forEach(s=>subjectSelect.add(new Option(s,s)));
+      subjectSelect.disabled=!subjects.length;
+      if(old&&subjects.includes(old))subjectSelect.value=old;
+      refreshClasses();
+    }
+    subjectSelect.addEventListener('change',refreshClasses);
+    window.addEventListener('teacherAssignmentsUpdated',refreshSubjects);
+    refreshSubjects();
+    form.addEventListener('submit',async event=>{
+      event.preventDefault();
+      const user=auth.currentUser;
+      if(!user){alert('Please sign in again before saving your examination timetable.');return;}
+      const date=document.getElementById('personalExamDate').value;
+      const time=document.getElementById('personalExamTime').value;
+      const subject=subjectSelect.value;
+      const className=classSelect.value;
+      if(!date||!time||!subject||!className||!assignments().some(a=>String(a.subject||'').trim()===subject&&String(a.className||a.class||'').trim()===className)){
+        alert('Choose a date, time, subject, and a class assigned to that subject in My Classes.');return;
+      }
+      const button=form.querySelector('button[type="submit"]');button.disabled=true;button.textContent='Saving…';
+      try{
+        const saved=await addDoc(personalExamCollectionRef(user.uid),{date,time,subject,className,ownerUid:user.uid,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
+        personalExamTimetableCache.push({id:saved.id,date,time,subject,className,ownerUid:user.uid});
+        form.reset();refreshSubjects();renderPersonalExamTimetable();renderTeacherTodayAgenda();
+      }catch(err){console.error('Personal examination save failed:',err);alert('Could not save to Firebase. Check Firestore rules for your own teachers/{uid}/personalExamTimetable records.');}
+      finally{button.disabled=false;button.textContent='＋ Save Examination Timetable';}
+    });
+  }
+
   function independentTimetableStorageKey(){
     const uid=auth.currentUser&&auth.currentUser.uid;
     return 'independentTeacherTimetable_v1_'+(uid||'local');
@@ -5455,6 +5557,9 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       getIndependentTimetableEntries().filter(entry=>(entry.day&&String(entry.day).toLowerCase()===weekday.toLowerCase())||(!entry.day&&entry.date===todayISO)).forEach(entry=>{
         items.push({kind:'lesson',time:entry.time||'Time not specified',cls:entry.className||'',subject:entry.subject||'Teaching Period',venue:'',title:entry.subject||'Teaching Period',extra:'Teaching'});
       });
+      personalExamTimetableCache.filter(entry=>entry.date===todayISO).forEach(entry=>{
+        items.push({kind:'exam',time:entry.time||'Time not specified',cls:entry.className||'',subject:entry.subject||'Examination',venue:'',title:entry.subject||'Examination',extra:'Personal Examination'});
+      });
     }
     function dateMatches(raw,allowWeekday){
       const value=String(raw||'').trim();
@@ -5524,7 +5629,9 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     if((window.TEACHER_DASHBOARD_MODE||'independent')==='independent'){
       setupIndependentTimetableForm();
       renderIndependentTimetable();
-      if(examBody)examBody.innerHTML='<tr><td colspan="7" class="empty">Examination timetable is managed separately.</td></tr>';
+      setupPersonalExamTimetableForm();
+      await loadPersonalExamTimetable();
+      if(examBody)examBody.innerHTML='<tr><td colspan="7" class="empty">School-assigned subject examinations are not connected in independent mode. Your personal timetable is shown below.</td></tr>';
       if(dutyBody)dutyBody.innerHTML='<tr><td colspan="7" class="empty">No school invigilation timetable in independent mode.</td></tr>';
       setTimetableMessage('teacherExamTimetableMessage','');
       renderTeacherTodayAgenda();
@@ -5628,6 +5735,10 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       catch(err){console.error('Teacher profile sync failed:',err);applyFirestoreTeacherProfile({},user);}
       // Resolve this account's registrar connection before loading students or assignments.
       await refreshTeacherSchoolConnection();
+      if((window.TEACHER_DASHBOARD_MODE||'independent')==='independent'){
+        setupPersonalExamTimetableForm();
+        await loadPersonalExamTimetable();
+      }
       try{if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();}
       catch(err){console.error('Student Firebase query failed during login:',err);}
       if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
@@ -5641,6 +5752,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     }else{
       activeTeacherConnection=null;window.activeTeacherConnection=null;
       window.firebaseTeacherUID=null;window.firebaseTeacherUser=null;
+      personalExamTimetableCache=[];
       students=[];
       renderTeacherAssignments(null);
       try{localStorage.removeItem('firebaseTeacherUID');localStorage.removeItem('firebaseTeacherDisplayName');}catch(_e){}
