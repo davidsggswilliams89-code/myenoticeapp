@@ -4382,6 +4382,18 @@ window.viewStudentResult=function(index){
   window.renderAttendance=function(){
     const head=document.getElementById("attendanceHead"),body=document.getElementById("attendanceBody");
     if(!head||!body)return;
+    // Bind one delegated click handler to the persistent tbody so taps work reliably on mobile.
+    if(!body.dataset.attendanceClickBound){
+      body.dataset.attendanceClickBound="1";
+      body.addEventListener("click",function(event){
+        const button=event.target.closest("button[data-attendance-status]");
+        if(!button)return;
+        event.preventDefault();event.stopPropagation();
+        const index=Number(button.dataset.studentIndex),date=button.dataset.attendanceDate,value=button.dataset.attendanceStatus;
+        if(!Number.isInteger(index)||!date||!value)return;
+        window.markAttendance(index,new Date(date+"T12:00:00"),value);
+      });
+    }
     populateAttendanceFilters();
 
     const cls=document.getElementById("attendanceClassLabel");
@@ -4425,8 +4437,8 @@ window.viewStudentResult=function(index){
         const key=studentAttendanceKey(student,d);
         return '<td class="attendance-day-cell '+(attendanceDateIsToday(d)?'attendance-today-cell':'')+'" data-attendance-date="'+dateString+'">'+
           '<div class="attendance-status-actions">'+
-            '<button type="button" class="attendance-status-btn present '+(present?'selected':'')+'" aria-pressed="'+present+'" title="Mark present" onclick="markAttendance('+i+',new Date(\''+dateString+'T12:00:00\'),\'present\')">✓ <span>Present</span></button>'+
-            '<button type="button" class="attendance-status-btn absent '+(absent?'selected':'')+'" aria-pressed="'+absent+'" title="Mark absent" onclick="markAttendance('+i+',new Date(\''+dateString+'T12:00:00\'),\'absent\')">× <span>Absent</span></button>'+
+            '<button type="button" class="attendance-status-btn present '+(present?'selected':'')+'" data-student-index="'+i+'" data-attendance-date="'+dateString+'" data-attendance-status="present" aria-pressed="'+present+'" title="Mark present">✓ <span>Present</span></button>'+
+            '<button type="button" class="attendance-status-btn absent '+(absent?'selected':'')+'" data-student-index="'+i+'" data-attendance-date="'+dateString+'" data-attendance-status="absent" aria-pressed="'+absent+'" title="Mark absent">× <span>Absent</span></button>'+
           '</div></td>';
       }).join('');
       return '<tr><td>'+photo+'</td><td><div class="attendance-student"><div class="attendance-student-name">'+
