@@ -3559,6 +3559,44 @@ function printDocument(content){
 
 
 
+
+<style>
+/* Attendance-only layout: one compact sticky student card, with day buttons kept clear to its right. */
+#attendanceView .attendance-table{min-width:800px!important;table-layout:fixed!important}
+#attendanceView .attendance-table th.attendance-student-head,
+#attendanceView .attendance-table td.attendance-student-cell{
+  position:sticky!important;left:0!important;z-index:6!important;
+  width:188px!important;min-width:188px!important;max-width:188px!important;
+  background:#fff!important;text-align:left!important;
+  padding:10px 8px!important;box-shadow:3px 0 7px rgba(16,35,63,.06);
+}
+#attendanceView .attendance-table th.attendance-student-head{background:#f7fafc!important;z-index:7!important;text-align:center!important}
+#attendanceView .attendance-table td.attendance-student-cell .attendance-student{
+  display:flex!important;align-items:center!important;gap:8px!important;min-width:0!important;
+  border:1px solid #dce8e4!important;border-radius:10px!important;background:#f8fbfa!important;
+  padding:6px!important;min-height:62px!important;
+}
+#attendanceView .attendance-table td.attendance-student-cell .attendance-student-photo{
+  width:40px!important;height:48px!important;flex:0 0 40px!important;margin:0!important;
+}
+#attendanceView .attendance-table td.attendance-student-cell .attendance-student-name{
+  min-width:0!important;max-width:none!important;font-size:12px!important;line-height:1.25!important;
+  white-space:normal!important;overflow-wrap:anywhere!important;
+}
+#attendanceView .attendance-table th.attendance-day-head,
+#attendanceView .attendance-table td:not(.attendance-student-cell){width:124px!important;min-width:124px!important;max-width:124px!important}
+#attendanceView .attendance-table td:not(.attendance-student-cell) .attendance-choice{justify-content:center!important;gap:6px!important}
+@media(max-width:760px){
+  #attendanceView .attendance-table{min-width:808px!important}
+  #attendanceView .attendance-table th.attendance-student-head,
+  #attendanceView .attendance-table td.attendance-student-cell{width:180px!important;min-width:180px!important;max-width:180px!important;padding:7px 5px!important}
+  #attendanceView .attendance-table td.attendance-student-cell .attendance-student{gap:6px!important;padding:5px!important}
+  #attendanceView .attendance-table td.attendance-student-cell .attendance-student-photo{width:36px!important;height:44px!important;flex-basis:36px!important}
+  #attendanceView .attendance-table th.attendance-day-head,
+  #attendanceView .attendance-table td:not(.attendance-student-cell){width:124px!important;min-width:124px!important;max-width:124px!important}
+}
+</style>
+
 </body></html>`);
  w.document.close();w.focus();setTimeout(()=>w.print(),250);
 }
@@ -4307,14 +4345,14 @@ window.viewStudentResult=function(index){
     const cls=document.getElementById("attendanceClassLabel");if(cls)cls.textContent=(attendanceSelectedClass||"No class")+" • "+selectedDashboardTerm();
     const monday=mondayOfWeek(new Date()),days=[];for(let i=0;i<5;i++){const d=new Date(monday);d.setDate(monday.getDate()+i);days.push(d);}
     const label=document.getElementById("attendanceWeekLabel");if(label)label.textContent="Week · "+prettyDate(days[0])+" – "+prettyDate(days[4]);
-    head.innerHTML='<tr><th>PHOTO</th><th>STUDENT NAME</th>'+days.map((d,i)=>'<th class="attendance-day-head"><span class="attendance-day-name">'+dayNames[i]+'</span><span class="attendance-day-date">'+prettyDate(d)+'</span></th>').join("")+'</tr>';
+    head.innerHTML='<tr><th class="attendance-student-head">STUDENT</th>'+days.map((d,i)=>'<th class="attendance-day-head"><span class="attendance-day-name">'+dayNames[i]+'</span><span class="attendance-day-date">'+prettyDate(d)+'</span></th>').join("")+'</tr>';
     const records=attendanceStudents();
     if(!attendanceSelectedSubject||!attendanceSelectedClass){body.innerHTML='<tr><td colspan="7" class="attendance-empty">Choose a saved subject and its assigned class from My Classes.</td></tr>';return;}
     if(!records.length){body.innerHTML='<tr><td colspan="7" class="attendance-empty">No students have been added to '+attendanceSelectedClass+' yet.</td></tr>';return;}
     body.innerHTML=records.map(function(item,i){
       const student=item.s,info=studentInfo(student);const photo=info.photo?'<img class="attendance-student-photo" src="'+info.photo+'" alt="Student photo">':'<div class="attendance-student-photo"></div>';
       const cells=days.map(function(d){const date=isoDate(d),state=attendanceState(student,d);return '<td><div class="attendance-choice"><button type="button" data-attendance-index="'+i+'" data-attendance-date="'+date+'" data-attendance-status="present" class="attendance-mark present '+(state==='present'?'selected':'')+'" aria-pressed="'+(state==='present')+'">✓ Present</button><button type="button" data-attendance-index="'+i+'" data-attendance-date="'+date+'" data-attendance-status="absent" class="attendance-mark absent '+(state==='absent'?'selected':'')+'" aria-pressed="'+(state==='absent')+'">✕ Absent</button></div></td>';}).join("");
-      return '<tr><td>'+photo+'</td><td><div class="attendance-student"><div class="attendance-student-name">'+student[1]+'</div></div></td>'+cells+'</tr>';
+      return '<tr><td class="attendance-student-cell"><div class="attendance-student">'+photo+'<div class="attendance-student-name">'+student[1]+'</div></div></td>'+cells+'</tr>';
     }).join("");
   };
   const attendanceBody=document.getElementById("attendanceBody");
