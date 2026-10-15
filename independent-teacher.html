@@ -848,25 +848,9 @@ button{cursor:pointer;border:0}
 .attendance-student{display:flex;align-items:center;gap:9px}
 .attendance-student-photo{width:38px;height:46px;border-radius:7px;object-fit:cover;border:1px solid #d7e1ea;background:#eef3f7;flex:0 0 auto}
 .attendance-student-name{font-size:12px;font-weight:900;color:#1e293b;white-space:normal;overflow:visible;text-overflow:clip;max-width:none;overflow-wrap:break-word;line-height:1.25}
-.attendance-day-head{min-width:104px;width:104px}
+.attendance-day-head{min-width:92px}
 .attendance-day-name{display:block;font-size:12px;font-weight:900}
 .attendance-day-date{display:block;font-size:10px;color:#64748b;margin-top:2px}
-.attendance-week-start th{border-left:3px solid #b8d9ce!important}
-.attendance-week-start td{border-left:3px solid #d7e9e3!important}
-.attendance-choice{display:flex;align-items:center;justify-content:center;gap:8px;min-width:88px}
-.attendance-mark{display:inline-flex;align-items:center;justify-content:center;gap:3px;font-size:10px;font-weight:900;cursor:pointer;color:#475569;white-space:nowrap}
-.attendance-mark input{appearance:none;-webkit-appearance:none;width:20px;height:20px;margin:0;border:2px solid #94a3b8;border-radius:4px;background:#fff;display:inline-grid;place-items:center;cursor:pointer;flex:none}
-.attendance-mark.present input:checked{background:#198754;border-color:#198754}
-.attendance-mark.present input:checked:after{content:"✓";color:#fff;font-size:15px;line-height:1;font-weight:900}
-.attendance-mark.absent input:checked{background:#dc2626;border-color:#dc2626}
-.attendance-mark.absent input:checked:after{content:"×";color:#fff;font-size:17px;line-height:1;font-weight:900}
-.attendance-mark input:disabled{opacity:.5;cursor:not-allowed}
-.attendance-mark:has(input:disabled){opacity:.55;cursor:not-allowed}
-.attendance-week-divider{background:#eaf7f2!important;color:#075c51!important;font-weight:900!important}
-.attendance-lock-note{font-size:9px;color:#94a3b8;margin-top:3px}
-.attendance-table{min-width:max-content}
-.attendance-table th:first-child,.attendance-table td:first-child{min-width:48px}
-.attendance-table th:nth-child(2),.attendance-table td:nth-child(2){min-width:145px}
 .attendance-check{width:21px;height:21px;accent-color:#198754;cursor:pointer}
 .attendance-check:disabled{cursor:not-allowed;opacity:.55}
 .attendance-x{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border:2px solid #dc2626;border-radius:5px;color:#dc2626;font-size:15px;font-weight:900;line-height:1}
@@ -2047,24 +2031,22 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
 <div id="attendanceView" class="section-view" style="display:none">
   <div class="section-title">
     <h2>Attendance</h2>
-    <p>Select a subject and class, then mark each student Present or Absent from Monday to Friday.</p>
+    <p>Mark student attendance for Monday to Friday. A student marked absent is shown with an X after 24 hours if attendance was not recorded.</p>
   </div>
   <div class="attendance-card">
     <div class="attendance-toolbar">
       <div>
         <b id="attendanceWeekLabel">Current Week</b>
-        <small id="attendanceClassLabel" aria-hidden="true" style="display:none"> </small>
+        <small id="attendanceClassLabel">Primary 5</small>
       </div>
       <div class="attendance-top-controls">
-        <label class="attendance-filter-label">SUBJECT
-          <select id="attendanceSubjectFilter" onchange="changeAttendanceSubject(this.value)"></select>
-        </label>
         <label class="attendance-filter-label">CLASS
           <select id="attendanceClassFilter" onchange="changeAttendanceClass(this.value)"></select>
         </label>
+        <button class="secondary attendance-refresh" type="button" onclick="renderAttendance()">REFRESH</button>
       </div>
     </div>
-    <div class="attendance-help">✓ Present &nbsp;&nbsp; □ Not yet marked &nbsp;&nbsp; <span class="attendance-absent-mark">✕</span> Absent</div>
+    <div class="attendance-help">✓ Present &nbsp;&nbsp; □ Not yet marked &nbsp;&nbsp; <span class="attendance-absent-mark">✕</span> Absent after 24 hours</div>
     <div class="attendance-table-wrap">
       <table class="attendance-table">
         <thead id="attendanceHead"></thead>
@@ -4264,215 +4246,133 @@ window.viewStudentResult=function(index){
   const ATT_KEY="primaryTeacherAttendance";
   const dayNames=["Monday","Tuesday","Wednesday","Thursday","Friday"];
   let attendanceSelectedClass="";
-  let attendanceSelectedSubject="";
 
-  function safeText(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
-  function teacherAssignments(){
-    const normalizeAssignments = raw => {
-      if(!Array.isArray(raw)) return [];
-      const out=[];
-      raw.forEach(a=>{
-        if(!a || typeof a!=="object") return;
-        const subject=String(a.subject||a.subjectName||"").trim();
-        const classes=Array.isArray(a.classes)?a.classes:[a.className||a.class||""];
-        classes.forEach(c=>{
-          const className=String(typeof c==="string"?c:(c&&(c.className||c.name))||"").trim();
-          if(subject&&className&&!out.some(x=>x.subject.toLowerCase()===subject.toLowerCase()&&x.className.toLowerCase()===className.toLowerCase())){
-            out.push({subject,className});
-          }
-        });
-      });
-      return out;
-    };
-    if(typeof window.teacherIsSchoolConnected==="function" && window.teacherIsSchoolConnected()){
-      return normalizeAssignments(window.activeTeacherConnection?.assignedTeachingAssignments);
-    }
-
-    // Prefer the current Firebase-backed assignments once loaded.
-    // If Firebase data is still loading or temporarily empty, use this teacher's
-    // cached assignments so the attendance subject filter does not appear blank.
-    let live=[];
-    try{
-      if(typeof window.getIndependentTeachingAssignments==="function"){
-        live=normalizeAssignments(window.getIndependentTeachingAssignments());
-      }
-    }catch(e){ console.warn("Could not read live teacher assignments:",e); }
-    if(live.length) return live;
-
-    try{
-      const uid=window.firebaseTeacherUID||"unauthenticated";
-      const raw=localStorage.getItem("teacherTeachingAssignments_"+uid);
-      const cached=normalizeAssignments(raw?JSON.parse(raw):[]);
-      if(cached.length) return cached;
-    }catch(e){}
-    return live;
-  }
   function allStudentClasses(){
-    const assignments=teacherAssignments();
-    if(attendanceSelectedSubject){
-      const assigned=Array.from(new Set(assignments.filter(a=>a.subject===attendanceSelectedSubject).map(a=>a.className)));
-      if(assigned.length)return assigned.sort(classSort);
+    if(typeof window.teacherIsSchoolConnected==="function" && window.teacherIsSchoolConnected()){
+      return typeof window.teacherAssignedClasses==="function" ? window.teacherAssignedClasses() : [];
     }
-    if(assignments.length)return Array.from(new Set(assignments.map(a=>a.className))).sort(classSort);
     const set=new Set(["Primary 1","Primary 2","Primary 3","Primary 4","Primary 5","Primary 6"]);
-    students.forEach(s=>{const info=studentInfo(s);if(info.className)set.add(info.className);});
-    return Array.from(set).sort(classSort);
+    students.forEach(function(s){
+      const info=studentInfo(s);
+      if(info.className)set.add(info.className);
+    });
+    return Array.from(set).sort(function(a,b){
+      const na=parseInt(String(a).replace(/\D/g,""))||999, nb=parseInt(String(b).replace(/\D/g,""))||999;
+      return na-nb || String(a).localeCompare(String(b));
+    });
   }
-  function classSort(a,b){const na=parseInt(String(a).replace(/\D/g,""))||999,nb=parseInt(String(b).replace(/\D/g,""))||999;return na-nb||String(a).localeCompare(String(b));}
   function attendanceStudents(){
-    const cls=attendanceSelectedClass||selectedDashboardClass();
-    return students.map((s,index)=>({s,index})).filter(x=>studentInfo(x.s).className===cls);
+    const cls=attendanceSelectedClass || selectedDashboardClass();
+    return students.map((s,index)=>({s,index})).filter(function(x){return studentInfo(x.s).className===cls;});
   }
-  function populateAttendanceFilters(){
-    const subjectSelect=document.getElementById("attendanceSubjectFilter");
-    const classSelect=document.getElementById("attendanceClassFilter");
-    const assignments=teacherAssignments();
-    const subjects=Array.from(new Set(assignments.map(a=>a.subject))).sort((a,b)=>a.localeCompare(b));
-    if(subjectSelect){
-      if(!subjects.length){
-        subjectSelect.innerHTML='<option value="">No saved subjects</option>';attendanceSelectedSubject="";
-      }else{
-        if(!subjects.includes(attendanceSelectedSubject))attendanceSelectedSubject=subjects[0];
-        subjectSelect.innerHTML=subjects.map(x=>'<option value="'+safeText(x)+'">'+safeText(x)+'</option>').join("");
-        subjectSelect.value=attendanceSelectedSubject;
-      }
-    }
+  function populateAttendanceClassFilter(){
+    const select=document.getElementById("attendanceClassFilter");
+    if(!select)return;
     const classes=allStudentClasses();
-    if(!classes.length){if(classSelect)classSelect.innerHTML='<option value="">No assigned classes</option>';attendanceSelectedClass="";return;}
-    if(!classes.includes(attendanceSelectedClass))attendanceSelectedClass=classes[0];
-    if(classSelect){classSelect.innerHTML=classes.map(c=>'<option value="'+safeText(c)+'">'+safeText(c)+'</option>').join("");classSelect.value=attendanceSelectedClass;}
+    if(!classes.length){select.innerHTML='<option value="">No classes</option>';attendanceSelectedClass="";return;}
+    const preferred=attendanceSelectedClass || selectedDashboardClass();
+    if(!classes.includes(preferred)) attendanceSelectedClass=classes[0]||"";
+    else attendanceSelectedClass=preferred;
+    select.innerHTML=classes.map(function(c){return '<option value="'+String(c).replace(/"/g,'&quot;')+'">'+c+'</option>';}).join("");
+    select.value=attendanceSelectedClass;
   }
-  window.changeAttendanceSubject=function(value){attendanceSelectedSubject=value;attendanceSelectedClass="";populateAttendanceFilters();renderAttendance();};
-  window.changeAttendanceClass=function(value){attendanceSelectedClass=value;renderAttendance();};
-  function attendanceStore(){try{return JSON.parse(localStorage.getItem(ATT_KEY)||"{}");}catch(e){return {};}}
-  function saveAttendanceStore(data){try{localStorage.setItem(ATT_KEY,JSON.stringify(data));}catch(e){alert("Attendance could not be saved on this device.");}}
-  function mondayOfWeek(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());const day=x.getDay();x.setDate(x.getDate()+(day===0?1:1-day));return x;}
-  function isoDate(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");return y+"-"+m+"-"+day;}
+  window.changeAttendanceClass=function(value){
+    attendanceSelectedClass=value;
+    renderAttendance();
+  };
+
+  function attendanceStore(){
+    try{return JSON.parse(localStorage.getItem(ATT_KEY)||"{}");}catch(e){return {};}
+  }
+  function saveAttendanceStore(data){try{localStorage.setItem(ATT_KEY,JSON.stringify(data));}catch(e){}}
+  function mondayOfWeek(d){
+    const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+    const day=x.getDay();
+    // On Sunday, show the next school week starting tomorrow; otherwise use this week's Monday.
+    const diff=day===0?1:1-day;
+    x.setDate(x.getDate()+diff);
+    return x;
+  }
+  function isoDate(d){
+    const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");
+    return y+"-"+m+"-"+day;
+  }
   function prettyDate(d){return d.toLocaleDateString(undefined,{day:"2-digit",month:"short"});}
   function academicWeekNumber(monday){
-    const term=selectedDashboardTerm();let termStart=null;
-    try{const dates=JSON.parse(localStorage.getItem("primaryAcademicTermStarts")||"{}");const raw=dates[term]||dates[String(term).toLowerCase()];if(raw&&/^\d{4}-\d{2}-\d{2}$/.test(raw))termStart=mondayOfWeek(new Date(raw+"T12:00:00"));}catch(e){}
-    if(!termStart)return null;return Math.max(1,Math.floor((monday-termStart)/604800000)+1);
+    const term=selectedDashboardTerm();
+    let termStart=null;
+    try{
+      const dates=JSON.parse(localStorage.getItem('primaryAcademicTermStarts')||'{}');
+      const raw=dates[term]||dates[String(term).toLowerCase()];
+      if(raw && /^\d{4}-\d{2}-\d{2}$/.test(raw))termStart=mondayOfWeek(new Date(raw+'T12:00:00'));
+    }catch(e){}
+    if(!termStart)return null;
+    return Math.max(1,Math.floor((monday-termStart)/604800000)+1);
   }
-  function studentAttendanceKey(s,date){return [attendanceSelectedSubject||"General",attendanceSelectedClass||selectedDashboardClass(),selectedDashboardTerm(),String(s[0]),date].join("|");}
-  function attendanceDateIsToday(date){
-    return isoDate(date)===isoDate(new Date());
-  }
+  function studentAttendanceKey(s,date){return (attendanceSelectedClass || selectedDashboardClass())+"|"+selectedDashboardTerm()+"|"+String(s[0])+"|"+date;}
   function dayState(s,date){
-    const value=attendanceStore()[studentAttendanceKey(s,date)];
-    if(value==="present"||value===true)return "present";
-    if(value==="absent")return "absent";
+    const store=attendanceStore();
+    const key=studentAttendanceKey(s,date);
+    if(store[key]===true) return "present";
+    const now=new Date();
+    const dayStart=new Date(date.getFullYear(),date.getMonth(),date.getDate(),0,0,0,0);
+    const hours=(now-dayStart)/3600000;
+    if(hours>=24) return "absent";
+    if(date>new Date(now.getFullYear(),now.getMonth(),now.getDate())) return "future";
     return "open";
   }
-  function markAttendance(index,date,value){
-    const records=attendanceStudents(),item=records[index];if(!item)return;
-    const store=attendanceStore(),key=studentAttendanceKey(item.s,date);
-    // Tap the currently selected status again to clear it; otherwise set Present or Absent.
-    const current=store[key];
-    if(current===value || (value==="present"&&current===true)){
-      delete store[key];
-    }else{
-      store[key]=value;
-    }
+  function toggleAttendance(index,date){
+    const records=attendanceStudents();
+    const item=records[index];
+    if(!item)return;
+    const s=item.s, state=dayState(s,date);
+    if(state!=="open" && state!=="present")return;
+    const store=attendanceStore(),key=studentAttendanceKey(s,date);
+    if(state==="present") delete store[key]; else store[key]=true;
     saveAttendanceStore(store);
     renderAttendance();
   }
-  window.markAttendance=markAttendance;
-  window.toggleAttendance=function(index,date){markAttendance(index,date,"present");};
+  window.toggleAttendance=toggleAttendance;
   window.renderAttendance=function(){
     const head=document.getElementById("attendanceHead"),body=document.getElementById("attendanceBody");
     if(!head||!body)return;
-    // Bind one delegated click handler to the persistent tbody so taps work reliably on mobile.
-    if(!body.dataset.attendanceClickBound){
-      body.dataset.attendanceClickBound="1";
-      body.addEventListener("click",function(event){
-        const button=event.target.closest("button[data-attendance-status]");
-        if(!button)return;
-        event.preventDefault();event.stopPropagation();
-        const index=Number(button.dataset.studentIndex),date=button.dataset.attendanceDate,value=button.dataset.attendanceStatus;
-        if(!Number.isInteger(index)||!date||!value)return;
-        window.markAttendance(index,new Date(date+"T12:00:00"),value);
-      });
-    }
-    populateAttendanceFilters();
-
+    populateAttendanceClassFilter();
     const cls=document.getElementById("attendanceClassLabel");
-    if(cls)cls.textContent=(attendanceSelectedSubject?attendanceSelectedSubject+" • ":"")+
-      (attendanceSelectedClass||"No class")+" • "+selectedDashboardTerm();
-
-    // Use the same compact Monday-Friday weekly layout as the school-connected dashboard.
-    const monday=mondayOfWeek(new Date()),days=[];
+    if(cls)cls.textContent=(attendanceSelectedClass || selectedDashboardClass() || "No class")+" • "+selectedDashboardTerm();
+    const monday=mondayOfWeek(new Date()), days=[];
     for(let i=0;i<5;i++){const d=new Date(monday);d.setDate(monday.getDate()+i);days.push(d);}
     const label=document.getElementById("attendanceWeekLabel");
-    if(label){
-      const week=academicWeekNumber(monday);
-      label.textContent=(week?"Week "+week+" · ":"Current week · ")+prettyDate(days[0])+" – "+prettyDate(days[4])+" (Mon–Fri)";
-    }
-
-    head.innerHTML='<tr><th>PHOTO</th><th>STUDENT NAME</th>'+
-      days.map(function(d,i){
-        const today=attendanceDateIsToday(d);
-        return '<th class="attendance-day-head '+(today?'attendance-today-head':'')+'">'+
-          '<span class="attendance-day-name">'+dayNames[i]+'</span>'+
-          '<span class="attendance-day-date">'+prettyDate(d)+'</span>'+
-          (today?'<span class="attendance-today-tag">TODAY</span>':'')+
-          '</th>';
-      }).join('')+'</tr>';
-
+    if(label){const week=academicWeekNumber(monday);label.textContent=(week?"Week "+week+" · ":"Week · ")+prettyDate(days[0])+" – "+prettyDate(days[4]);}
+    head.innerHTML='<tr><th>PHOTO</th><th>STUDENT NAME</th>'+days.map(function(d,i){return '<th class="attendance-day-head"><span class="attendance-day-name">'+dayNames[i]+'</span><span class="attendance-day-date">'+prettyDate(d)+'</span></th>';}).join("")+'</tr>';
     const records=attendanceStudents();
-    if(!records.length){
-      body.innerHTML='<tr><td colspan="7" class="attendance-empty">No students have been added to '+
-        safeText(attendanceSelectedClass||"this class")+' yet.</td></tr>';
-      return;
-    }
-
+    if(!records.length){body.innerHTML='<tr><td colspan="7" class="attendance-empty">No students have been added to '+(attendanceSelectedClass || selectedDashboardClass())+' yet.</td></tr>';return;}
     body.innerHTML=records.map(function(item,i){
-      const student=item.s,info=studentInfo(student);
-      const photo=info.photo
-        ?'<img class="attendance-student-photo" src="'+safeText(info.photo)+'" alt="Student photo">'
-        :'<div class="attendance-student-photo"></div>';
+      const s=item.s,info=studentInfo(s);
+      const photo=info.photo?'<img class="attendance-student-photo" src="'+info.photo+'" alt="Student photo">':'<div class="attendance-student-photo"></div>';
       const cells=days.map(function(d){
-        const dateString=isoDate(d),state=dayState(student,d);
-        const present=state==="present",absent=state==="absent";
-        const key=studentAttendanceKey(student,d);
-        return '<td class="attendance-day-cell '+(attendanceDateIsToday(d)?'attendance-today-cell':'')+'" data-attendance-date="'+dateString+'">'+
-          '<div class="attendance-status-actions">'+
-            '<button type="button" class="attendance-status-btn present '+(present?'selected':'')+'" data-student-index="'+i+'" data-attendance-date="'+dateString+'" data-attendance-status="present" aria-pressed="'+present+'" title="Mark present">✓ <span>Present</span></button>'+
-            '<button type="button" class="attendance-status-btn absent '+(absent?'selected':'')+'" data-student-index="'+i+'" data-attendance-date="'+dateString+'" data-attendance-status="absent" aria-pressed="'+absent+'" title="Mark absent">× <span>Absent</span></button>'+
-          '</div></td>';
-      }).join('');
-      return '<tr><td>'+photo+'</td><td><div class="attendance-student"><div class="attendance-student-name">'+
-        safeText(student[1])+'</div></div></td>'+cells+'</tr>';
-    }).join('');
-
-    // Scroll the current week into a useful position on narrow screens.
-    requestAnimationFrame(function(){
-      const wrap=document.querySelector('#attendanceView .attendance-table-wrap');
-      const todayCell=body.querySelector('[data-attendance-date="'+isoDate(new Date())+'"]');
-      if(wrap && todayCell && wrap.scrollWidth>wrap.clientWidth){
-        const wrapRect=wrap.getBoundingClientRect(),cellRect=todayCell.getBoundingClientRect();
-        wrap.scrollLeft+=cellRect.left-wrapRect.left-Math.min(70,wrap.clientWidth*.1);
-      }
-    });
+        const state=dayState(s,d);
+        if(state==="present") return '<td><button type="button" class="attendance-present" title="Present — tap to remove" onclick="toggleAttendance('+i+',new Date(\''+isoDate(d)+'T00:00:00\'))">✓</button></td>';
+        if(state==="absent") return '<td><span class="attendance-x" title="Absent — attendance window closed">✕</span></td>';
+        if(state==="future") return '<td><input class="attendance-check" type="checkbox" disabled title="This day has not started"></td>';
+        return '<td><input class="attendance-check" type="checkbox" title="Mark present" onchange="toggleAttendance('+i+',new Date(\''+isoDate(d)+'T00:00:00\'))"></td>';
+      }).join("");
+      return '<tr><td>'+photo+'</td><td><div class="attendance-student"><div class="attendance-student-name">'+s[1]+'</div></div></td>'+cells+'</tr>';
+    }).join("");
   };
+
+  // Keep attendance synchronized when class/term filters change.
   const cls=document.getElementById("classSelect"),term=document.getElementById("termSelect");
-  if(cls)cls.addEventListener("change",function(){attendanceSelectedClass="";setTimeout(renderAttendance,0);});
+  if(cls)cls.addEventListener("change",function(){
+    if(!attendanceSelectedClass || attendanceSelectedClass===this.dataset.previousAttendanceClass){attendanceSelectedClass=this.value;}
+    this.dataset.previousAttendanceClass=this.value;
+    setTimeout(renderAttendance,0);
+  });
   if(term)term.addEventListener("change",function(){setTimeout(renderAttendance,0);});
   const originalRefresh=window.refreshStudentViews;
-  if(typeof originalRefresh==="function")window.refreshStudentViews=function(){originalRefresh();setTimeout(renderAttendance,0);};
-  window.addEventListener("teacherAssignmentsUpdated",()=>{attendanceSelectedSubject="";attendanceSelectedClass="";renderAttendance();});
-  setTimeout(renderAttendance,0);
-  // If the dashboard remains open overnight, refresh at the next local
-  // midnight so yesterday locks and today's attendance becomes available.
-  function scheduleAttendanceDayRollover(){
-    const now=new Date();
-    const nextMidnight=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1,0,0,1,0);
-    const delay=Math.max(1000,nextMidnight.getTime()-now.getTime());
-    setTimeout(function(){renderAttendance();scheduleAttendanceDayRollover();},delay);
+  if(typeof originalRefresh==="function"){
+    window.refreshStudentViews=function(){originalRefresh();setTimeout(renderAttendance,0);};
   }
-  scheduleAttendanceDayRollover();
-  // Recalculate lock state when the page becomes visible again after sleeping.
-  document.addEventListener('visibilitychange',function(){if(!document.hidden)renderAttendance();});
+  setTimeout(renderAttendance,0);
 })();
 </script>
 
