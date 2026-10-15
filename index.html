@@ -3402,6 +3402,16 @@ renderCurriculum();renderStudents();renderResults();
       visible++;
       return '<div class="library-week-card"><div class="library-week-head"><div><span class="library-week-number">'+(i+1)+'</span><span class="library-week-title"><strong>Week '+(i+1)+' — '+esc(c.topic)+'</strong><small>'+periods.length+' teaching period'+(periods.length===1?'':'s')+'</small></span></div><span class="library-week-badge">'+esc(selectedTerm.toUpperCase())+'</span></div><div class="library-periods">'+periods.map(function(x){return '<div class="library-period"><div class="library-period-top"><div class="library-period-name">Period '+(x.j+1)+': '+esc(x.p.title)+'</div><div class="library-period-actions"><button type="button" class="library-action library-plan" onclick="openLessonPlan('+i+','+x.j+')">LESSON PLAN</button><button type="button" class="library-action library-note" onclick="openLessonNote('+i+','+x.j+')">LESSON NOTE</button></div></div><div class="library-period-sub">'+esc((x.p.subcontents||[]).join(' • '))+'</div></div>';}).join('')+'</div></div>';
     }).join('') : '';
+    // The subscription gate above returns before rendering lessons for unapproved teachers.
+    // Once approved content is rendered, explicitly clear any stale disabled state on lesson buttons.
+    box.querySelectorAll('.library-action.library-plan, .library-action.library-note').forEach(function(button){
+      button.disabled=false;
+      button.removeAttribute('disabled');
+      button.removeAttribute('aria-disabled');
+      button.style.opacity='1';
+      button.style.cursor='pointer';
+      button.style.filter='none';
+    });
     if(empty){
       empty.style.display=visible?'none':'block';
       if(!subjectMatches){
