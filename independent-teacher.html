@@ -4359,13 +4359,7 @@ window.viewStudentResult=function(index){
     return isoDate(date)===isoDate(new Date());
   }
   function dayState(s,date){
-    // Past and future dates are locked; today's saved mark remains editable.
-    if(!attendanceDateIsToday(date)){
-      const dayStart=new Date(date.getFullYear(),date.getMonth(),date.getDate(),0,0,0,0);
-      const now=new Date();
-      const todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate(),0,0,0,0);
-      return dayStart.getTime()<todayStart.getTime()?"locked":"future";
-    }
+    // All displayed school days are editable; retain any saved Present/Absent mark.
     const value=attendanceStore()[studentAttendanceKey(s,date)];
     if(value==="present"||value===true)return "present";
     if(value==="absent")return "absent";
@@ -4373,7 +4367,6 @@ window.viewStudentResult=function(index){
   }
   function markAttendance(index,date,value){
     const records=attendanceStudents(),item=records[index];if(!item)return;
-    if(!attendanceDateIsToday(date))return;
     const store=attendanceStore();
     store[studentAttendanceKey(item.s,date)]=value;
     saveAttendanceStore(store);
@@ -4403,7 +4396,7 @@ window.viewStudentResult=function(index){
       const photo=info.photo?'<img class="attendance-student-photo" src="'+safeText(info.photo)+'" alt="Student photo">':'<div class="attendance-student-photo"></div>';
       const cells=days.map(function(dayItem){
         const d=dayItem.date,state=dayState(student,d),dateString=isoDate(d);
-        const disabled = !attendanceDateIsToday(d); // Today stays interactive even after a mark is saved.
+        const disabled = false; // No date restriction: all displayed dates are clickable.
         const presentChecked=state==="present"?' checked':'';
         const absentChecked=state==="absent"?' checked':'';
         const lockNote="";
