@@ -1591,8 +1591,9 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
 .independent-timetable-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:14px}
 .independent-timetable-field{min-width:0}
 .independent-timetable-field label{display:block;font-size:12px;font-weight:900;color:#526171;margin:0 0 6px}
-.independent-timetable-field input{width:100%;min-height:48px;padding:10px 12px;border:1px solid #cbd6e2;border-radius:10px;background:#fff;color:#17324d;font:inherit}
-.independent-timetable-field input:focus{outline:2px solid rgba(7,140,85,.18);border-color:#078c55}
+.independent-timetable-field input,.independent-timetable-field select{width:100%;min-height:48px;padding:10px 12px;border:1px solid #cbd6e2;border-radius:10px;background:#fff;color:#17324d;font:inherit}
+.independent-timetable-field input:focus,.independent-timetable-field select:focus{outline:2px solid rgba(7,140,85,.18);border-color:#078c55}
+.independent-timetable-field select:disabled{background:#f3f5f6;color:#98a2b3}
 .independent-timetable-add{grid-column:1/-1;min-height:48px;border-radius:10px;background:#078c55;color:#fff;font-weight:900;padding:12px 16px}
 .independent-timetable-delete{background:#fff0f2;color:#b42318;border:1px solid #fecaca;border-radius:7px;padding:7px 10px;font-weight:800}
 @media(max-width:600px){.independent-timetable-form{grid-template-columns:1fr;padding:12px}.independent-timetable-add{grid-column:auto}}
@@ -2316,14 +2317,14 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
   <div class="card independent-timetable-create">
     <div class="cardhead"><h3>Add Timetable Entry</h3></div>
     <form id="independentTimetableForm" class="independent-timetable-form">
-      <div class="independent-timetable-field"><label for="independentTimetableSubject">SUBJECT</label><input id="independentTimetableSubject" name="subject" type="text" placeholder="e.g. Basic Science" required maxlength="100"></div>
-      <div class="independent-timetable-field"><label for="independentTimetableDate">DATE</label><input id="independentTimetableDate" name="date" type="date" required></div>
+      <div class="independent-timetable-field"><label for="independentTimetableSubject">SUBJECT</label><select id="independentTimetableSubject" name="subject" required><option value="">Choose a subject from My Classes</option></select></div>
+      <div class="independent-timetable-field"><label for="independentTimetableDay">DAY</label><select id="independentTimetableDay" name="day" required><option value="">Choose day</option><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option></select></div>
       <div class="independent-timetable-field"><label for="independentTimetableTime">TIME</label><input id="independentTimetableTime" name="time" type="time" required></div>
-      <div class="independent-timetable-field"><label for="independentTimetableClass">CLASS</label><input id="independentTimetableClass" name="className" type="text" placeholder="e.g. Primary 5" required maxlength="80"></div>
+      <div class="independent-timetable-field"><label for="independentTimetableClass">CLASS</label><select id="independentTimetableClass" name="className" required disabled><option value="">Select a subject first</option></select></div>
       <button class="independent-timetable-add" type="submit">＋ Add to Timetable</button>
     </form>
   </div>
-  <div class="card"><div id="teacherTimetableMessage" class="empty">Your timetable entries will appear here.</div><div class="tablewrap"><table class="schedule-table"><thead><tr><th>Day / Date</th><th>Time</th><th>Class</th><th>Subject</th><th>Venue</th><th>Term / Session</th><th>Action</th></tr></thead><tbody id="teacherTimetableRows"><tr><td colspan="7" class="empty">No timetable entries yet. Use the form above to add one.</td></tr></tbody></table></div></div>
+  <div class="card"><div id="teacherTimetableMessage" class="empty">Your timetable entries will appear here.</div><div class="tablewrap"><table class="schedule-table"><thead><tr><th>Day</th><th>Time</th><th>Class</th><th>Subject</th><th>Venue</th><th>Term / Session</th><th>Action</th></tr></thead><tbody id="teacherTimetableRows"><tr><td colspan="7" class="empty">No timetable entries yet. Use the form above to add one.</td></tr></tbody></table></div></div>
 </div>
 
 <div id="examTimetableView" class="section-view" style="display:none">
@@ -5373,7 +5374,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     }
     entries.forEach(entry=>{
       const tr=document.createElement('tr');
-      safeCell(tr,formatTimetableDate(entry.date));
+      safeCell(tr,entry.day||formatTimetableDate(entry.date));
       safeCell(tr,entry.time||'—');
       safeCell(tr,entry.className||'—');
       safeCell(tr,entry.subject||'—');
@@ -5394,22 +5395,50 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     const form=document.getElementById('independentTimetableForm');
     if(!form||form.dataset.bound==='1')return;
     form.dataset.bound='1';
-    const dateInput=document.getElementById('independentTimetableDate');
-    if(dateInput&&!dateInput.value){
-      const now=new Date();dateInput.value=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
+    const subjectSelect=document.getElementById('independentTimetableSubject');
+    const classSelect=document.getElementById('independentTimetableClass');
+    const daySelect=document.getElementById('independentTimetableDay');
+    const timeInput=document.getElementById('independentTimetableTime');
+    function getAssignments(){
+      try{return typeof window.getIndependentTeachingAssignments==='function'?window.getIndependentTeachingAssignments():[];}catch(_e){return[];}
     }
+    function refreshSubjects(keepCurrent=true){
+      if(!subjectSelect)return;
+      const old=keepCurrent?subjectSelect.value:'';
+      const assignments=getAssignments();
+      const subjects=[...new Set(assignments.map(a=>String(a.subject||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+      subjectSelect.replaceChildren(new Option(subjects.length?'Choose a subject':'No subjects saved in My Classes',''));
+      subjects.forEach(subject=>subjectSelect.add(new Option(subject,subject)));
+      subjectSelect.disabled=!subjects.length;
+      if(old&&subjects.includes(old))subjectSelect.value=old;
+      refreshClasses();
+    }
+    function refreshClasses(){
+      if(!classSelect||!subjectSelect)return;
+      const selectedSubject=subjectSelect.value;
+      const classes=[...new Set(getAssignments().filter(a=>a.subject===selectedSubject).map(a=>String(a.className||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+      const old=classSelect.value;
+      classSelect.replaceChildren(new Option(selectedSubject?(classes.length?'Choose a class':'No classes assigned to this subject'):'Select a subject first',''));
+      classes.forEach(cls=>classSelect.add(new Option(cls,cls)));
+      classSelect.disabled=!selectedSubject||!classes.length;
+      if(old&&classes.includes(old))classSelect.value=old;
+    }
+    subjectSelect?.addEventListener('change',refreshClasses);
+    window.addEventListener('teacherAssignmentsUpdated',()=>refreshSubjects(true));
+    refreshSubjects(false);
     form.addEventListener('submit',event=>{
       event.preventDefault();
-      const subject=document.getElementById('independentTimetableSubject').value.trim();
-      const date=document.getElementById('independentTimetableDate').value;
-      const time=document.getElementById('independentTimetableTime').value;
-      const className=document.getElementById('independentTimetableClass').value.trim();
-      if(!subject||!date||!time||!className){alert('Please complete the subject, date, time, and class.');return;}
+      const subject=subjectSelect.value;
+      const day=daySelect.value;
+      const time=timeInput.value;
+      const className=classSelect.value;
+      const validAssignment=getAssignments().some(a=>a.subject===subject&&a.className===className);
+      if(!subject||!day||!time||!className||!validAssignment){alert('Please select a subject from My Classes, its assigned class, a day, and a time.');return;}
       const entries=getIndependentTimetableEntries();
-      entries.push({id:'tt_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8),subject,date,time,className,createdAt:new Date().toISOString()});
+      entries.push({id:'tt_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8),subject,day,time,className,createdAt:new Date().toISOString()});
       try{saveIndependentTimetableEntries(entries);}catch(e){alert('Could not save this timetable entry in this browser.');return;}
       form.reset();
-      if(dateInput){const now=new Date();dateInput.value=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');}
+      refreshSubjects(false);
       renderIndependentTimetable();renderTeacherTodayAgenda();
     });
   }
@@ -5423,7 +5452,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     if(dateLabel)dateLabel.textContent=now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
     const items=[];
     if((window.TEACHER_DASHBOARD_MODE||'independent')==='independent'){
-      getIndependentTimetableEntries().filter(entry=>entry.date===todayISO).forEach(entry=>{
+      getIndependentTimetableEntries().filter(entry=>(entry.day&&String(entry.day).toLowerCase()===weekday.toLowerCase())||(!entry.day&&entry.date===todayISO)).forEach(entry=>{
         items.push({kind:'lesson',time:entry.time||'Time not specified',cls:entry.className||'',subject:entry.subject||'Teaching Period',venue:'',title:entry.subject||'Teaching Period',extra:'Teaching'});
       });
     }
