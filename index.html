@@ -899,6 +899,10 @@ button{cursor:pointer;border:0}
 .library-period:last-child{margin-bottom:0}
 .library-period-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.library-period-name{color:#17324d;font-weight:900;font-size:14px;line-height:1.35}.library-period-actions{display:flex;gap:6px;flex:none}
 .library-action{border:0;border-radius:8px;padding:8px 10px;color:#fff;font-size:11px;font-weight:900;cursor:pointer}.library-plan{background:#078c55}.library-note{background:#1476e8}.library-period-sub{margin-top:7px;color:#667085;font-size:12px;line-height:1.45}
+/* Keep displayed lesson Plan/Note buttons visually active on every week. */
+.library-action.library-plan:not(:disabled){background:#078c55!important;color:#fff!important;opacity:1!important;filter:none!important;cursor:pointer!important}
+.library-action.library-note:not(:disabled){background:#1476e8!important;color:#fff!important;opacity:1!important;filter:none!important;cursor:pointer!important}
+.library-action.library-plan:disabled,.library-action.library-note:disabled{background:#078c55!important;color:#fff!important;opacity:1!important;filter:none!important;cursor:pointer!important}
 .lesson-library-empty{background:#fff;border:1px dashed #b9cfc7;border-radius:15px;padding:30px;text-align:center;color:#667085}
 @media(max-width:760px){.lesson-assignment-summary{grid-template-columns:repeat(2,1fr)}.lesson-library-toolbar{grid-template-columns:1fr 1fr}.library-search{grid-column:1/-1}.lesson-library-stats{grid-template-columns:repeat(2,1fr)}.lesson-library-head h2{font-size:25px}.library-week-head{align-items:flex-start}.library-week-badge{margin-top:2px}.library-period-top{flex-direction:column}.library-period-actions{width:100%}.library-action{flex:1}.lesson-library-profile-btn{width:100%}}
 </style>
@@ -3512,6 +3516,18 @@ renderCurriculum();renderStudents();renderResults();
       visible++;
       return '<div class="library-week-card"><div class="library-week-head"><div><span class="library-week-number">'+(i+1)+'</span><span class="library-week-title"><strong>Week '+(i+1)+' — '+esc(c.topic)+'</strong><small>'+periods.length+' teaching period'+(periods.length===1?'':'s')+'</small></span></div><span class="library-week-badge">FIRST TERM</span></div><div class="library-periods">'+periods.map(function(x){return '<div class="library-period"><div class="library-period-top"><div class="library-period-name">Period '+(x.j+1)+': '+esc(x.p.title)+'</div><div class="library-period-actions"><button type="button" class="library-action library-plan" onclick="openLessonPlan('+i+','+x.j+')">LESSON PLAN</button><button type="button" class="library-action library-note" onclick="openLessonNote('+i+','+x.j+')">LESSON NOTE</button></div></div><div class="library-period-sub">'+esc((x.p.subcontents||[]).join(' • '))+'</div></div>';}).join('')+'</div></div>';
     }).join('') : '';
+
+    // Keep every rendered lesson-period Plan/Note button active.
+    // The subscription check above remains unchanged and still gates access to the library.
+    box.querySelectorAll('.library-action.library-plan, .library-action.library-note').forEach(function(button){
+      button.disabled = false;
+      button.removeAttribute('disabled');
+      button.removeAttribute('aria-disabled');
+      button.style.removeProperty('opacity');
+      button.style.removeProperty('filter');
+      button.style.removeProperty('cursor');
+    });
+
     if(empty){
       empty.style.display=visible?'none':'block';
       if(!subjectMatches){
