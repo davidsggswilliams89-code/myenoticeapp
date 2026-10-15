@@ -4288,12 +4288,18 @@ window.viewStudentResult=function(index){
   function isoDate(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
   function prettyDate(d){return d.toLocaleDateString(undefined,{day:"2-digit",month:"short"});}
   function studentAttendanceKey(s,date){return attendanceSelectedClass+"|"+selectedDashboardTerm()+"|"+String(s[0])+"|"+date;}
-  function attendanceState(s,date){const value=attendanceStore()[studentAttendanceKey(s,date)];return value===true?"present":(value==="present"||value==="absent"?value:"");}
+  function attendanceState(s,date){const normalizedDate=date instanceof Date?isoDate(date):String(date||"");const value=attendanceStore()[studentAttendanceKey(s,normalizedDate)];return value===true?"present":(value==="present"||value==="absent"?value:"");}
   window.setAttendanceStatus=function(index,date,status){
-    const records=attendanceStudents(),item=records[index];if(!item)return;
-    const store=attendanceStore(),key=studentAttendanceKey(item.s,date);
-    if(store[key]===status || (status==="present"&&store[key]===true))delete store[key];else store[key]=status;
-    saveAttendanceStore(store);renderAttendance();
+    const records=attendanceStudents(),item=records[index];
+    if(!item || !["present","absent"].includes(status))return;
+    const normalizedDate=String(date||"");
+    const store=attendanceStore(),key=studentAttendanceKey(item.s,normalizedDate);
+    // Each student/day has exactly one status: clicking the selected status clears it;
+    // clicking the opposite status replaces it, so Present and Absent cannot both be active.
+    if(store[key]===status || (status==="present"&&store[key]===true))delete store[key];
+    else store[key]=status;
+    saveAttendanceStore(store);
+    renderAttendance();
   };
   window.renderAttendance=function(){
     const head=document.getElementById("attendanceHead"),body=document.getElementById("attendanceBody");if(!head||!body)return;
