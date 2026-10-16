@@ -3246,108 +3246,6 @@ function printDocument(content){
 
 
 
-
-<script>
-/* TEMPORARY LESSON BUTTON DIAGNOSTICS — observational only; does not enable/disable buttons. */
-(function(){
-  const MAX_LOGS = 80;
-  let logs = [];
-  let panel, output, status;
-  function time(){ return new Date().toLocaleTimeString(); }
-  function add(message, detail){
-    const entry = '['+time()+'] '+message+(detail ? ' | '+detail : '');
-    logs.unshift(entry); logs = logs.slice(0, MAX_LOGS);
-    if(output) output.textContent = logs.join('\n');
-    console.info('[Lesson Button Diagnostic]', entry);
-  }
-  function getWeek(el){
-    const card = el.closest('.library-week-card');
-    const title = card?.querySelector('.library-week-title strong')?.textContent?.trim() || 'week unknown';
-    const period = el.closest('.library-period')?.querySelector('.library-period-name')?.textContent?.trim() || 'period unknown';
-    return title+'; '+period;
-  }
-  function snapshot(el, reason){
-    const cs = getComputedStyle(el);
-    const info = [
-      'button='+el.textContent.trim(),
-      getWeek(el),
-      'disabledProperty='+el.disabled,
-      'disabledAttr='+el.hasAttribute('disabled'),
-      'ariaDisabled='+el.getAttribute('aria-disabled'),
-      'class='+el.className,
-      'opacity='+cs.opacity,
-      'filter='+cs.filter,
-      'pointerEvents='+cs.pointerEvents,
-      'cursor='+cs.cursor,
-      'bg='+cs.backgroundColor,
-      'onclickAttr='+(el.getAttribute('onclick')||'none')
-    ].join('; ');
-    add(reason, info);
-  }
-  function ensurePanel(){
-    if(panel || !document.body) return;
-    panel=document.createElement('section');
-    panel.id='lessonButtonDiagnosticPanel';
-    panel.style.cssText='position:fixed;z-index:999999;bottom:8px;left:8px;right:8px;max-height:44vh;overflow:hidden;background:#101827;color:#f8fafc;border:2px solid #f59e0b;border-radius:12px;box-shadow:0 5px 25px #0005;font:12px/1.4 monospace;';
-    panel.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;background:#253247"><strong style="font: bold 13px Arial,sans-serif;color:#fbbf24">Lesson Button Diagnostic (temporary)</strong><div><button id="lbdCopy" type="button" style="padding:5px 8px">Copy log</button> <button id="lbdHide" type="button" style="padding:5px 8px">Hide</button></div></div><div id="lbdStatus" style="padding:8px 10px;color:#bbf7d0">Watching lesson buttons. This panel does not change button behaviour.</div><pre id="lbdOutput" style="margin:0;padding:8px 10px;max-height:27vh;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere"></pre>';
-    document.body.appendChild(panel);
-    output=panel.querySelector('#lbdOutput'); status=panel.querySelector('#lbdStatus');
-    panel.querySelector('#lbdHide').addEventListener('click',()=>{panel.style.display='none';});
-    panel.querySelector('#lbdCopy').addEventListener('click',async()=>{
-      try{await navigator.clipboard.writeText(logs.join('\n')); add('Log copied to clipboard');}
-      catch(e){add('Copy failed; select and copy the log manually',e.message);}
-    });
-    output.textContent=logs.join('\n');
-  }
-  function scan(){
-    ensurePanel();
-    document.querySelectorAll('#courseContentsList .library-action, .library-week-card .library-action').forEach(el=>{
-      if(el.dataset.lbdSeen) return;
-      el.dataset.lbdSeen='1';
-      snapshot(el,'BUTTON CREATED');
-    });
-  }
-  document.addEventListener('click',function(e){
-    const el=e.target.closest('.library-action');
-    if(el){
-      ensurePanel();
-      snapshot(el,'BUTTON CLICKED');
-      add('Click captured','defaultPrevented='+e.defaultPrevented);
-      setTimeout(()=>snapshot(el,'STATE 250ms AFTER CLICK'),250);
-      setTimeout(()=>snapshot(el,'STATE 1500ms AFTER CLICK'),1500);
-    }
-  },true);
-  const observer = new MutationObserver(records=>{
-    for(const rec of records){
-      const target=rec.target.nodeType===1?rec.target:rec.target.parentElement;
-      const btn=target?.matches?.('.library-action')?target:target?.closest?.('.library-action');
-      if(btn){
-        snapshot(btn,'BUTTON MUTATION: '+rec.type+(rec.attributeName?'/'+rec.attributeName:''));
-      } else if(rec.type==='childList'){
-        rec.addedNodes.forEach(n=>{
-          if(n.nodeType!==1)return;
-          if(n.matches?.('.library-action')) snapshot(n,'BUTTON ADDED');
-          n.querySelectorAll?.('.library-action').forEach(b=>snapshot(b,'BUTTON ADDED'));
-        });
-      }
-    }
-    scan();
-  });
-  function start(){
-    ensurePanel();
-    add('Diagnostic started','URL='+location.pathname+'; time='+new Date().toISOString());
-    scan();
-    observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['disabled','class','style','aria-disabled']});
-    document.addEventListener('DOMContentLoaded',scan);
-    setInterval(scan,1500);
-    window.addEventListener('error',e=>add('JAVASCRIPT ERROR',e.message+' at '+e.filename+':'+e.lineno));
-    window.addEventListener('unhandledrejection',e=>add('UNHANDLED PROMISE REJECTION',String(e.reason?.message||e.reason)));
-    add('Instructions','Refresh, open Lessons, compare Week 3 and Week 4, tap a grey button, then copy/send this log.');
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true}); else start();
-})();
-</script>
-
 </body></html>`);
  w.document.close();w.focus();setTimeout(()=>w.print(),250);
 }
@@ -5470,6 +5368,57 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
 })();
 </script>
 
+<script id="lesson-button-diagnostic-script">
+/* TEMPORARY LESSON BUTTON DIAGNOSTICS — observational only; does not enable/disable buttons. */
+(function(){
+  'use strict';
+  var logs=[], panel, output, status, hidden=false;
+  function stamp(){try{return new Date().toLocaleTimeString()}catch(e){return ''}}
+  function add(message,detail){
+    var entry='['+stamp()+'] '+message+(detail?' | '+detail:'');
+    logs.unshift(entry); if(logs.length>100) logs.length=100;
+    if(output) output.textContent=logs.join('\n');
+  }
+  function weekInfo(el){
+    var card=el.closest('.library-week-card');
+    var title=card && card.innerText ? card.innerText.split('\n').slice(0,4).join(' / ') : 'week not found';
+    var period=el.closest('.library-period');
+    var p=period && period.querySelector('.library-period-name');
+    return title+'; '+(p?p.textContent.trim():'period not found');
+  }
+  function snap(el,why){
+    try { var s=window.getComputedStyle(el); add(why, 'button='+el.textContent.trim()+'; '+weekInfo(el)+'; disabled='+el.disabled+'; disabledAttr='+el.hasAttribute('disabled')+'; aria-disabled='+el.getAttribute('aria-disabled')+'; class='+el.className+'; opacity='+s.opacity+'; filter='+s.filter+'; pointer-events='+s.pointerEvents+'; cursor='+s.cursor+'; background='+s.backgroundColor+'; onclick='+(el.getAttribute('onclick')||'none')); }
+    catch(e){add('Snapshot error',String(e))}
+  }
+  function ensurePanel(){
+    if(panel || !document.body) return;
+    panel=document.createElement('div'); panel.id='lessonButtonDiagnosticPanel';
+    panel.style.cssText='position:fixed!important;z-index:2147483647!important;left:8px!important;right:8px!important;bottom:8px!important;max-height:42vh!important;overflow:hidden!important;background:#101827!important;color:#fff!important;border:3px solid #f59e0b!important;border-radius:12px!important;box-shadow:0 4px 24px rgba(0,0,0,.55)!important;font:12px/1.4 monospace!important;display:block!important;visibility:visible!important;opacity:1!important;';
+    panel.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding:9px;background:#253247;color:white"><strong style="font: bold 13px Arial;color:#fbbf24">DIAGNOSTIC: Lesson Buttons</strong><button type="button" id="lbdMin" style="padding:7px;background:#f59e0b;color:#111;border:0;border-radius:5px;font-weight:bold">Minimise</button></div><div id="lbdBody"><div id="lbdStatus" style="padding:8px;color:#bbf7d0">Starting diagnostic…</div><pre id="lbdOutput" style="margin:0;padding:8px;max-height:22vh;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;color:#fff;background:#101827"></pre><div style="display:flex;gap:8px;padding:8px"><button type="button" id="lbdCopy" style="padding:8px;background:#16a34a;color:white;border:0;border-radius:5px;font-weight:bold">Copy log</button><button type="button" id="lbdShow" style="padding:8px;background:#2563eb;color:white;border:0;border-radius:5px;font-weight:bold">Show full log</button></div></div>';
+    document.body.appendChild(panel); output=panel.querySelector('#lbdOutput'); status=panel.querySelector('#lbdStatus');
+    panel.querySelector('#lbdMin').addEventListener('click',function(){var b=panel.querySelector('#lbdBody'); var isHidden=b.style.display==='none'; b.style.display=isHidden?'block':'none'; this.textContent=isHidden?'Minimise':'Show panel';});
+    panel.querySelector('#lbdShow').addEventListener('click',function(){if(output){output.style.maxHeight='50vh';output.style.maxHeight='50dvh';} });
+    panel.querySelector('#lbdCopy').addEventListener('click',function(){
+      var value=logs.join('\n');
+      if(navigator.clipboard && navigator.clipboard.writeText){navigator.clipboard.writeText(value).then(function(){add('LOG COPIED','Paste it into this chat');}).catch(function(){manualCopy(value);});}
+      else manualCopy(value);
+    });
+    function manualCopy(value){
+      var area=document.createElement('textarea'); area.value=value; area.setAttribute('readonly',''); area.style.cssText='position:fixed;left:5px;right:5px;top:20%;width:90%;height:45vh;z-index:2147483647;background:white;color:black;font-size:12px'; document.body.appendChild(area); area.focus(); area.select();
+      add('Clipboard unavailable','Text box opened. Long-press the text, Select all, Copy.');
+    }
+  }
+  function scan(){ensurePanel(); document.querySelectorAll('.library-action').forEach(function(el){if(el.dataset.lbdSeen)return;el.dataset.lbdSeen='1';snap(el,'BUTTON FOUND');});}
+  document.addEventListener('click',function(e){var el=e.target && e.target.closest ? e.target.closest('.library-action'):null;if(el){snap(el,'BUTTON TAPPED');setTimeout(function(){snap(el,'250ms after tap')},250);setTimeout(function(){snap(el,'1500ms after tap')},1500);}},true);
+  window.addEventListener('error',function(e){add('JAVASCRIPT ERROR',(e.message||'unknown')+' at '+(e.filename||'')+':'+(e.lineno||''));});
+  window.addEventListener('unhandledrejection',function(e){add('PROMISE ERROR',String(e.reason && (e.reason.message||e.reason)||e.reason));});
+  function start(){ensurePanel();add('Diagnostic started','Current page: '+location.href);scan();
+    try{new MutationObserver(function(records){records.forEach(function(r){var el=r.target && r.target.nodeType===1?r.target:null; if(el && el.matches && el.matches('.library-action')) snap(el,'BUTTON CHANGED '+(r.attributeName||r.type));});scan();}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['disabled','class','style','aria-disabled']});}catch(e){add('Observer failed',String(e));}
+    setInterval(scan,1200); add('Next','Open Lessons, then tap one grey Lesson Plan or Lesson Note button. Diagnostic details will appear here.');
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+})();
+</script>
 </body>
 </html>
 <style>
