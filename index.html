@@ -3500,24 +3500,25 @@ renderCurriculum();renderStudents();renderResults();
     // The subscription gate above returns before rendering lessons for unapproved teachers.
     // Once approved content is rendered, explicitly clear any stale disabled state on lesson buttons.
     function restoreApprovedLessonButtonState(){
-      // This function runs only after the subscription gate above has passed.
-      // Force the correct colors as well as enabled state in case another dashboard
-      // routine or cached DOM update has left stale disabled/grey styling behind.
+      // This runs only after teacherHasApprovedLessonSubscription() passed above.
+      // Repair buttons only when their state is wrong; do not rewrite unchanged
+      // attributes/styles because that can cause a MutationObserver feedback loop.
       box.querySelectorAll('.library-action.library-plan, .library-action.library-note').forEach(function(button){
-        button.disabled = false;
-        button.removeAttribute('disabled');
-        button.removeAttribute('aria-disabled');
-        button.removeAttribute('title');
-        button.style.setProperty('opacity','1','important');
-        button.style.setProperty('cursor','pointer','important');
-        button.style.setProperty('filter','none','important');
-        button.style.setProperty('background-color',button.classList.contains('library-plan')?'#078c55':'#1476e8','important');
-        button.style.setProperty('color','#ffffff','important');
+        if(button.disabled) button.disabled = false;
+        if(button.hasAttribute('disabled')) button.removeAttribute('disabled');
+        if(button.getAttribute('aria-disabled') === 'true') button.removeAttribute('aria-disabled');
+        if(button.hasAttribute('title')) button.removeAttribute('title');
+        if(button.style.getPropertyValue('opacity') !== '1') button.style.setProperty('opacity','1','important');
+        if(button.style.getPropertyValue('cursor') !== 'pointer') button.style.setProperty('cursor','pointer','important');
+        if(button.style.getPropertyValue('filter') !== 'none') button.style.setProperty('filter','none','important');
+        var expectedBg = button.classList.contains('library-plan') ? '#078c55' : '#1476e8';
+        if(button.style.getPropertyValue('background-color') !== expectedBg) button.style.setProperty('background-color',expectedBg,'important');
+        if(button.style.getPropertyValue('color') !== '#ffffff') button.style.setProperty('color','#ffffff','important');
       });
     }
     restoreApprovedLessonButtonState();
-    // If another script refreshes the lesson cards or reapplies a stale disabled
-    // state after subscription activation, restore the state for this approved view.
+    // Watch for another routine disabling the buttons, but avoid a self-triggering
+    // mutation loop: restoreApprovedLessonButtonState() only changes incorrect values.
     if(window.__lessonButtonObserver) window.__lessonButtonObserver.disconnect();
     if(window.MutationObserver){
       window.__lessonButtonObserver = new MutationObserver(function(){
@@ -3525,7 +3526,7 @@ renderCurriculum();renderStudents();renderResults();
           restoreApprovedLessonButtonState();
         }
       });
-      window.__lessonButtonObserver.observe(box,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','aria-disabled','style','class']});
+      window.__lessonButtonObserver.observe(box,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','aria-disabled','title','style','class']});
     }
     if(empty){
       empty.style.display=visible?'none':'block';
