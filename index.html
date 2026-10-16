@@ -3347,7 +3347,9 @@ async function requireApprovedLessonAccess(){
   };
 
   window.updateLessonLibrary=async function(){
-    if(typeof window.loadTeacherFirestoreSubscriptions==='function') await window.loadTeacherFirestoreSubscriptions();
+    if(typeof window.loadTeacherFirestoreSubscriptions==='function'){
+      try{await window.loadTeacherFirestoreSubscriptions();}catch(error){console.warn('Could not refresh lesson subscription cache:',error);}
+    }
     renderSummary();
     const box=document.getElementById('courseContentsList'),empty=document.getElementById('lessonLibraryEmpty');
     if(!box)return;
@@ -3356,13 +3358,41 @@ async function requireApprovedLessonAccess(){
     const selectedTerm=libraryTerm?.value||'';
     const selectedSubject=librarySubject?.value||'';
 
-    // Subscription restriction removed from lesson library display.
-    function hasSubjectClassSubscription(subject, cls){ return true; }
+    // Check the live subscription cache for this teacher + subject + class.
+    function hasSubjectClassSubscription(subject, cls){
+      if(!subject || !cls) return false;
+      const uid=window.firebaseTeacherUID||'';
+      if(!uid) return false;
+      const records=Array.isArray(window.firestoreSubscriptionCache)?window.firestoreSubscriptionCache:[];
+      const now=Date.now();
+      const norm=v=>String(v||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();
+      const option=librarySubject?.selectedOptions?.[0];
+      const subjectId=option?.dataset?.subjectId||'';
+      return records.some(record=>{
+        if(String(record.teacherUid||'')!==uid || String(record.status||'').toLowerCase()!=='active') return false;
+        const start=record.startsAt?.toDate?record.startsAt.toDate().getTime():Date.parse(record.startsAt||record.approvedAt||0);
+        const end=record.expiresAt?.toDate?record.expiresAt.toDate().getTime():Date.parse(record.expiresAt||0);
+        if(Number.isFinite(start)&&start>now) return false;
+        if(!Number.isFinite(end)||end<=now) return false;
+        const sameSubject=(subjectId&&record.subjectId&&String(subjectId)===String(record.subjectId)) || norm(record.subject)===norm(subject);
+        const classes=Array.isArray(record.classes)?record.classes:[];
+        return sameSubject && classes.some(value=>norm(value)===norm(cls));
+      });
+    }
     const selectedRecord=curriculumCatalog.find(function(item){
       return item.className===selectedClass && item.term===selectedTerm && String(item.subject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()===String(selectedSubject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();
     });
 
-    // Display curriculum independently of subscription status.
+    // Subscribers see the curriculum immediately after selecting subject/class/term.
+    // Non-subscribers continue to see the subscription prompt.
+    if(!hasSubjectClassSubscription(selectedSubject,selectedClass)){
+      box.innerHTML='';
+      if(empty){
+        empty.style.display='block';
+        empty.innerHTML='<div style="max-width:620px;margin:auto;padding:8px 2px"><div style="font-size:38px;margin-bottom:8px">🔒</div><b style="font-size:19px;color:#17324d">Subscribe to access lesson plans and lesson notes</b><p style="color:#667085;line-height:1.5">Access opens after the administrator approves your subscription for this subject and class.</p><button type="button" class="subscription-action" style="max-width:300px" onclick="openSubscriptionForLessonSelection()">💳 Subscribe to this subject</button></div>';
+      }
+      return;
+    }
     const classMatches=curriculumCatalog.some(function(item){return item.className===selectedClass;});
     const termMatches=curriculumCatalog.some(function(item){return item.className===selectedClass && item.term===selectedTerm;});
     const subjectMatches=curriculumCatalog.some(function(item){return item.className===selectedClass && item.term===selectedTerm && String(item.subject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()===String(selectedSubject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();});
@@ -3408,6 +3438,7 @@ async function requireApprovedLessonAccess(){
       else if(all.includes('Basic Science & Technology')) librarySubject.value='Basic Science & Technology';
     }
     syncSubjectOptions();
+    if(librarySubject){librarySubject.addEventListener('change',function(){refreshCurriculumFromSource();});}
     if(cls && libraryClass){cls.addEventListener('change',function(){if(Array.from(libraryClass.options).some(o=>o.value===cls.value))libraryClass.value=cls.value;if(!(typeof window.teacherIsSchoolConnected==='function'&&window.teacherIsSchoolConnected()))syncSubjectOptions();refreshCurriculumFromSource()})}
     if(term && libraryTerm){term.addEventListener('change',function(){if(Array.from(libraryTerm.options).some(o=>o.value===term.value))libraryTerm.value=term.value;refreshCurriculumFromSource()})}
     window.addEventListener('teacherAssignmentsUpdated',function(){syncSubjectOptions();refreshCurriculumFromSource();});
