@@ -2566,130 +2566,13 @@ function selectedDashboardClass(){return document.getElementById("classSelect")?
 function selectedDashboardTerm(){return document.getElementById("termSelect")?.value||"First Term";}
 function visibleStudentRecords(){const cls=selectedDashboardClass();return students.map((s,index)=>({s,index})).filter(x=>studentInfo(x.s).className===cls);}
 
-const lessonData={
-  topic:"Environmental Change",
-  subtopic:"Erosion — Causes, Effects and Control",
-  objectives:"By the end of the lesson, pupils should be able to: (1) define erosion; (2) identify causes of erosion; (3) state effects of erosion; (4) mention ways of controlling erosion.",
-  previous:"Pupils have observed soil being washed away by rain or running water and have seen bare land after vegetation has been removed.",
-  materials:"Pictures/charts showing erosion, soil, water, a tray or container, leaves/grass and other simple locally available materials.",
-  reference:"Primary 5 First Term Basic Science & Technology curriculum provided for this project; relevant Basic Science & Technology textbook approved by the school.",
-  entry:"Ask pupils to describe what happens to bare soil when heavy rain falls on it.",
-  method:"Discussion, demonstration, questioning, observation and guided participation.",
-  content:`
-    <h4>Meaning of Erosion</h4>
-    <p><b>Erosion</b> is the gradual wearing away and removal of the topsoil by agents such as water and wind.</p>
 
-    <h4>Causes of Erosion</h4>
-    <ol>
-      <li>Heavy rainfall</li>
-      <li>Running water</li>
-      <li>Wind</li>
-      <li>Deforestation</li>
-      <li>Poor farming practices</li>
-    </ol>
-
-    <h4>Effects of Erosion</h4>
-    <ol>
-      <li>Loss of fertile soil</li>
-      <li>Damage to farmland</li>
-      <li>Formation of gullies</li>
-      <li>Damage to roads and buildings</li>
-    </ol>
-
-    <h4>Control of Erosion</h4>
-    <ol>
-      <li>Planting trees</li>
-      <li>Maintaining vegetation</li>
-      <li>Proper drainage</li>
-      <li>Terracing</li>
-    </ol>
-
-    <h4>Examples / Classroom Explanation</h4>
-    <p>Use a small amount of soil in a tray. Pour water gently over one part and observe how the soil moves. Ask pupils what they observed and connect the observation to erosion.</p>
-
-    <h4>Questions to Ask During the Lesson</h4>
-    <div class="qa"><b>Q1.</b> What is erosion?<br><span class="answer">Expected answer: Erosion is the gradual wearing away and removal of the topsoil by agents such as water and wind.</span></div>
-    <div class="qa"><b>Q2.</b> Mention two agents that can cause erosion.<br><span class="answer">Expected answer: Water and wind.</span></div>
-    <div class="qa"><b>Q3.</b> Mention three causes of erosion.<br><span class="answer">Expected answer: Heavy rainfall, running water and wind. Deforestation and poor farming practices are also causes.</span></div>
-    <div class="qa"><b>Q4.</b> Mention two effects of erosion.<br><span class="answer">Expected answer: Loss of fertile soil and damage to farmland.</span></div>
-    <div class="qa"><b>Q5.</b> How can erosion be controlled?<br><span class="answer">Expected answer: By planting trees, maintaining vegetation, providing proper drainage and using terracing.</span></div>
-
-    <h4>Key Points for Pupils</h4>
-    <ul>
-      <li>Erosion involves the wearing away and removal of topsoil.</li>
-      <li>Water and wind are important agents of erosion.</li>
-      <li>Erosion can cause loss of fertile soil and damage to farmland, roads and buildings.</li>
-      <li>Planting trees, maintaining vegetation, proper drainage and terracing help to control erosion.</li>
-    </ul>
-  `,
-  presentation:"Begin with pupils' observations about rain and bare soil. Define erosion. Explain the causes, effects and control measures using pictures and a simple soil-and-water demonstration. Ask questions throughout the lesson and allow pupils to give examples from their environment.",
-  teacher:"Introduces the lesson; explains definitions and key points; demonstrates soil movement with water; asks oral questions; guides discussion; checks pupils' understanding; corrects errors; summarizes the lesson.",
-  pupils:"Listen and respond to questions; observe the demonstration; identify causes and effects; participate in discussion; answer oral questions; copy the key points and complete the evaluation.",
-  evaluation:"1. Define erosion. 2. Mention five causes of erosion. 3. State four effects of erosion. 4. Mention four ways of controlling erosion. 5. Name two agents of erosion.",
-  conclusion:"Erosion is the gradual wearing away and removal of topsoil by agents such as water and wind. It has causes and effects, but it can be controlled through measures such as planting trees, maintaining vegetation, proper drainage and terracing.",
-  assignment:"1. Write the meaning of erosion. 2. List five causes of erosion. 3. State four effects of erosion. 4. Mention four ways of controlling erosion.",
-  presentationNote:`<p><b>Step 1 — Introduction:</b> Ask pupils what happens to bare soil when heavy rain falls on it. Allow them to share observations.</p><p><b>Step 2 — Presentation:</b> Introduce and define erosion. Explain its causes using simple examples.</p><p><b>Step 3 — Development:</b> Discuss the effects of erosion and explain the listed control measures. Demonstrate soil movement with water where materials are available.</p><p><b>Step 4 — Questioning:</b> Ask the oral questions provided in this note and allow pupils to respond.</p><p><b>Step 5 — Evaluation:</b> Give the evaluation questions below and check pupils' answers.</p><p><b>Step 6 — Conclusion:</b> Summarize the main points and correct any misunderstanding.</p>`,
-  evaluationHtml:`<ol><li>Define erosion.</li><li>Mention five causes of erosion.</li><li>State four effects of erosion.</li><li>Mention four ways of controlling erosion.</li><li>Name two agents of erosion.</li></ol>`,
-  assignmentHtml:`<ol><li>Write the meaning of erosion.</li><li>List five causes of erosion.</li><li>State four effects of erosion.</li><li>Mention four ways of controlling erosion.</li></ol>`
-};
 
 /* Detailed lesson content for the next Environmental Change sub-contents.
    These drafts are aligned to the uploaded curriculum sub-content; the curriculum
    itself names the sub-content, while the explanatory teaching material below is
    a teacher-ready expansion for classroom use. */
-const lessonLibrary={
-  "Environmental Change||Causes":{
-    objectives:"By the end of the lesson, pupils should be able to: (1) explain what causes erosion; (2) identify heavy rainfall, running water, wind, deforestation and poor farming practices as causes; (3) explain briefly how each cause contributes to erosion; (4) give examples from their environment.",
-    previous:"Pupils have seen soil being washed away during rainfall and have observed bare land, roadsides or farmland affected by running water.",
-    materials:"Pictures of eroded land, soil in a tray, water, dry leaves/grass, a small stick and locally available examples of bare and covered soil.",
-    entry:"Ask pupils: What happens to loose soil when heavy rain falls on bare land? What have you seen after a heavy rainfall?",
-    method:"Discussion, demonstration, questioning, observation and guided participation.",
-    content:`<h4>Meaning of Causes of Erosion</h4><p>Causes of erosion are the conditions or activities that make soil easier to be removed from one place to another by agents such as water and wind.</p><h4>Major Causes</h4><ol><li><b>Heavy rainfall:</b> Strong or prolonged rainfall can loosen soil and wash it away.</li><li><b>Running water:</b> Water flowing over the ground can carry loose soil away, especially where drainage is poor.</li><li><b>Wind:</b> Strong wind can blow loose and dry soil from exposed land.</li><li><b>Deforestation:</b> Removing trees and other vegetation leaves soil exposed to rain and wind.</li><li><b>Poor farming practices:</b> Farming methods that leave soil bare or disturb the soil unnecessarily can increase erosion.</li></ol><h4>Classroom Explanation</h4><p>Place loose soil in a tray. Compare a bare part with a part covered by grass or leaves. Pour a small amount of water over both and observe which soil moves more. Explain that vegetation helps protect the soil.</p><h4>Questions to Ask During the Lesson</h4><div class="qa"><b>Q1.</b> What are causes of erosion?<br><span class="answer">Expected answer: Conditions or activities that make soil easier to be removed.</span></div><div class="qa"><b>Q2.</b> Mention three causes of erosion.<br><span class="answer">Expected answer: Heavy rainfall, running water and wind.</span></div><div class="qa"><b>Q3.</b> How can deforestation increase erosion?<br><span class="answer">Expected answer: It removes vegetation that protects the soil, leaving the soil exposed.</span></div><div class="qa"><b>Q4.</b> How can poor farming practices contribute to erosion?<br><span class="answer">Expected answer: They can leave soil bare or disturb the soil, making it easier to be washed or blown away.</span></div><h4>Key Points for Pupils</h4><ul><li>Heavy rainfall and running water can wash soil away.</li><li>Wind can remove loose, dry soil.</li><li>Deforestation exposes soil.</li><li>Poor farming practices can increase soil erosion.</li></ul>`,
-    presentation:"Begin by discussing pupils' observations after rainfall. Define causes of erosion. Explain each cause with simple local examples. Use a tray demonstration to compare exposed and protected soil. Ask questions and allow pupils to identify examples from their environment.",
-    teacher:"Introduces the lesson; asks introductory questions; explains each cause; demonstrates soil movement; gives local examples; asks oral questions; corrects misconceptions; summarizes the lesson.",
-    pupils:"Respond to questions; observe the demonstration; identify causes; give examples from their environment; participate in discussion; answer oral questions; copy key points.",
-    evaluation:"1. What are causes of erosion? 2. Mention five causes of erosion. 3. Explain how heavy rainfall can cause erosion. 4. How does deforestation increase erosion? 5. State one way poor farming practices can increase erosion.",
-    conclusion:"Erosion can be caused or increased by heavy rainfall, running water, wind, deforestation and poor farming practices. Keeping the soil covered with vegetation and using good land-management practices can reduce exposure to erosion.",
-    assignment:"1. List five causes of erosion. 2. Explain any two causes. 3. Write two examples of activities in your community that can expose soil to erosion.",
-    presentationNote:`<p><b>Step 1 — Introduction:</b> Ask pupils what they observe on bare soil after heavy rainfall.</p><p><b>Step 2 — Presentation:</b> Define causes of erosion and introduce the five causes in the curriculum.</p><p><b>Step 3 — Development:</b> Explain each cause using simple examples and a soil-and-water demonstration.</p><p><b>Step 4 — Questioning:</b> Ask pupils to identify causes and explain how they affect exposed soil.</p><p><b>Step 5 — Evaluation:</b> Use the evaluation questions below to check understanding.</p><p><b>Step 6 — Conclusion:</b> Review the five causes and emphasize keeping soil protected.</p>`,
-    evaluationHtml:`<ol><li>What are causes of erosion?</li><li>Mention five causes of erosion.</li><li>Explain how heavy rainfall can cause erosion.</li><li>How does deforestation increase erosion?</li><li>State one way poor farming practices can increase erosion.</li></ol>`,
-    assignmentHtml:`<ol><li>List five causes of erosion.</li><li>Explain any two causes.</li><li>Write two examples of activities in your community that can expose soil to erosion.</li></ol>`
-  },
-  "Environmental Change||Effects":{
-    objectives:"By the end of the lesson, pupils should be able to: (1) explain the effects of erosion; (2) state loss of fertile soil, damage to farmland, formation of gullies, and damage to roads and buildings as effects; (3) explain briefly how erosion produces these effects; (4) relate the effects to their environment.",
-    previous:"Pupils know that erosion removes soil and have observed washed-away soil, damaged paths, exposed roots or channels formed by running water.",
-    materials:"Pictures of eroded farmland and roads, soil, tray, water, charts showing gullies and locally available examples of erosion damage.",
-    entry:"Ask pupils: What can happen to a farm when a large amount of soil is washed away? What damage can running water cause?",
-    method:"Discussion, observation, demonstration, questioning and guided participation.",
-    content:`<h4>Meaning of Effects of Erosion</h4><p>Effects of erosion are the results or problems that occur when soil is gradually removed from the land.</p><h4>Major Effects</h4><ol><li><b>Loss of fertile soil:</b> Valuable topsoil needed for healthy plant growth may be removed.</li><li><b>Damage to farmland:</b> Continued removal of soil can reduce the usefulness of farmland and expose plant roots.</li><li><b>Formation of gullies:</b> Concentrated running water can cut channels into the ground and form gullies.</li><li><b>Damage to roads and buildings:</b> Severe erosion can wash away soil supporting roads, paths or structures.</li></ol><h4>Classroom Explanation</h4><p>Show pictures of a gully, damaged farmland and an eroded roadside. Ask pupils to describe what has happened and connect each observation to the effects of erosion.</p><h4>Questions to Ask During the Lesson</h4><div class="qa"><b>Q1.</b> What are effects of erosion?<br><span class="answer">Expected answer: The results or problems caused by the removal of soil.</span></div><div class="qa"><b>Q2.</b> Mention four effects of erosion.<br><span class="answer">Expected answer: Loss of fertile soil, damage to farmland, formation of gullies, and damage to roads and buildings.</span></div><div class="qa"><b>Q3.</b> How can erosion affect farmland?<br><span class="answer">Expected answer: It can remove fertile soil and damage the land.</span></div><div class="qa"><b>Q4.</b> What is a gully?<br><span class="answer">Expected answer: A deep channel or trench formed on the ground by concentrated running water.</span></div><h4>Key Points for Pupils</h4><ul><li>Erosion removes soil from the land.</li><li>It can cause loss of fertile soil.</li><li>It can damage farmland and form gullies.</li><li>Severe erosion can damage roads and buildings.</li></ul>`,
-    presentation:"Begin by showing pictures or examples of erosion damage. Explain the meaning of effects. Discuss each listed effect and use local examples. Ask pupils to identify erosion effects they have seen around them.",
-    teacher:"Shows teaching materials; introduces the effects; explains each effect; asks questions; guides pupils to observe pictures; gives examples; checks understanding; summarizes the lesson.",
-    pupils:"Observe pictures; listen to explanations; identify effects; give examples from their environment; answer questions; participate in discussion; copy key points.",
-    evaluation:"1. What are effects of erosion? 2. Mention four effects of erosion. 3. Explain how erosion can cause loss of fertile soil. 4. How are gullies formed? 5. State two things that severe erosion can damage.",
-    conclusion:"Erosion can remove fertile soil, damage farmland, form gullies and damage roads and buildings. Understanding these effects helps pupils appreciate the importance of protecting the soil.",
-    assignment:"1. List four effects of erosion. 2. Explain any two effects. 3. Draw or describe a place in your community where erosion has caused damage.",
-    presentationNote:`<p><b>Step 1 — Introduction:</b> Show pictures or discuss places where soil has been washed away.</p><p><b>Step 2 — Presentation:</b> Explain the meaning of effects of erosion.</p><p><b>Step 3 — Development:</b> Discuss loss of fertile soil, farmland damage, gullies, and damage to roads and buildings.</p><p><b>Step 4 — Questioning:</b> Ask pupils to identify and explain each effect.</p><p><b>Step 5 — Evaluation:</b> Give the evaluation questions below.</p><p><b>Step 6 — Conclusion:</b> Summarize the major effects and relate them to the pupils' environment.</p>`,
-    evaluationHtml:`<ol><li>What are effects of erosion?</li><li>Mention four effects of erosion.</li><li>Explain how erosion can cause loss of fertile soil.</li><li>How are gullies formed?</li><li>State two things that severe erosion can damage.</li></ol>`,
-    assignmentHtml:`<ol><li>List four effects of erosion.</li><li>Explain any two effects.</li><li>Draw or describe a place in your community where erosion has caused damage.</li></ol>`
-  },
-  "Environmental Change||Control":{
-    objectives:"By the end of the lesson, pupils should be able to: (1) explain control of erosion; (2) state planting trees, maintaining vegetation, proper drainage and terracing as ways of controlling erosion; (3) explain briefly how these measures protect soil; (4) suggest suitable control measures for simple local situations.",
-    previous:"Pupils have learnt that erosion removes soil and have identified its causes and effects.",
-    materials:"Pictures of trees and vegetation, simple drainage examples, pictures of terraces, soil, tray, water, grass/leaves and locally available materials.",
-    entry:"Ask pupils: What can we do to stop soil from being washed away by rain? Why do trees and grass help protect the soil?",
-    method:"Discussion, demonstration, observation, questioning and guided participation.",
-    content:`<h4>Meaning of Control of Erosion</h4><p>Control of erosion means using suitable methods to reduce or prevent the removal of soil by water, wind and other agents.</p><h4>Ways of Controlling Erosion</h4><ol><li><b>Planting trees:</b> Tree roots help hold soil together, while tree cover reduces direct exposure of soil to rain.</li><li><b>Maintaining vegetation:</b> Grass and other plants cover the soil and help reduce the force of water and wind on exposed soil.</li><li><b>Proper drainage:</b> Well-planned drainage channels help control the movement of excess water and reduce uncontrolled runoff.</li><li><b>Terracing:</b> Terraces on sloping land slow down the movement of water and help reduce soil loss.</li></ol><h4>Classroom Demonstration</h4><p>Prepare two small soil areas in a tray: leave one bare and cover the other with grass or leaves. Pour water gently over both. Compare the amount of soil moved and discuss how vegetation protects soil.</p><h4>Questions to Ask During the Lesson</h4><div class="qa"><b>Q1.</b> What does control of erosion mean?<br><span class="answer">Expected answer: Using methods to reduce or prevent the removal of soil.</span></div><div class="qa"><b>Q2.</b> Mention four ways of controlling erosion.<br><span class="answer">Expected answer: Planting trees, maintaining vegetation, proper drainage and terracing.</span></div><div class="qa"><b>Q3.</b> How do trees help control erosion?<br><span class="answer">Expected answer: Their roots help hold soil and their cover protects the soil.</span></div><div class="qa"><b>Q4.</b> Why is proper drainage important?<br><span class="answer">Expected answer: It helps control excess water and reduce uncontrolled runoff.</span></div><h4>Key Points for Pupils</h4><ul><li>Vegetation helps protect soil from erosion.</li><li>Trees and plant roots help hold soil together.</li><li>Proper drainage controls excess water.</li><li>Terracing slows water movement on sloping land.</li></ul>`,
-    presentation:"Begin with questions about stopping soil from being washed away. Explain the meaning of erosion control. Teach the four listed measures and demonstrate the protective effect of vegetation where materials are available.",
-    teacher:"Introduces the lesson; asks questions; explains each control measure; conducts the simple demonstration; asks oral questions; relates the measures to local situations; summarizes the lesson.",
-    pupils:"Answer introductory questions; observe the demonstration; identify control measures; explain how vegetation helps; participate in discussion; answer evaluation questions; copy key points.",
-    evaluation:"1. What is control of erosion? 2. Mention four ways of controlling erosion. 3. Explain how planting trees helps control erosion. 4. Why is proper drainage important? 5. What is terracing?",
-    conclusion:"Erosion can be reduced by protecting the soil and controlling water movement. Planting trees, maintaining vegetation, proper drainage and terracing are important ways of controlling erosion.",
-    assignment:"1. List four ways of controlling erosion. 2. Explain how vegetation protects soil. 3. Write one way your community can reduce soil erosion.",
-    presentationNote:`<p><b>Step 1 — Introduction:</b> Ask pupils how soil can be protected from being washed away.</p><p><b>Step 2 — Presentation:</b> Define control of erosion and introduce the four curriculum measures.</p><p><b>Step 3 — Development:</b> Explain planting trees, maintaining vegetation, proper drainage and terracing.</p><p><b>Step 4 — Demonstration:</b> Compare bare soil with soil covered by vegetation using a simple tray demonstration where possible.</p><p><b>Step 5 — Evaluation:</b> Ask the evaluation questions below.</p><p><b>Step 6 — Conclusion:</b> Review the four control measures and their importance.</p>`,
-    evaluationHtml:`<ol><li>What is control of erosion?</li><li>Mention four ways of controlling erosion.</li><li>Explain how planting trees helps control erosion.</li><li>Why is proper drainage important?</li><li>What is terracing?</li></ol>`,
-    assignmentHtml:`<ol><li>List four ways of controlling erosion.</li><li>Explain how vegetation protects soil.</li><li>Write one way your community can reduce soil erosion.</li></ol>`
-  }
-};
+
 
 
 function teacherIdentitySafe(value){
@@ -2809,94 +2692,42 @@ function closeModal(){
 }
 function saveModal(){alert("Saved locally in this demo. Firebase can be connected later.");closeModal()}
 
-const periodLessonLibrary={
-  "Environmental Change||Air and Water Pollution — Sources, Effects and Control":{
-    objectives:"By the end of the lesson, pupils should be able to: (1) explain air and water pollution; (2) identify sources of air and water pollution; (3) state effects of pollution; (4) mention ways of controlling pollution.",
-    previous:"Pupils have seen smoke, dirty water, refuse or other forms of pollution in their environment.",materials:"Pictures of polluted air and water, charts and locally available examples.",entry:"Ask pupils: What makes air or water dirty? What can make the environment polluted?",method:"Discussion, observation, questioning, explanation and guided participation.",
-    content:"<h4>Air and Water Pollution</h4><p>Pollution occurs when harmful substances make the environment unsafe or unsuitable for living things.</p><h4>Sources</h4><ul><li>Smoke from vehicles and burning materials.</li><li>Dust and harmful gases.</li><li>Domestic and industrial waste.</li><li>Refuse and dirty water entering water sources.</li></ul><h4>Effects</h4><ul><li>It can make air difficult or unpleasant to breathe.</li><li>It can make water unsafe or unsuitable for use.</li><li>It can harm plants, animals and people.</li></ul><h4>Control</h4><ul><li>Dispose of waste properly.</li><li>Avoid dumping refuse into water.</li><li>Reduce unnecessary burning.</li><li>Keep surroundings and water sources clean.</li></ul><h4>Questions to Ask</h4><div class='qa'><b>Q1.</b> What is pollution?<br><span class='answer'>Expected answer: The presence of harmful substances that make the environment unsafe or unsuitable.</span></div><div class='qa'><b>Q2.</b> Mention two sources of air pollution.<br><span class='answer'>Expected answer: Vehicle smoke and burning materials.</span></div><div class='qa'><b>Q3.</b> Mention two ways of controlling pollution.<br><span class='answer'>Expected answer: Proper waste disposal and keeping water sources clean.</span></div>",
-    presentation:"Introduce air and water pollution using familiar examples. Discuss the listed sources, effects and control measures. Ask questions throughout and allow pupils to identify examples from their community.",teacher:"Introduces pollution; explains sources, effects and control; uses pictures and examples; asks questions; guides discussion; checks understanding; summarizes.",pupils:"Observe teaching materials; answer questions; identify sources and effects; suggest control measures; participate in discussion; copy key points.",evaluation:"1. What is pollution? 2. Mention three sources of pollution. 3. State three effects of pollution. 4. Mention four ways of controlling pollution.",conclusion:"Air and water pollution can harm people and the environment. Proper waste disposal, cleanliness and reducing harmful activities help to control pollution.",assignment:"1. List three sources of pollution. 2. State three effects. 3. Mention four ways of controlling air and water pollution.",presentationNote:"<p><b>Step 1 — Introduction:</b> Ask pupils about dirty air and water they have seen.</p><p><b>Step 2 — Presentation:</b> Explain air and water pollution.</p><p><b>Step 3 — Development:</b> Discuss sources, effects and control measures.</p><p><b>Step 4 — Questioning:</b> Ask oral questions and allow pupils to participate.</p><p><b>Step 5 — Evaluation:</b> Give the evaluation questions.</p><p><b>Step 6 — Conclusion:</b> Summarize the lesson.</p>",evaluationHtml:"<ol><li>What is pollution?</li><li>Mention three sources of pollution.</li><li>State three effects of pollution.</li><li>Mention four ways of controlling pollution.</li></ol>",assignmentHtml:"<ol><li>List three sources of pollution.</li><li>State three effects.</li><li>Mention four ways of controlling air and water pollution.</li></ol>"
-  }
-};
+
 
 function getActiveLessonData(type="Lesson Plan"){
-  // Resolve lesson material from the currently selected class + subject + term.
-  // This prevents a lesson from one class being reused after changing classes.
-  const selectedClass=document.getElementById('lessonLibraryClass')?.value || 'Primary 5';
-  const selectedTerm=document.getElementById('lessonLibraryTerm')?.value || 'First Term';
+  // SOURCE-ONLY POLICY:
+  // Lesson plans and notes must come from the selected record in curriculum.html.
+  // Never fall back to hardcoded demo lessons or generate placeholder lesson content.
+  const selectedClass=document.getElementById('lessonLibraryClass')?.value || '';
+  const selectedTerm=document.getElementById('lessonLibraryTerm')?.value || '';
   const selectedSubject=document.getElementById('lessonLibrarySubject')?.value || '';
-  const activeRecord=(curriculumCatalog||[]).find(function(item){
-    return item.className===selectedClass && item.term===selectedTerm && (!selectedSubject || String(item.subject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()===String(selectedSubject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim());
-  });
+  const norm=value=>String(value||'').trim().toLowerCase()
+    .replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();
+
+  const activeRecord=(Array.isArray(curriculumCatalog)?curriculumCatalog:[]).find(item=>
+    norm(item.className)===norm(selectedClass) &&
+    norm(item.term)===norm(selectedTerm) &&
+    norm(item.subject)===norm(selectedSubject)
+  );
+  if(!activeRecord) return null;
+
   const weekNumber=(Number(selectedLesson.topicIndex)||0)+1;
   const periodNumber=(Number(selectedLesson.periodIndex)||0)+1;
-  const collection=type==='Lesson Note' ? (activeRecord?.lessonNotes||[]) : (activeRecord?.lessonPlans||[]);
-  const savedLesson=collection.find(function(item){
-    return Number(item.week)===weekNumber && Number(item.period)===periodNumber;
-  });
-  if(savedLesson){
-    const base={
-      topic:selectedLesson.topic,
-      subtopic:selectedLesson.subtopic,
-      objectives:'', previous:'', materials:'',
-      reference:`${selectedClass} ${selectedTerm} ${activeRecord?.subject||selectedSubject} curriculum.`,
-      entry:'', method:'Discussion, explanation, questioning and guided participation.',
-      content:'', presentation:'', teacher:'', pupils:'', evaluation:'', conclusion:'', assignment:'',
-      presentationNote:'', evaluationHtml:'', assignmentHtml:''
-    };
-    if(type==='Lesson Note'){
-      return {...base,...savedLesson,
-        topic:selectedLesson.topic,
-        subtopic:selectedLesson.subtopic,
-        previous:savedLesson.introduction||base.previous,
-        objectives:(savedLesson.keyPoints||[]).map((x,i)=>`${i+1}. Pupils should understand ${x}.`).join('\n'),
-        entry:savedLesson.introduction||base.entry,
-        content:savedLesson.content||'',
-        presentationNote:savedLesson.summary?`<p>${savedLesson.summary}</p>`:'',
-        teacher:'<p>Explain the lesson content, use relevant examples, ask questions and check pupils’ understanding.</p>',
-        pupils:'<p>Listen, participate, answer questions and write the key points.</p>',
-        evaluation:savedLesson.evaluation||'',
-        evaluationHtml:savedLesson.evaluation||'',
-        conclusion:savedLesson.summary||'',
-        assignment:savedLesson.assignment||'',
-        assignmentHtml:savedLesson.assignment||''
-      };
-    }
-    return {...base,...savedLesson,
-      topic:selectedLesson.topic,
-      subtopic:selectedLesson.subtopic,
-      presentation:savedLesson.presentation||'',
-      evaluation:savedLesson.evaluation||'',
-      conclusion:savedLesson.conclusion||'',
-      assignment:savedLesson.assignment||''
-    };
-  }
-  if(selectedLesson.topic==="Environmental Change" && selectedLesson.periodIndex===0 && selectedClass==='Primary 5'){
-    return {...lessonData,topic:selectedLesson.topic,subtopic:selectedLesson.subtopic};
-  }
-  const key=`${selectedLesson.topic}||${selectedLesson.subtopic}`;
-  if(periodLessonLibrary[key]) return {...periodLessonLibrary[key],topic:selectedLesson.topic,subtopic:selectedLesson.subtopic};
-  if(lessonLibrary[key]) return {...lessonLibrary[key],topic:selectedLesson.topic,subtopic:selectedLesson.subtopic};
-  const t=selectedLesson.topic, st=selectedLesson.subtopic;
-  const evaluation=`1. What is ${st}? 2. Mention one important point about ${st}. 3. Give one example related to ${st}.`;
-  const assignment=`1. Write what you understand about ${st}. 2. Mention two important points about ${st}.`;
+  const collection=type==='Lesson Note'
+    ? (Array.isArray(activeRecord.lessonNotes)?activeRecord.lessonNotes:[])
+    : (Array.isArray(activeRecord.lessonPlans)?activeRecord.lessonPlans:[]);
+  const savedLesson=collection.find(item=>
+    Number(item.week)===weekNumber && Number(item.period)===periodNumber
+  );
+  if(!savedLesson) return null;
+
+  // Return only the saved curriculum source object. Do not fill missing lesson fields
+  // with generated text or data from the old in-file lesson library.
   return {
-    topic:t, subtopic:st,
-    objectives:`By the end of the lesson, pupils should be able to: (1) explain the selected sub-content; (2) identify important points related to ${st}; (3) answer simple questions on the lesson; (4) apply what they have learnt.`,
-    previous:`Pupils have some everyday knowledge or previous classroom experience related to ${st}.`,
-    materials:`Relevant pictures, charts, real objects or locally available materials related to ${st}.`,
-    reference:`Primary 5 First Term Basic Science & Technology curriculum provided for this project; relevant Basic Science & Technology textbook approved by the school.`,
-    entry:`Ask pupils what they already know or have observed about ${st}.`,
-    method:`Discussion, explanation, questioning, observation and guided participation.`,
-    content:`<h4>Curriculum Focus</h4><p><b>Topic:</b> ${t}</p><p><b>Sub-content:</b> ${st}</p><p>This lesson is linked directly to the selected curriculum sub-content. The teacher should explain the meaning, key points, examples and relevant classroom applications of this sub-content using the approved school materials.</p><h4>Questions to Ask During the Lesson</h4><ol><li>What do you understand by ${st}?</li><li>Mention one important point about ${st}.</li><li>Give an example related to ${st}.</li></ol><h4>Key Points for Pupils</h4><ul><li>The lesson focuses on ${st}.</li><li>Pupils should understand the main idea and be able to explain it in their own words.</li></ul>`,
-    presentation:`Introduce ${st} by asking pupils what they already know. Explain the selected curriculum sub-content using appropriate examples and materials. Ask questions during the lesson, allow pupils to participate, then evaluate their understanding and summarize the main points.`,
-    teacher:`Introduces the lesson; explains the selected sub-content; uses appropriate teaching materials; asks questions; guides discussion; checks understanding; corrects errors; summarizes the lesson.`,
-    pupils:`Listen and respond to questions; observe the materials; participate in discussion; give examples; answer evaluation questions; copy key points.`,
-    evaluation,
-    conclusion:`The lesson has focused on ${st}. Pupils should be able to explain the main idea and answer basic questions about the selected sub-content.`,
-    assignment,
-    presentationNote:`<p><b>Step 1 — Introduction:</b> Ask pupils what they already know about ${st}.</p><p><b>Step 2 — Presentation:</b> Introduce and explain the selected curriculum sub-content.</p><p><b>Step 3 — Development:</b> Use examples and suitable materials to deepen understanding.</p><p><b>Step 4 — Questioning:</b> Ask oral questions and allow pupils to participate.</p><p><b>Step 5 — Evaluation:</b> Use the evaluation questions below.</p><p><b>Step 6 — Conclusion:</b> Summarize the main points and correct misunderstandings.</p>`,
-    evaluationHtml:`<ol><li>What do you understand by ${st}?</li><li>Mention one important point about ${st}.</li><li>Give one example related to ${st}.</li></ol>`,
-    assignmentHtml:`<ol><li>Write what you understand about ${st}.</li><li>Mention two important points about ${st}.</li></ol>`
+    ...savedLesson,
+    topic:savedLesson.topic || selectedLesson.topic || '',
+    subtopic:savedLesson.subtopic || selectedLesson.subtopic || '',
+    duration:savedLesson.duration || '40 minutes'
   };
 }
 
@@ -2904,6 +2735,17 @@ function lessonForm(type,index=0){
   const c=curriculum[selectedLesson.topicIndex ?? index ?? 0] || curriculum[0] || {topic:selectedLesson.topic,periods:[]};
   const data=getActiveLessonData(type);
   const isNote=type==="Lesson Note";
+  if(!data){
+    const selectedClass=document.getElementById('lessonLibraryClass')?.value||'';
+    const selectedSubject=document.getElementById('lessonLibrarySubject')?.value||'';
+    const selectedTerm=document.getElementById('lessonLibraryTerm')?.value||'';
+    return `<div class="note-box" style="padding:20px;border:1px solid #e5b567;background:#fffaf0;border-radius:12px">
+      <h3 style="margin-top:0;color:#8a4b08">Lesson content not found in the curriculum source</h3>
+      <p>No saved ${isNote?'lesson note':'lesson plan'} was found for:</p>
+      <ul><li>Class: ${String(selectedClass)}</li><li>Subject: ${String(selectedSubject)}</li><li>Term: ${String(selectedTerm)}</li><li>${weekLabel}</li><li>${periodLabel}</li></ul>
+      <p>This dashboard does not generate or substitute hardcoded lesson content. Add the matching lesson ${isNote?'note':'plan'} to <code>curriculum.html</code> and refresh.</p>
+    </div>`;
+  }
   const weekLabel=`Week ${(Number(selectedLesson.topicIndex)||0)+1}`;
   const periodLabel=`Period ${(Number(selectedLesson.periodIndex)||0)+1}`;
   if(!isNote){
@@ -2932,7 +2774,7 @@ function lessonForm(type,index=0){
   return `<div class="lesson-note">
     <div class="note-box">
       <b>📖 Complete Nigerian Primary School Lesson Note</b>
-      <p style="margin:5px 0 0">Detailed teaching content for use during the actual lesson. The curriculum topic/sub-topic is taken from the project's Primary 5 First Term Basic Science & Technology curriculum.</p>
+      <p style="margin:5px 0 0">Lesson note content is retrieved from the matching lesson-note record in curriculum.html for the selected class, subject, term, week and period.</p>
     </div>
 
     <h4>1. Lesson Information</h4>
@@ -2992,54 +2834,35 @@ function setLessonTab(type){
    btn.classList.toggle("active", (type==="Lesson Plan" && i===0) || (type==="Lesson Note" && i===1));
  });
 }
-// A single access check protects both lesson buttons. The list renderer and the
-// modal-opening layer now use the same subject + class + active subscription rule.
-async function requireLessonSubscriptionAccess(){
-  const subject=document.getElementById('lessonLibrarySubject')?.value||'';
-  const cls=document.getElementById('lessonLibraryClass')?.value||'';
-  if(typeof window.loadTeacherFirestoreSubscriptions==='function'){
-    await window.loadTeacherFirestoreSubscriptions(true);
-  }
-  const uid=window.firebaseTeacherUID||'';
-  const norm=v=>String(v||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();
-  const option=document.getElementById('lessonLibrarySubject')?.selectedOptions?.[0];
-  const subjectId=option?.dataset?.subjectId||'';
-  const now=Date.now();
-  const records=Array.isArray(window.firestoreSubscriptionCache)?window.firestoreSubscriptionCache:[];
-  const allowed=!!uid&&!!subject&&!!cls&&records.some(record=>{
-    if(String(record.teacherUid||'')!==uid||String(record.status||'').toLowerCase()!=='active')return false;
-    const start=record.startsAt?.toDate?record.startsAt.toDate().getTime():Date.parse(record.startsAt||record.approvedAt||0);
-    const end=record.expiresAt?.toDate?record.expiresAt.toDate().getTime():Date.parse(record.expiresAt||0);
-    if(Number.isFinite(start)&&start>now)return false;
-    if(!Number.isFinite(end)||end<=now)return false;
-    const sameSubject=(subjectId&&record.subjectId&&String(subjectId)===String(record.subjectId))||norm(record.subject)===norm(subject);
-    const classes=Array.isArray(record.classes)?record.classes:[];
-    return sameSubject&&classes.some(value=>norm(value)===norm(cls));
-  });
-  if(!allowed){
-    if(typeof window.openSubscriptionForLessonSelection==='function')window.openSubscriptionForLessonSelection();
-    alert('Access locked. An active administrator-approved subscription is required for this subject and class.');
-  }
-  return allowed;
-}
 async function openLessonPlan(index=0,periodIndex=null){
- if(!(await requireLessonSubscriptionAccess()))return;
+ if(!(await requireApprovedLessonAccess())) return;
  if(periodIndex!==null){
-   const c=curriculum[index] || curriculum[0]; const period=c.periods?.[periodIndex] || c.periods?.[0];
+   const c=curriculum[index] || curriculum[0]; const period=c?.periods?.[periodIndex] || c?.periods?.[0];
    if(period){selectedLesson={topic:c.topic,subtopic:period.title,topicIndex:index,periodIndex};updateLessonSelectionCard();markSelectedSubContent();}
+ }
+ const data=getActiveLessonData("Lesson Plan");
+ if(!data){
+   showModal("📅 Lesson Plan",lessonForm("Lesson Plan",selectedLesson.topicIndex??index??0));
+   return;
  }
  currentLessonType="Lesson Plan"; currentLessonIndex=selectedLesson.topicIndex ?? index ?? 0;
  setLessonTab("Lesson Plan"); showModal("📅 Lesson Plan",lessonForm("Lesson Plan",currentLessonIndex));
 }
 async function openLessonNote(index=0,periodIndex=null){
- if(!(await requireLessonSubscriptionAccess()))return;
+ if(!(await requireApprovedLessonAccess())) return;
  if(periodIndex!==null){
-   const c=curriculum[index] || curriculum[0]; const period=c.periods?.[periodIndex] || c.periods?.[0];
+   const c=curriculum[index] || curriculum[0]; const period=c?.periods?.[periodIndex] || c?.periods?.[0];
    if(period){selectedLesson={topic:c.topic,subtopic:period.title,topicIndex:index,periodIndex};updateLessonSelectionCard();markSelectedSubContent();}
+ }
+ const data=getActiveLessonData("Lesson Note");
+ if(!data){
+   showModal("📖 Lesson Note",lessonForm("Lesson Note",selectedLesson.topicIndex??index??0));
+   return;
  }
  currentLessonType="Lesson Note"; currentLessonIndex=selectedLesson.topicIndex ?? index ?? 0;
  setLessonTab("Lesson Note"); showModal("📖 Lesson Note",lessonForm("Lesson Note",currentLessonIndex));
 }
+
 function caExamAssignmentPairs(){
   if(typeof window.teacherLessonAssignmentPairs==="function")return window.teacherLessonAssignmentPairs();
   const r=window.activeTeacherConnection||{};
@@ -3294,6 +3117,10 @@ function printCurrentLesson(){
   const topic=selectedLesson.topic || '';
   const subtopic=selectedLesson.subtopic || '';
   const data=getActiveLessonData(type);
+  if(!data){
+    alert('Cannot print: this lesson '+(type==='Lesson Note'?'note':'plan')+' is not present in curriculum.html for the selected class, subject, term, week and period.');
+    return;
+  }
   const printDate=new Date().toLocaleDateString();
   const meta=`
     <div class="print-meta">
@@ -3426,6 +3253,38 @@ renderCurriculum();renderStudents();renderResults();
 </script>
 
 <script>
+window.teacherHasApprovedLessonSubscription=function(subject, cls){
+  if(!subject||!cls) return false;
+  const uid=window.firebaseTeacherUID||'';
+  if(!uid) return false;
+  const records=Array.isArray(window.firestoreSubscriptionCache)?window.firestoreSubscriptionCache:[];
+  const now=Date.now();
+  const norm=v=>String(v||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();
+  const option=document.getElementById('lessonLibrarySubject')?.selectedOptions?.[0];
+  const subjectId=option?.dataset?.subjectId||'';
+  return records.some(record=>{
+    if(String(record.teacherUid||'')!==uid || String(record.status||'').toLowerCase()!=='active') return false;
+    const start=record.startsAt?.toDate?record.startsAt.toDate().getTime():Date.parse(record.startsAt||record.approvedAt||0);
+    const end=record.expiresAt?.toDate?record.expiresAt.toDate().getTime():Date.parse(record.expiresAt||0);
+    if(Number.isFinite(start)&&start>now) return false;
+    if(!Number.isFinite(end)||end<=now) return false;
+    const sameSubject=(subjectId&&record.subjectId&&String(subjectId)===String(record.subjectId))||norm(record.subject)===norm(subject);
+    const classes=Array.isArray(record.classes)?record.classes:[];
+    return sameSubject&&classes.some(value=>norm(value)===norm(cls));
+  });
+};
+async function requireApprovedLessonAccess(){
+  if(typeof window.loadTeacherFirestoreSubscriptions==='function') await window.loadTeacherFirestoreSubscriptions();
+  const subject=document.getElementById('lessonLibrarySubject')?.value||'';
+  const cls=document.getElementById('lessonLibraryClass')?.value||'';
+  if(!window.teacherHasApprovedLessonSubscription(subject,cls)){
+    if(typeof window.openSubscriptionForLessonSelection==='function') window.openSubscriptionForLessonSelection();
+    alert('Access locked. This subject and class require an active subscription approved by the administrator.');
+    return false;
+  }
+  return true;
+}
+
 (function(){
   const libraryClass=document.getElementById('lessonLibraryClass');
   const libraryTerm=document.getElementById('lessonLibraryTerm');
@@ -3499,24 +3358,7 @@ renderCurriculum();renderStudents();renderResults();
     // Lesson access is granted only when this teacher has an active yearly
     // subscription for both the selected subject and the selected class.
     function hasSubjectClassSubscription(subject, cls){
-      if(!subject || !cls) return false;
-      const uid=window.firebaseTeacherUID||'';
-      if(!uid) return false;
-      const records=Array.isArray(window.firestoreSubscriptionCache)?window.firestoreSubscriptionCache:[];
-      const now=Date.now();
-      const norm=v=>String(v||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();
-      const subjectOption=librarySubject?.selectedOptions?.[0];
-      const subjectId=subjectOption?.dataset?.subjectId||'';
-      return records.some(record=>{
-        if(String(record.teacherUid||'')!==uid || String(record.status||'').toLowerCase()!=='active') return false;
-        const start=record.startsAt?.toDate?record.startsAt.toDate().getTime():Date.parse(record.startsAt||record.approvedAt||0);
-        const end=record.expiresAt?.toDate?record.expiresAt.toDate().getTime():Date.parse(record.expiresAt||0);
-        if(Number.isFinite(start)&&start>now) return false;
-        if(!Number.isFinite(end)||end<=now) return false;
-        const sameSubject=(subjectId&&record.subjectId&&String(subjectId)===String(record.subjectId)) || norm(record.subject)===norm(subject);
-        const classes=Array.isArray(record.classes)?record.classes:[];
-        return sameSubject && classes.some(value=>norm(value)===norm(cls));
-      });
+      return !!(window.teacherHasApprovedLessonSubscription && window.teacherHasApprovedLessonSubscription(subject,cls));
     }
     const selectedRecord=curriculumCatalog.find(function(item){
       return item.className===selectedClass && item.term===selectedTerm && String(item.subject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()===String(selectedSubject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();
@@ -3542,10 +3384,7 @@ renderCurriculum();renderStudents();renderResults();
       }).filter(x=>x.match);
       if(!periods.length)return '';
       visible++;
-      // No hard-coded week lock: all curriculum weeks use the same subscription rule.
-      const inactiveAttr='';
-      const inactiveStyle='';
-      return '<div class="library-week-card"><div class="library-week-head"><div><span class="library-week-number">'+(i+1)+'</span><span class="library-week-title"><strong>Week '+(i+1)+' — '+esc(c.topic)+'</strong><small>'+periods.length+' teaching period'+(periods.length===1?'':'s')+'</small></span></div><span class="library-week-badge">FIRST TERM</span></div><div class="library-periods">'+periods.map(function(x){return '<div class="library-period"><div class="library-period-top"><div class="library-period-name">Period '+(x.j+1)+': '+esc(x.p.title)+'</div><div class="library-period-actions"><button type="button" class="library-action library-plan"'+inactiveAttr+inactiveStyle+' onclick="openLessonPlan('+i+','+x.j+')">LESSON PLAN</button><button type="button" class="library-action library-note"'+inactiveAttr+inactiveStyle+' onclick="openLessonNote('+i+','+x.j+')">LESSON NOTE</button></div></div><div class="library-period-sub">'+esc((x.p.subcontents||[]).join(' • '))+'</div></div>';}).join('')+'</div></div>';
+      return '<div class="library-week-card"><div class="library-week-head"><div><span class="library-week-number">'+(i+1)+'</span><span class="library-week-title"><strong>Week '+(i+1)+' — '+esc(c.topic)+'</strong><small>'+periods.length+' teaching period'+(periods.length===1?'':'s')+'</small></span></div><span class="library-week-badge">'+esc(selectedTerm.toUpperCase())+'</span></div><div class="library-periods">'+periods.map(function(x){return '<div class="library-period"><div class="library-period-top"><div class="library-period-name">Period '+(x.j+1)+': '+esc(x.p.title)+'</div><div class="library-period-actions"><button type="button" class="library-action library-plan" onclick="openLessonPlan('+i+','+x.j+')">LESSON PLAN</button><button type="button" class="library-action library-note" onclick="openLessonNote('+i+','+x.j+')">LESSON NOTE</button></div></div><div class="library-period-sub">'+esc((x.p.subcontents||[]).join(' • '))+'</div></div>';}).join('')+'</div></div>';
     }).join('') : '';
     if(empty){
       empty.style.display=visible?'none':'block';
