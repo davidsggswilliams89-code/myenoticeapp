@@ -3246,6 +3246,108 @@ function printDocument(content){
 
 
 
+
+<script>
+/* TEMPORARY LESSON BUTTON DIAGNOSTICS — observational only; does not enable/disable buttons. */
+(function(){
+  const MAX_LOGS = 80;
+  let logs = [];
+  let panel, output, status;
+  function time(){ return new Date().toLocaleTimeString(); }
+  function add(message, detail){
+    const entry = '['+time()+'] '+message+(detail ? ' | '+detail : '');
+    logs.unshift(entry); logs = logs.slice(0, MAX_LOGS);
+    if(output) output.textContent = logs.join('\n');
+    console.info('[Lesson Button Diagnostic]', entry);
+  }
+  function getWeek(el){
+    const card = el.closest('.library-week-card');
+    const title = card?.querySelector('.library-week-title strong')?.textContent?.trim() || 'week unknown';
+    const period = el.closest('.library-period')?.querySelector('.library-period-name')?.textContent?.trim() || 'period unknown';
+    return title+'; '+period;
+  }
+  function snapshot(el, reason){
+    const cs = getComputedStyle(el);
+    const info = [
+      'button='+el.textContent.trim(),
+      getWeek(el),
+      'disabledProperty='+el.disabled,
+      'disabledAttr='+el.hasAttribute('disabled'),
+      'ariaDisabled='+el.getAttribute('aria-disabled'),
+      'class='+el.className,
+      'opacity='+cs.opacity,
+      'filter='+cs.filter,
+      'pointerEvents='+cs.pointerEvents,
+      'cursor='+cs.cursor,
+      'bg='+cs.backgroundColor,
+      'onclickAttr='+(el.getAttribute('onclick')||'none')
+    ].join('; ');
+    add(reason, info);
+  }
+  function ensurePanel(){
+    if(panel || !document.body) return;
+    panel=document.createElement('section');
+    panel.id='lessonButtonDiagnosticPanel';
+    panel.style.cssText='position:fixed;z-index:999999;bottom:8px;left:8px;right:8px;max-height:44vh;overflow:hidden;background:#101827;color:#f8fafc;border:2px solid #f59e0b;border-radius:12px;box-shadow:0 5px 25px #0005;font:12px/1.4 monospace;';
+    panel.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;background:#253247"><strong style="font: bold 13px Arial,sans-serif;color:#fbbf24">Lesson Button Diagnostic (temporary)</strong><div><button id="lbdCopy" type="button" style="padding:5px 8px">Copy log</button> <button id="lbdHide" type="button" style="padding:5px 8px">Hide</button></div></div><div id="lbdStatus" style="padding:8px 10px;color:#bbf7d0">Watching lesson buttons. This panel does not change button behaviour.</div><pre id="lbdOutput" style="margin:0;padding:8px 10px;max-height:27vh;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere"></pre>';
+    document.body.appendChild(panel);
+    output=panel.querySelector('#lbdOutput'); status=panel.querySelector('#lbdStatus');
+    panel.querySelector('#lbdHide').addEventListener('click',()=>{panel.style.display='none';});
+    panel.querySelector('#lbdCopy').addEventListener('click',async()=>{
+      try{await navigator.clipboard.writeText(logs.join('\n')); add('Log copied to clipboard');}
+      catch(e){add('Copy failed; select and copy the log manually',e.message);}
+    });
+    output.textContent=logs.join('\n');
+  }
+  function scan(){
+    ensurePanel();
+    document.querySelectorAll('#courseContentsList .library-action, .library-week-card .library-action').forEach(el=>{
+      if(el.dataset.lbdSeen) return;
+      el.dataset.lbdSeen='1';
+      snapshot(el,'BUTTON CREATED');
+    });
+  }
+  document.addEventListener('click',function(e){
+    const el=e.target.closest('.library-action');
+    if(el){
+      ensurePanel();
+      snapshot(el,'BUTTON CLICKED');
+      add('Click captured','defaultPrevented='+e.defaultPrevented);
+      setTimeout(()=>snapshot(el,'STATE 250ms AFTER CLICK'),250);
+      setTimeout(()=>snapshot(el,'STATE 1500ms AFTER CLICK'),1500);
+    }
+  },true);
+  const observer = new MutationObserver(records=>{
+    for(const rec of records){
+      const target=rec.target.nodeType===1?rec.target:rec.target.parentElement;
+      const btn=target?.matches?.('.library-action')?target:target?.closest?.('.library-action');
+      if(btn){
+        snapshot(btn,'BUTTON MUTATION: '+rec.type+(rec.attributeName?'/'+rec.attributeName:''));
+      } else if(rec.type==='childList'){
+        rec.addedNodes.forEach(n=>{
+          if(n.nodeType!==1)return;
+          if(n.matches?.('.library-action')) snapshot(n,'BUTTON ADDED');
+          n.querySelectorAll?.('.library-action').forEach(b=>snapshot(b,'BUTTON ADDED'));
+        });
+      }
+    }
+    scan();
+  });
+  function start(){
+    ensurePanel();
+    add('Diagnostic started','URL='+location.pathname+'; time='+new Date().toISOString());
+    scan();
+    observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['disabled','class','style','aria-disabled']});
+    document.addEventListener('DOMContentLoaded',scan);
+    setInterval(scan,1500);
+    window.addEventListener('error',e=>add('JAVASCRIPT ERROR',e.message+' at '+e.filename+':'+e.lineno));
+    window.addEventListener('unhandledrejection',e=>add('UNHANDLED PROMISE REJECTION',String(e.reason?.message||e.reason)));
+    add('Instructions','Refresh, open Lessons, compare Week 3 and Week 4, tap a grey button, then copy/send this log.');
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true}); else start();
+})();
+</script>
+
 </body></html>`);
  w.document.close();w.focus();setTimeout(()=>w.print(),250);
 }
