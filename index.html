@@ -3246,6 +3246,7 @@ function printDocument(content){
 
 
 
+<div id="subscriptionTestWarning" style="position:fixed;left:8px;right:8px;bottom:8px;z-index:2147483647;background:#fff4cc;color:#593b00;border:2px solid #d99a00;border-radius:10px;padding:10px 12px;font: bold 13px/1.4 Arial,sans-serif;box-shadow:0 4px 18px #0003">TEMPORARY TEST: lesson subscription restriction is OFF. Do not use this as the live production version.</div>
 </body></html>`);
  w.document.close();w.focus();setTimeout(()=>w.print(),250);
 }
@@ -3274,14 +3275,8 @@ window.teacherHasApprovedLessonSubscription=function(subject, cls){
   });
 };
 async function requireApprovedLessonAccess(){
-  if(typeof window.loadTeacherFirestoreSubscriptions==='function') await window.loadTeacherFirestoreSubscriptions();
-  const subject=document.getElementById('lessonLibrarySubject')?.value||'';
-  const cls=document.getElementById('lessonLibraryClass')?.value||'';
-  if(!window.teacherHasApprovedLessonSubscription(subject,cls)){
-    if(typeof window.openSubscriptionForLessonSelection==='function') window.openSubscriptionForLessonSelection();
-    alert('Access locked. This subject and class require an active subscription approved by the administrator.');
-    return false;
-  }
+  // TEMPORARY DIAGNOSTIC TEST ONLY: bypass subscription access check
+  // to determine whether subscription gating causes Weeks 4-10 to disappear.
   return true;
 }
 
@@ -3355,23 +3350,13 @@ async function requireApprovedLessonAccess(){
     const selectedTerm=libraryTerm?.value||'';
     const selectedSubject=librarySubject?.value||'';
 
-    // Lesson access is granted only when this teacher has an active yearly
-    // subscription for both the selected subject and the selected class.
-    function hasSubjectClassSubscription(subject, cls){
-      return !!(window.teacherHasApprovedLessonSubscription && window.teacherHasApprovedLessonSubscription(subject,cls));
-    }
+    // TEMPORARY DIAGNOSTIC TEST ONLY: show curriculum regardless of subscription.
+    function hasSubjectClassSubscription(subject, cls){ return true; }
     const selectedRecord=curriculumCatalog.find(function(item){
       return item.className===selectedClass && item.term===selectedTerm && String(item.subject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()===String(selectedSubject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();
     });
 
-    if(!hasSubjectClassSubscription(selectedSubject, selectedClass)){
-      box.innerHTML='';
-      if(empty){
-        empty.style.display='block';
-        empty.innerHTML='<div style="max-width:620px;margin:auto;padding:8px 2px"><div style="font-size:38px;margin-bottom:8px">🔒</div><b style="font-size:19px;color:#17324d">Subscribe to access lesson plans and lesson notes</b><button type="button" class="subscription-action" style="max-width:300px" onclick="openSubscriptionForLessonSelection()">💳 Subscribe to this subject</button></div>';
-      }
-      return;
-    }
+    // TEMPORARY DIAGNOSTIC TEST ONLY: subscription display gate bypassed.
     const classMatches=curriculumCatalog.some(function(item){return item.className===selectedClass;});
     const termMatches=curriculumCatalog.some(function(item){return item.className===selectedClass && item.term===selectedTerm;});
     const subjectMatches=curriculumCatalog.some(function(item){return item.className===selectedClass && item.term===selectedTerm && String(item.subject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()===String(selectedSubject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();});
@@ -5391,7 +5376,10 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     catch(e){add('Snapshot error',String(e))}
   }
   function ensurePanel(){
-    if(panel || !document.body) return;
+    /* The dashboard replaces its login view after authentication. If that removes the panel, recreate it. */
+    if(panel && panel.isConnected) return;
+    if(panel && !panel.isConnected){ panel=null; output=null; status=null; }
+    if(!document.body) return;
     panel=document.createElement('div'); panel.id='lessonButtonDiagnosticPanel';
     panel.style.cssText='position:fixed!important;z-index:2147483647!important;left:8px!important;right:8px!important;bottom:8px!important;max-height:42vh!important;overflow:hidden!important;background:#101827!important;color:#fff!important;border:3px solid #f59e0b!important;border-radius:12px!important;box-shadow:0 4px 24px rgba(0,0,0,.55)!important;font:12px/1.4 monospace!important;display:block!important;visibility:visible!important;opacity:1!important;';
     panel.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding:9px;background:#253247;color:white"><strong style="font: bold 13px Arial;color:#fbbf24">DIAGNOSTIC: Lesson Buttons</strong><button type="button" id="lbdMin" style="padding:7px;background:#f59e0b;color:#111;border:0;border-radius:5px;font-weight:bold">Minimise</button></div><div id="lbdBody"><div id="lbdStatus" style="padding:8px;color:#bbf7d0">Starting diagnostic…</div><pre id="lbdOutput" style="margin:0;padding:8px;max-height:22vh;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;color:#fff;background:#101827"></pre><div style="display:flex;gap:8px;padding:8px"><button type="button" id="lbdCopy" style="padding:8px;background:#16a34a;color:white;border:0;border-radius:5px;font-weight:bold">Copy log</button><button type="button" id="lbdShow" style="padding:8px;background:#2563eb;color:white;border:0;border-radius:5px;font-weight:bold">Show full log</button></div></div>';
@@ -5413,7 +5401,14 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   window.addEventListener('error',function(e){add('JAVASCRIPT ERROR',(e.message||'unknown')+' at '+(e.filename||'')+':'+(e.lineno||''));});
   window.addEventListener('unhandledrejection',function(e){add('PROMISE ERROR',String(e.reason && (e.reason.message||e.reason)||e.reason));});
   function start(){ensurePanel();add('Diagnostic started','Current page: '+location.href);scan();
-    try{new MutationObserver(function(records){records.forEach(function(r){var el=r.target && r.target.nodeType===1?r.target:null; if(el && el.matches && el.matches('.library-action')) snap(el,'BUTTON CHANGED '+(r.attributeName||r.type));});scan();}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['disabled','class','style','aria-disabled']});}catch(e){add('Observer failed',String(e));}
+    try{
+      /* Observe documentElement, not only the initial body: login may replace body contents. */
+      new MutationObserver(function(records){
+        if(!panel || !panel.isConnected){ panel=null; output=null; status=null; ensurePanel(); add('Diagnostic panel restored','Dashboard changed the page after login.'); }
+        records.forEach(function(r){var el=r.target && r.target.nodeType===1?r.target:null; if(el && el.matches && el.matches('.library-action')) snap(el,'BUTTON CHANGED '+(r.attributeName||r.type));});
+        scan();
+      }).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['disabled','class','style','aria-disabled']});
+    }catch(e){add('Observer failed',String(e));}
     setInterval(scan,1200); add('Next','Open Lessons, then tap one grey Lesson Plan or Lesson Note button. Diagnostic details will appear here.');
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
