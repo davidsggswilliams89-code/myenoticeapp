@@ -3404,14 +3404,34 @@ renderCurriculum();renderStudents();renderResults();
     }).join('') : '';
     // The subscription gate above returns before rendering lessons for unapproved teachers.
     // Once approved content is rendered, explicitly clear any stale disabled state on lesson buttons.
-    box.querySelectorAll('.library-action.library-plan, .library-action.library-note').forEach(function(button){
-      button.disabled=false;
-      button.removeAttribute('disabled');
-      button.removeAttribute('aria-disabled');
-      button.style.opacity='1';
-      button.style.cursor='pointer';
-      button.style.filter='none';
-    });
+    function restoreApprovedLessonButtonState(){
+      // This function runs only after the subscription gate above has passed.
+      // Force the correct colors as well as enabled state in case another dashboard
+      // routine or cached DOM update has left stale disabled/grey styling behind.
+      box.querySelectorAll('.library-action.library-plan, .library-action.library-note').forEach(function(button){
+        button.disabled = false;
+        button.removeAttribute('disabled');
+        button.removeAttribute('aria-disabled');
+        button.removeAttribute('title');
+        button.style.setProperty('opacity','1','important');
+        button.style.setProperty('cursor','pointer','important');
+        button.style.setProperty('filter','none','important');
+        button.style.setProperty('background-color',button.classList.contains('library-plan')?'#078c55':'#1476e8','important');
+        button.style.setProperty('color','#ffffff','important');
+      });
+    }
+    restoreApprovedLessonButtonState();
+    // If another script refreshes the lesson cards or reapplies a stale disabled
+    // state after subscription activation, restore the state for this approved view.
+    if(window.__lessonButtonObserver) window.__lessonButtonObserver.disconnect();
+    if(window.MutationObserver){
+      window.__lessonButtonObserver = new MutationObserver(function(){
+        if(box.isConnected && box.querySelector('.library-action.library-plan, .library-action.library-note')){
+          restoreApprovedLessonButtonState();
+        }
+      });
+      window.__lessonButtonObserver.observe(box,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','aria-disabled','style','class']});
+    }
     if(empty){
       empty.style.display=visible?'none':'block';
       if(!subjectMatches){
