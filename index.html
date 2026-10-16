@@ -3246,7 +3246,6 @@ function printDocument(content){
 
 
 
-<div id="subscriptionTestWarning" style="position:fixed;left:8px;right:8px;bottom:8px;z-index:2147483647;background:#fff4cc;color:#593b00;border:2px solid #d99a00;border-radius:10px;padding:10px 12px;font: bold 13px/1.4 Arial,sans-serif;box-shadow:0 4px 18px #0003">TEMPORARY TEST: lesson subscription restriction is OFF. Do not use this as the live production version.</div>
 </body></html>`);
  w.document.close();w.focus();setTimeout(()=>w.print(),250);
 }
@@ -3275,8 +3274,7 @@ window.teacherHasApprovedLessonSubscription=function(subject, cls){
   });
 };
 async function requireApprovedLessonAccess(){
-  // TEMPORARY DIAGNOSTIC TEST ONLY: bypass subscription access check
-  // to determine whether subscription gating causes Weeks 4-10 to disappear.
+  // Subscription restriction removed from lesson-plan and lesson-note access.
   return true;
 }
 
@@ -3350,13 +3348,13 @@ async function requireApprovedLessonAccess(){
     const selectedTerm=libraryTerm?.value||'';
     const selectedSubject=librarySubject?.value||'';
 
-    // TEMPORARY DIAGNOSTIC TEST ONLY: show curriculum regardless of subscription.
+    // Subscription restriction removed from lesson library display.
     function hasSubjectClassSubscription(subject, cls){ return true; }
     const selectedRecord=curriculumCatalog.find(function(item){
       return item.className===selectedClass && item.term===selectedTerm && String(item.subject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()===String(selectedSubject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();
     });
 
-    // TEMPORARY DIAGNOSTIC TEST ONLY: subscription display gate bypassed.
+    // Display curriculum independently of subscription status.
     const classMatches=curriculumCatalog.some(function(item){return item.className===selectedClass;});
     const termMatches=curriculumCatalog.some(function(item){return item.className===selectedClass && item.term===selectedTerm;});
     const subjectMatches=curriculumCatalog.some(function(item){return item.className===selectedClass && item.term===selectedTerm && String(item.subject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()===String(selectedSubject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();});
@@ -3374,7 +3372,7 @@ async function requireApprovedLessonAccess(){
     if(empty){
       empty.style.display=visible?'none':'block';
       if(!subjectMatches){
-        empty.innerHTML='<div style="max-width:620px;margin:auto;padding:8px 2px"><div style="font-size:30px;margin-bottom:7px">📘</div><b style="font-size:18px;color:#526171">No lesson content available for '+esc(selectedSubject||'this subject')+' yet.</b><br><small style="display:block;margin-top:8px;line-height:1.55">Your subscription is active, but curriculum content has not yet been added to the curriculum source for this subject, class and term. Please check again after the curriculum is uploaded.</small></div>';
+        empty.innerHTML='<div style="max-width:620px;margin:auto;padding:8px 2px"><div style="font-size:30px;margin-bottom:7px">📘</div><b style="font-size:18px;color:#526171">No lesson content available for '+esc(selectedSubject||'this subject')+' yet.</b><br><small style="display:block;margin-top:8px;line-height:1.55">Curriculum content has not yet been added to the curriculum source for this subject, class and term. Please check again after the curriculum is uploaded.</small></div>';
       }else if(!classMatches || !termMatches){
         empty.innerHTML='<b>No lesson content available for this selection yet.</b><br><small>Choose a class, subject and term with an approved curriculum in the curriculum source.</small>';
       }else{
@@ -5276,144 +5274,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
 </script>
 
 
-<script>
-/* Students section only: populate class filter from the signed-in teacher's registrar assignments. */
-(function(){
-  function getStudentRecords(){
-    return typeof students !== "undefined" && Array.isArray(students) ? students : [];
-  }
-  function getStudentClassInfo(s){
-    return typeof studentInfo === "function" ? studentInfo(s) : {className:s.className||s.class||"",photo:s.photo||""};
-  }
-  function studentAssignedClassOptions(){
-    var connected = typeof window.teacherIsSchoolConnected === "function" && window.teacherIsSchoolConnected();
-    var values = [];
-    if (connected) {
-      values = typeof window.teacherAssignedClasses === "function" ? window.teacherAssignedClasses() : [];
-    } else {
-      values = getStudentRecords().map(function(s){
-        return getStudentClassInfo(s).className || "";
-      }).filter(Boolean);
-    }
-    var unique = Array.from(new Set(values.map(function(v){ return String(v).trim(); }).filter(Boolean)));
-    unique.sort(function(a,b){
-      var na = parseInt(a.replace(/\D/g,""),10), nb = parseInt(b.replace(/\D/g,""),10);
-      return (Number.isFinite(na)?na:999) - (Number.isFinite(nb)?nb:999) || a.localeCompare(b);
-    });
-    return unique;
-  }
 
-  window.refreshStudentClassFilter = function(){
-    var select = document.getElementById("studentClassFilter");
-    if(!select) return;
-    var previous = select.value;
-    var classes = studentAssignedClassOptions();
-    select.replaceChildren();
-    select.add(new Option("All assigned classes", ""));
-    classes.forEach(function(cls){ select.add(new Option(cls, cls)); });
-    select.value = classes.includes(previous) ? previous : "";
-    select.disabled = classes.length === 0;
-    if(!classes.length){
-      select.replaceChildren();
-      select.add(new Option("No assigned classes", ""));
-    }
-  };
-
-  window.renderStudents = function(){
-    var body = document.getElementById("studentsBody");
-    if(!body) return;
-    window.refreshStudentClassFilter();
-    var select = document.getElementById("studentClassFilter");
-    var filter = select ? select.value : "";
-    var connected = typeof window.teacherIsSchoolConnected === "function" && window.teacherIsSchoolConnected();
-    var allowed = connected && typeof window.teacherAssignedClasses === "function" ? window.teacherAssignedClasses() : [];
-    var list = getStudentRecords();
-    var records = list.map(function(s,index){ return {s:s,index:index,info:getStudentClassInfo(s)}; })
-      .filter(function(item){
-        var cls = item.info.className || "";
-        if(connected && !allowed.includes(cls)) return false;
-        return !filter || cls === filter;
-      });
-    var count = document.getElementById("studentCount");
-    if(count) count.textContent = records.length + " Student" + (records.length === 1 ? "" : "s");
-    body.innerHTML = records.map(function(item,i){
-      var s=item.s, info=item.info;
-      var photo=info.photo ? '<img src="'+String(info.photo).replace(/"/g,'&quot;')+'" alt="Student photo" style="width:42px;height:52px;object-fit:cover;border-radius:6px">' : '—';
-      return '<tr><td>'+(i+1)+'</td><td>'+photo+'</td><td>'+(s[0]||"")+'</td><td>'+(s[1]||"")+'</td><td>'+(s[2]||"")+'</td><td>'+(info.className||"")+'</td><td><button class="btn blue" onclick="viewStudentResult('+item.index+')">View</button> <button class="btn green" onclick="editStudent('+item.index+')">Edit</button> <button class="btn red" onclick="deleteStudent('+item.index+')">Delete</button></td></tr>';
-    }).join("") || '<tr><td colspan="7" class="empty">'+(connected && !allowed.length ? 'No classes have been assigned to this teacher by the registrar yet.' : (filter ? 'No students found in '+filter+'.' : 'No students found in your assigned classes.'))+'</td></tr>';
-  };
-
-  document.addEventListener("DOMContentLoaded", function(){
-    window.refreshStudentClassFilter();
-    var select = document.getElementById("studentClassFilter");
-    if(select) select.addEventListener("change", window.renderStudents);
-  });
-  window.addEventListener("teacherAssignmentsUpdated", function(){ window.refreshStudentClassFilter(); window.renderStudents(); });
-  window.addEventListener("teacherAccountContextChanged", function(){ window.refreshStudentClassFilter(); window.renderStudents(); });
-})();
-</script>
-
-<script id="lesson-button-diagnostic-script">
-/* TEMPORARY LESSON BUTTON DIAGNOSTICS — observational only; does not enable/disable buttons. */
-(function(){
-  'use strict';
-  var logs=[], panel, output, status, hidden=false;
-  function stamp(){try{return new Date().toLocaleTimeString()}catch(e){return ''}}
-  function add(message,detail){
-    var entry='['+stamp()+'] '+message+(detail?' | '+detail:'');
-    logs.unshift(entry); if(logs.length>100) logs.length=100;
-    if(output) output.textContent=logs.join('\n');
-  }
-  function weekInfo(el){
-    var card=el.closest('.library-week-card');
-    var title=card && card.innerText ? card.innerText.split('\n').slice(0,4).join(' / ') : 'week not found';
-    var period=el.closest('.library-period');
-    var p=period && period.querySelector('.library-period-name');
-    return title+'; '+(p?p.textContent.trim():'period not found');
-  }
-  function snap(el,why){
-    try { var s=window.getComputedStyle(el); add(why, 'button='+el.textContent.trim()+'; '+weekInfo(el)+'; disabled='+el.disabled+'; disabledAttr='+el.hasAttribute('disabled')+'; aria-disabled='+el.getAttribute('aria-disabled')+'; class='+el.className+'; opacity='+s.opacity+'; filter='+s.filter+'; pointer-events='+s.pointerEvents+'; cursor='+s.cursor+'; background='+s.backgroundColor+'; onclick='+(el.getAttribute('onclick')||'none')); }
-    catch(e){add('Snapshot error',String(e))}
-  }
-  function ensurePanel(){
-    /* The dashboard replaces its login view after authentication. If that removes the panel, recreate it. */
-    if(panel && panel.isConnected) return;
-    if(panel && !panel.isConnected){ panel=null; output=null; status=null; }
-    if(!document.body) return;
-    panel=document.createElement('div'); panel.id='lessonButtonDiagnosticPanel';
-    panel.style.cssText='position:fixed!important;z-index:2147483647!important;left:8px!important;right:8px!important;bottom:8px!important;max-height:42vh!important;overflow:hidden!important;background:#101827!important;color:#fff!important;border:3px solid #f59e0b!important;border-radius:12px!important;box-shadow:0 4px 24px rgba(0,0,0,.55)!important;font:12px/1.4 monospace!important;display:block!important;visibility:visible!important;opacity:1!important;';
-    panel.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding:9px;background:#253247;color:white"><strong style="font: bold 13px Arial;color:#fbbf24">DIAGNOSTIC: Lesson Buttons</strong><button type="button" id="lbdMin" style="padding:7px;background:#f59e0b;color:#111;border:0;border-radius:5px;font-weight:bold">Minimise</button></div><div id="lbdBody"><div id="lbdStatus" style="padding:8px;color:#bbf7d0">Starting diagnostic…</div><pre id="lbdOutput" style="margin:0;padding:8px;max-height:22vh;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;color:#fff;background:#101827"></pre><div style="display:flex;gap:8px;padding:8px"><button type="button" id="lbdCopy" style="padding:8px;background:#16a34a;color:white;border:0;border-radius:5px;font-weight:bold">Copy log</button><button type="button" id="lbdShow" style="padding:8px;background:#2563eb;color:white;border:0;border-radius:5px;font-weight:bold">Show full log</button></div></div>';
-    document.body.appendChild(panel); output=panel.querySelector('#lbdOutput'); status=panel.querySelector('#lbdStatus');
-    panel.querySelector('#lbdMin').addEventListener('click',function(){var b=panel.querySelector('#lbdBody'); var isHidden=b.style.display==='none'; b.style.display=isHidden?'block':'none'; this.textContent=isHidden?'Minimise':'Show panel';});
-    panel.querySelector('#lbdShow').addEventListener('click',function(){if(output){output.style.maxHeight='50vh';output.style.maxHeight='50dvh';} });
-    panel.querySelector('#lbdCopy').addEventListener('click',function(){
-      var value=logs.join('\n');
-      if(navigator.clipboard && navigator.clipboard.writeText){navigator.clipboard.writeText(value).then(function(){add('LOG COPIED','Paste it into this chat');}).catch(function(){manualCopy(value);});}
-      else manualCopy(value);
-    });
-    function manualCopy(value){
-      var area=document.createElement('textarea'); area.value=value; area.setAttribute('readonly',''); area.style.cssText='position:fixed;left:5px;right:5px;top:20%;width:90%;height:45vh;z-index:2147483647;background:white;color:black;font-size:12px'; document.body.appendChild(area); area.focus(); area.select();
-      add('Clipboard unavailable','Text box opened. Long-press the text, Select all, Copy.');
-    }
-  }
-  function scan(){ensurePanel(); document.querySelectorAll('.library-action').forEach(function(el){if(el.dataset.lbdSeen)return;el.dataset.lbdSeen='1';snap(el,'BUTTON FOUND');});}
-  document.addEventListener('click',function(e){var el=e.target && e.target.closest ? e.target.closest('.library-action'):null;if(el){snap(el,'BUTTON TAPPED');setTimeout(function(){snap(el,'250ms after tap')},250);setTimeout(function(){snap(el,'1500ms after tap')},1500);}},true);
-  window.addEventListener('error',function(e){add('JAVASCRIPT ERROR',(e.message||'unknown')+' at '+(e.filename||'')+':'+(e.lineno||''));});
-  window.addEventListener('unhandledrejection',function(e){add('PROMISE ERROR',String(e.reason && (e.reason.message||e.reason)||e.reason));});
-  function start(){ensurePanel();add('Diagnostic started','Current page: '+location.href);scan();
-    try{
-      /* Observe documentElement, not only the initial body: login may replace body contents. */
-      new MutationObserver(function(records){
-        if(!panel || !panel.isConnected){ panel=null; output=null; status=null; ensurePanel(); add('Diagnostic panel restored','Dashboard changed the page after login.'); }
-        records.forEach(function(r){var el=r.target && r.target.nodeType===1?r.target:null; if(el && el.matches && el.matches('.library-action')) snap(el,'BUTTON CHANGED '+(r.attributeName||r.type));});
-        scan();
-      }).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['disabled','class','style','aria-disabled']});
-    }catch(e){add('Observer failed',String(e));}
-    setInterval(scan,1200); add('Next','Open Lessons, then tap one grey Lesson Plan or Lesson Note button. Diagnostic details will appear here.');
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
-})();
-</script>
 </body>
 </html>
 <style>
