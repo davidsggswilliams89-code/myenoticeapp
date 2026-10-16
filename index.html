@@ -3279,101 +3279,6 @@ function printDocument(content){
 
 
 
-
-<!-- LESSON BUTTON DIAGNOSTICS: visible after refresh to identify why lesson buttons are grey/locked -->
-<style>
-#lessonDiagnosticPanel{position:fixed;left:8px;right:8px;bottom:12px;z-index:99999;background:#10233f;color:#fff;border:2px solid #f59e0b;border-radius:12px;box-shadow:0 8px 30px #0005;font:13px/1.45 Arial,sans-serif;max-height:48vh;display:flex;flex-direction:column}
-#lessonDiagnosticPanel .ld-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:#173b59;border-radius:10px 10px 0 0}
-#lessonDiagnosticPanel .ld-head strong{font-size:14px}
-#lessonDiagnosticPanel button{padding:7px 10px;border-radius:7px;background:#f59e0b;color:#111;font-weight:800}
-#lessonDiagnosticPanel .ld-body{overflow:auto;padding:10px 12px}
-#lessonDiagnosticPanel .ld-status{padding:8px;margin:0 0 8px;border-radius:7px;background:#fff;color:#10233f;font-weight:800}
-#lessonDiagnosticPanel pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:0;color:#e6edf5;font:12px/1.45 monospace}
-#lessonDiagnosticPanel .ld-ok{background:#dcfce7;color:#14532d}
-#lessonDiagnosticPanel .ld-bad{background:#fee2e2;color:#7f1d1d}
-@media print{#lessonDiagnosticPanel{display:none!important}}
-</style>
-<div id="lessonDiagnosticPanel" role="status" aria-live="polite">
-  <div class="ld-head"><strong>🔎 Lesson Button Diagnostic — after refresh</strong><div><button type="button" id="ldRefresh">Check now</button> <button type="button" id="ldHide">Hide</button></div></div>
-  <div class="ld-body"><div class="ld-status">Checking lesson buttons and subscription state…</div><pre id="ldDetails"></pre></div>
-</div>
-<script>
-(function(){
-  var panel=document.getElementById('lessonDiagnosticPanel');
-  if(!panel)return;
-  var details=document.getElementById('ldDetails'), status=panel.querySelector('.ld-status');
-  var errors=[];
-  function norm(v){return String(v||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();}
-  function getVal(id){var el=document.getElementById(id);return el?el.value:'(element missing)';}
-  function report(){
-    try{
-      var subject=getVal('lessonLibrarySubject'), cls=getVal('lessonLibraryClass'), term=getVal('lessonLibraryTerm');
-      var uid=window.firebaseTeacherUID||'';
-      var records=Array.isArray(window.firestoreSubscriptionCache)?window.firestoreSubscriptionCache:[];
-      var now=Date.now(), matches=[];
-      records.forEach(function(r,i){
-        var start=r.startsAt&&typeof r.startsAt.toDate==='function'?r.startsAt.toDate().getTime():Date.parse(r.startsAt||r.approvedAt||0);
-        var end=r.expiresAt&&typeof r.expiresAt.toDate==='function'?r.expiresAt.toDate().getTime():Date.parse(r.expiresAt||0);
-        var classes=Array.isArray(r.classes)?r.classes:[];
-        var subEl=document.getElementById('lessonLibrarySubject');
-        var subjectId=subEl&&subEl.selectedOptions[0]?subEl.selectedOptions[0].dataset.subjectId:'';
-        var sameSubject=(subjectId&&r.subjectId&&String(subjectId)===String(r.subjectId))||norm(r.subject)===norm(subject);
-        var sameClass=classes.some(function(c){return norm(c)===norm(cls);});
-        var uidMatch=String(r.teacherUid||'')===String(uid);
-        var active=String(r.status||'').toLowerCase()==='active';
-        var dateOK=(!Number.isFinite(start)||start<=now)&&Number.isFinite(end)&&end>now;
-        if(uidMatch||sameSubject||sameClass)matches.push({index:i,teacherUidMatch:uidMatch,status:r.status||'(missing)',subject:r.subject||'(missing)',subjectId:r.subjectId||'',subjectMatch:sameSubject,classes:classes,classMatch:sameClass,startsAt:r.startsAt&&r.startsAt.toDate?r.startsAt.toDate().toISOString():r.startsAt||'(missing)',expiresAt:r.expiresAt&&r.expiresAt.toDate?r.expiresAt.toDate().toISOString():r.expiresAt||'(missing)',dateOK:dateOK,active:active});
-      });
-      var buttons=Array.from(document.querySelectorAll('#courseContentsList .library-action, .library-period-actions .library-action'));
-      var buttonRows=buttons.slice(0,30).map(function(b){return {text:(b.innerText||'').trim(),disabled:!!b.disabled,ariaDisabled:b.getAttribute('aria-disabled'),opacity:getComputedStyle(b).opacity,filter:getComputedStyle(b).filter,background:getComputedStyle(b).backgroundColor,onclick:b.getAttribute('onclick')};});
-      var approved=(typeof window.teacherHasApprovedLessonSubscription==='function')?window.teacherHasApprovedLessonSubscription(subject,cls):'function missing';
-      var connected=(typeof window.teacherIsSchoolConnected==='function')?window.teacherIsSchoolConnected():'function missing';
-      var mode=localStorage.getItem('teacherDashboardMode')||'(not set)';
-      var data={
-        checkedAt:new Date().toLocaleString(),
-        page:location.href,
-        dashboardMode:mode,
-        teacherUID:uid||'(not available yet)',
-        teacherSchoolConnected:connected,
-        selectedSubject:subject,selectedClass:cls,selectedTerm:term,
-        subscriptionCacheCount:records.length,
-        accessFunctionApproved:approved,
-        likelyReason:!uid?'Teacher Firebase UID has not loaded or the user is not signed in.':!records.length?'Subscription records have not loaded into firestoreSubscriptionCache (or query returned zero records).':approved===false?'No cache record matched this teacher + subject + class + active status + valid expiry date. Check each match below.':buttons.some(function(b){return b.disabled||getComputedStyle(b).opacity<'0.8'||getComputedStyle(b).filter!=='none';})?'A button is disabled/grey despite the current access function; inspect button state and recent errors below.':'Buttons currently appear enabled. If they turn grey later, the observer below should capture it.',
-        curriculumRecords:(typeof curriculumCatalog!=='undefined'&&Array.isArray(curriculumCatalog))?curriculumCatalog.length:'catalog not accessible',
-        buttonCount:buttons.length,buttonStates:buttonRows,
-        relatedSubscriptionRecords:matches,
-        capturedErrors:errors.slice(-8)
-      };
-      status.className='ld-status '+(approved===true?'ld-ok':'ld-bad');
-      status.textContent=approved===true?'Access check: APPROVED — checking for styling/routine interference.':'Access check: NOT APPROVED or not yet loaded — details below show why.';
-      details.textContent=JSON.stringify(data,null,2);
-      try{sessionStorage.setItem('lessonButtonDiagnosticLast',JSON.stringify(data));}catch(_){}
-    }catch(e){status.className='ld-status ld-bad';status.textContent='Diagnostic itself hit an error: '+(e.message||e);details.textContent=String(e.stack||e);}
-  }
-  function addError(kind,err){
-    errors.push({time:new Date().toISOString(),kind:kind,message:String(err&&err.message||err||''),stack:String(err&&err.stack||'').slice(0,1200)});
-    if(errors.length>20)errors.shift();
-    report();
-  }
-  window.addEventListener('error',function(e){addError('window.error',e.error||e.message);});
-  window.addEventListener('unhandledrejection',function(e){addError('unhandledrejection',e.reason);});
-  window.addEventListener('DOMContentLoaded',function(){
-    report();
-    var target=document.getElementById('courseContentsList');
-    if(target){
-      var observer=new MutationObserver(function(){report();});
-      observer.observe(target,{subtree:true,childList:true,attributes:true,attributeFilter:['disabled','aria-disabled','style','class']});
-    }
-    var observer2=new MutationObserver(function(){report();});
-    observer2.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['disabled','aria-disabled','style','class']});
-    setTimeout(report,1000);setTimeout(report,3000);setTimeout(report,7000);
-  });
-  document.getElementById('ldRefresh').addEventListener('click',report);
-  document.getElementById('ldHide').addEventListener('click',function(){panel.style.display='none';});
-  window.lessonButtonDiagnosticReport=report;
-})();
-</script>
-
 </body></html>`);
  w.document.close();w.focus();setTimeout(()=>w.print(),250);
 }
@@ -3497,37 +3402,6 @@ renderCurriculum();renderStudents();renderResults();
       visible++;
       return '<div class="library-week-card"><div class="library-week-head"><div><span class="library-week-number">'+(i+1)+'</span><span class="library-week-title"><strong>Week '+(i+1)+' — '+esc(c.topic)+'</strong><small>'+periods.length+' teaching period'+(periods.length===1?'':'s')+'</small></span></div><span class="library-week-badge">'+esc(selectedTerm.toUpperCase())+'</span></div><div class="library-periods">'+periods.map(function(x){return '<div class="library-period"><div class="library-period-top"><div class="library-period-name">Period '+(x.j+1)+': '+esc(x.p.title)+'</div><div class="library-period-actions"><button type="button" class="library-action library-plan" onclick="openLessonPlan('+i+','+x.j+')">LESSON PLAN</button><button type="button" class="library-action library-note" onclick="openLessonNote('+i+','+x.j+')">LESSON NOTE</button></div></div><div class="library-period-sub">'+esc((x.p.subcontents||[]).join(' • '))+'</div></div>';}).join('')+'</div></div>';
     }).join('') : '';
-    // The subscription gate above returns before rendering lessons for unapproved teachers.
-    // Once approved content is rendered, explicitly clear any stale disabled state on lesson buttons.
-    function restoreApprovedLessonButtonState(){
-      // This runs only after teacherHasApprovedLessonSubscription() passed above.
-      // Repair buttons only when their state is wrong; do not rewrite unchanged
-      // attributes/styles because that can cause a MutationObserver feedback loop.
-      box.querySelectorAll('.library-action.library-plan, .library-action.library-note').forEach(function(button){
-        if(button.disabled) button.disabled = false;
-        if(button.hasAttribute('disabled')) button.removeAttribute('disabled');
-        if(button.getAttribute('aria-disabled') === 'true') button.removeAttribute('aria-disabled');
-        if(button.hasAttribute('title')) button.removeAttribute('title');
-        if(button.style.getPropertyValue('opacity') !== '1') button.style.setProperty('opacity','1','important');
-        if(button.style.getPropertyValue('cursor') !== 'pointer') button.style.setProperty('cursor','pointer','important');
-        if(button.style.getPropertyValue('filter') !== 'none') button.style.setProperty('filter','none','important');
-        var expectedBg = button.classList.contains('library-plan') ? '#078c55' : '#1476e8';
-        if(button.style.getPropertyValue('background-color') !== expectedBg) button.style.setProperty('background-color',expectedBg,'important');
-        if(button.style.getPropertyValue('color') !== '#ffffff') button.style.setProperty('color','#ffffff','important');
-      });
-    }
-    restoreApprovedLessonButtonState();
-    // Watch for another routine disabling the buttons, but avoid a self-triggering
-    // mutation loop: restoreApprovedLessonButtonState() only changes incorrect values.
-    if(window.__lessonButtonObserver) window.__lessonButtonObserver.disconnect();
-    if(window.MutationObserver){
-      window.__lessonButtonObserver = new MutationObserver(function(){
-        if(box.isConnected && box.querySelector('.library-action.library-plan, .library-action.library-note')){
-          restoreApprovedLessonButtonState();
-        }
-      });
-      window.__lessonButtonObserver.observe(box,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','aria-disabled','title','style','class']});
-    }
     if(empty){
       empty.style.display=visible?'none':'block';
       if(!subjectMatches){
