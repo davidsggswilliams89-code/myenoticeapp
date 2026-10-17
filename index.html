@@ -1565,20 +1565,6 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
       <button class="auth-secondary" type="button" id="teacherRegisterBack">Back to Account Type</button>
     </form>
 
-
-    <form id="parentRegisterForm" class="auth-form" style="display:none">
-      <h3>Create Parent / Guardian Account</h3>
-      <p class="auth-note">Use the School ID shown in the registrar portal and the phone number already saved in the school's student record. Access begins after registrar approval. No SMS fee or OTP is required.</p>
-      <div class="auth-field"><label for="parentRegName">Parent / Guardian full name</label><input id="parentRegName" required maxlength="120" autocomplete="name"></div>
-      <div class="auth-field"><label for="parentRegSchool">School ID</label><input id="parentRegSchool" required maxlength="100" placeholder="Enter School ID"></div>
-      <div class="auth-field"><label for="parentRegPhone">Registered phone number</label><input id="parentRegPhone" required type="tel" maxlength="40" placeholder="Use the number in the school register"></div>
-      <div class="auth-field"><label for="parentRegEmail">Email address</label><input id="parentRegEmail" required type="email" autocomplete="email"></div>
-      <div class="auth-field"><label for="parentRegPassword">Password</label><input id="parentRegPassword" required type="password" minlength="6" autocomplete="new-password"></div>
-      <div class="auth-field"><label for="parentRegConfirm">Confirm password</label><input id="parentRegConfirm" required type="password" minlength="6" autocomplete="new-password"></div>
-      <button class="auth-primary" type="submit">SUBMIT FOR APPROVAL</button>
-      <button class="auth-secondary" type="button" id="parentRegisterBack">Back to Account Type</button>
-    </form>
-
     <form id="registrarRegisterForm" class="auth-form" style="display:none">
       <h3>Create Registrar Account</h3>
       <div class="auth-field"><label for="registrarFullName">Registrar Full Name</label><input id="registrarFullName" type="text" autocomplete="name" required maxlength="100"></div>
@@ -1587,6 +1573,18 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
       <div class="auth-field"><label for="registrarConfirmPassword">Confirm Password</label><input id="registrarConfirmPassword" type="password" autocomplete="new-password" required minlength="6"></div>
       <button class="auth-primary" type="submit" id="registrarRegisterBtn">CREATE REGISTRAR ACCOUNT</button>
       <button class="auth-secondary" type="button" id="registrarRegisterBack">Back to Account Type</button>
+    </form>
+
+    <form id="parentRegisterForm" class="auth-form" style="display:none">
+      <h3>Create Parent / Guardian Account</h3>
+      <p class="auth-note">Create one personal account first. Connect to each school later using its School ID. No SMS OTP is required.</p>
+      <div class="auth-field"><label for="parentFullName">Full Name</label><input id="parentFullName" type="text" autocomplete="name" required maxlength="120"></div>
+      <div class="auth-field"><label for="parentRegisterPhone">Phone Number</label><input id="parentRegisterPhone" type="tel" autocomplete="tel" required maxlength="30" placeholder="Phone number registered with the school"></div>
+      <div class="auth-field"><label for="parentRegisterEmail">Email Address</label><input id="parentRegisterEmail" type="email" autocomplete="email" required></div>
+      <div class="auth-field"><label for="parentRegisterPassword">Password</label><input id="parentRegisterPassword" type="password" autocomplete="new-password" required minlength="6"></div>
+      <div class="auth-field"><label for="parentConfirmPassword">Confirm Password</label><input id="parentConfirmPassword" type="password" autocomplete="new-password" required minlength="6"></div>
+      <button class="auth-primary" type="submit">CREATE PARENT ACCOUNT</button>
+      <button class="auth-secondary" type="button" id="parentRegisterBack">Back to Account Type</button>
     </form>
   </div>
 </div>
@@ -4651,6 +4649,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   const loginForm=document.getElementById('teacherLoginForm');
   const registerForm=document.getElementById('teacherRegisterForm');
   const registrarRegisterForm=document.getElementById('registrarRegisterForm');
+  const parentRegisterForm=document.getElementById('parentRegisterForm');
   const registerRoleChoice=document.getElementById('registerRoleChoice');
   const msg=document.getElementById('authMessage');
   const subtitle=document.getElementById('authSubtitle');
@@ -4659,7 +4658,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   function clearMessage(){ if(msg){msg.textContent='';msg.className='auth-message';} }
   function busy(form,yes){ if(form)form.classList.toggle('auth-loading',yes); }
   function showPanel(panel){
-    [loginForm,registerRoleChoice,registerForm,registrarRegisterForm].forEach(el=>{if(el)el.style.display='none';});
+    [loginForm,registerRoleChoice,registerForm,registrarRegisterForm,parentRegisterForm].forEach(el=>{if(el)el.style.display='none';});
     if(panel)panel.style.display='block';
     clearMessage();
   }
@@ -4684,32 +4683,10 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   document.getElementById('backToLogin')?.addEventListener('click',()=>{showPanel(loginForm);subtitle.textContent='Sign in to continue';});
   document.getElementById('chooseTeacherRegister')?.addEventListener('click',()=>{showPanel(registerForm);subtitle.textContent='Create your teacher account';});
   document.getElementById('chooseRegistrarRegister')?.addEventListener('click',()=>{showPanel(registrarRegisterForm);subtitle.textContent='Create your registrar account';});
+  document.getElementById('chooseParentRegister')?.addEventListener('click',()=>{showPanel(parentRegisterForm);subtitle.textContent='Create your parent / guardian account';});
   document.getElementById('teacherRegisterBack')?.addEventListener('click',()=>{showPanel(registerRoleChoice);subtitle.textContent='Choose the account you want to create';});
   document.getElementById('registrarRegisterBack')?.addEventListener('click',()=>{showPanel(registerRoleChoice);subtitle.textContent='Choose the account you want to create';});
-
-  const parentRegisterForm=document.getElementById('parentRegisterForm');
-  document.getElementById('chooseParentRegister')?.addEventListener('click',()=>{showPanel(parentRegisterForm);subtitle.textContent='Register as a parent or guardian';});
   document.getElementById('parentRegisterBack')?.addEventListener('click',()=>{showPanel(registerRoleChoice);subtitle.textContent='Choose the account you want to create';});
-  parentRegisterForm?.addEventListener('submit',async e=>{
-    e.preventDefault();clearMessage();
-    const fullName=document.getElementById('parentRegName').value.trim(),schoolId=document.getElementById('parentRegSchool').value.trim(),phone=document.getElementById('parentRegPhone').value.trim(),email=document.getElementById('parentRegEmail').value.trim(),password=document.getElementById('parentRegPassword').value,confirm=document.getElementById('parentRegConfirm').value;
-    if(password!==confirm){message('Passwords do not match.');return;}
-    busy(parentRegisterForm,true);let credential=null;
-    try{
-      window.__parentRegisterInProgress=true;
-      const schoolSnap=await getDoc(doc(db,'schools',schoolId));
-      if(!schoolSnap.exists())throw new Error('School ID not found. Copy the exact School ID from the registrar portal.');
-      const studentsSnap=await getDocs(collection(db,'schools',schoolId,'students'));
-      const norm=v=>String(v||'').replace(/\D/g,'');
-      const matches=studentsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>norm(s.parentPhone||s.parentGuardianPhone||s.phone)===norm(phone));
-      if(!matches.length)throw new Error('This phone number was not found in the school register. Contact the registrar to update the student record.');
-      credential=await createUserWithEmailAndPassword(auth,email,password);
-      await updateProfile(credential.user,{displayName:fullName});
-      await setDoc(doc(db,'parents',credential.user.uid),{uid:credential.user.uid,fullName,email,phone,schoolId,schoolName:schoolSnap.data().name||'',role:'parent',status:'pending',matchedStudentIds:matches.map(s=>s.id),createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
-      await signOut(auth);message('Registration submitted. Your account is Pending Approval. The school registrar must approve it before you can access your children’s information.','success');showPanel(loginForm);subtitle.textContent='Sign in after registrar approval';parentRegisterForm.reset();
-    }catch(err){if(credential){try{await deleteUser(credential.user)}catch(_){}}message(friendlyError(err));}
-    finally{window.__parentRegisterInProgress=false;busy(parentRegisterForm,false);}
-  });
 
   async function routeSignedInUser(user){
     // Check the user's own teacher profile first. This preserves existing teacher
@@ -4738,11 +4715,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     }
 
     const parentSnap=await getDoc(doc(db,'parents',user.uid));
-    if(parentSnap.exists() && parentSnap.data()?.role==='parent'){
-      const p=parentSnap.data();
-      if(p.status!=='approved'){await signOut(auth);throw new Error(p.status==='rejected'?'Parent access was not approved. Please contact the school registrar.':'Your parent account is Pending Approval. Please wait for the registrar to approve it.');}
-      window.location.replace('parent.html');return 'parent';
-    }
+    if(parentSnap.exists() && parentSnap.data()?.role==='parent'){ window.location.replace('parent.html'); return 'parent'; }
     await signOut(auth);
     throw new Error('This account has no registered role. Please create an account or contact support.');
   }
@@ -4811,6 +4784,16 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       if(cred?.user){try{await deleteUser(cred.user);}catch(cleanupErr){}}
       message(friendlyError(err));
     }finally{busy(registrarRegisterForm,false);}
+  });
+
+  parentRegisterForm?.addEventListener('submit',async e=>{
+    e.preventDefault();clearMessage();
+    const name=document.getElementById('parentFullName').value.trim(),phone=document.getElementById('parentRegisterPhone').value.trim(),email=document.getElementById('parentRegisterEmail').value.trim(),password=document.getElementById('parentRegisterPassword').value,confirm=document.getElementById('parentConfirmPassword').value;
+    if(password!==confirm){message('Passwords do not match.');return;}
+    busy(parentRegisterForm,true);let cred=null;
+    try{cred=await createUserWithEmailAndPassword(auth,email,password);await updateProfile(cred.user,{displayName:name});await setDoc(doc(db,'parents',cred.user.uid),{uid:cred.user.uid,fullName:name,email:cred.user.email||email,phone,role:'parent',createdAt:serverTimestamp(),updatedAt:serverTimestamp()});message('Parent account created. Opening your dashboard…','success');window.location.replace('parent.html');}
+    catch(err){if(cred?.user){try{await deleteUser(cred.user);}catch(cleanupErr){}}message(friendlyError(err));}
+    finally{busy(parentRegisterForm,false);}
   });
 
   document.getElementById('authForgotBtn')?.addEventListener('click',async()=>{
