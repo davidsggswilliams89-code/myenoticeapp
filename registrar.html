@@ -33,6 +33,24 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 .class-management-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}.class-management-item{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:13px;background:#f8fbf9}.class-management-item input{width:20px;height:20px;flex:0 0 auto}.class-management-item span{font-weight:600}.assignment-hint{display:block;max-width:100%;overflow-wrap:anywhere;word-break:normal;line-height:1.5;margin:0;}
 @media(max-width:560px){.class-management-list{grid-template-columns:1fr}.assignment-row{grid-template-columns:minmax(0,1fr)!important;gap:8px!important;padding:10px!important}.assignment-row select{width:100%;}.assignment-remove{width:auto!important;justify-self:start;}.assignment-hint{font-size:14px;}}
 
+/* Professional registrar dashboard profile and statistic cards */
+.registrar-profile-hero{position:relative;overflow:hidden;text-align:center;padding:30px 20px 24px;border:1px solid #d8e7de;border-radius:20px;background:radial-gradient(circle at top right,#e4f6ee 0,transparent 38%),linear-gradient(135deg,#fff 0%,#f3faf6 100%);box-shadow:0 12px 32px rgba(16,75,50,.07);margin:20px 0 22px}
+.registrar-avatar{width:116px;height:116px;display:grid;place-items:center;margin:0 auto 14px;border-radius:50%;overflow:hidden;border:5px solid #fff;box-shadow:0 0 0 2px #b9ddc9,0 8px 22px rgba(16,75,50,.15);background:linear-gradient(135deg,#176b45,#0aa4a5);color:#fff;font-size:38px;font-weight:800}
+.registrar-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.registrar-profile-hero h2{font-size:clamp(22px,4vw,30px);margin:0 0 7px;color:#123c2a;overflow-wrap:anywhere}
+.registrar-profile-hero .school-name{font-size:15px;font-weight:700;color:#176b45;margin:0 0 16px;overflow-wrap:anywhere}
+.registrar-profile-hero .profile-kicker{font-size:11px;text-transform:uppercase;letter-spacing:1.8px;font-weight:800;color:#6b8174;margin:0 0 12px}
+.registrar-profile-actions{display:flex;justify-content:center;gap:9px;flex-wrap:wrap}
+.dashboard-stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:0 0 24px}
+.dashboard-stats .stat{position:relative;min-width:0;margin:0;padding:18px;border-radius:15px;border:1px solid #e1ebe4;box-shadow:0 5px 18px rgba(16,75,50,.045)}
+.dashboard-stats .stat:before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:0 5px 5px 0;background:var(--stat-accent,#176b45)}
+.dashboard-stats .stat .stat-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:#edf7f0;font-size:20px;margin-bottom:12px}
+.dashboard-stats .stat span{font-size:12px;font-weight:700;line-height:1.4;margin-bottom:7px}
+.dashboard-stats .stat strong{font-size:clamp(22px,3vw,29px);font-weight:800;color:#173b29;overflow-wrap:anywhere}
+.dashboard-stats .stat small{display:block;margin-top:5px;color:#77867c;font-size:11px}
+@media(max-width:800px){.dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:420px){.registrar-profile-hero{padding:24px 14px}.registrar-avatar{width:100px;height:100px}.dashboard-stats{gap:10px}.dashboard-stats .stat{padding:15px 12px}.dashboard-stats .stat .stat-icon{width:34px;height:34px}}
+
 /* Registrar header/navigation matches the teacher dashboard's green-to-teal tab bar */
 .registrar-nav{position:sticky;top:0;z-index:50;display:flex;gap:7px;overflow-x:auto;white-space:nowrap;padding:7px 10px;background:linear-gradient(90deg,#075c51 0%,#087c60 45%,#0aa4a5 100%);box-shadow:0 5px 18px rgba(7,92,81,.2);scrollbar-width:none}
 .registrar-nav::-webkit-scrollbar{display:none}.registrar-nav button{flex:0 0 auto;min-width:116px;border:1px solid rgba(255,255,255,.18);border-radius:11px;background:rgba(255,255,255,.12);color:#fff;padding:10px 13px;font-size:13px;font-weight:800}.registrar-nav button span{display:block;font-size:18px;margin-bottom:3px}.registrar-nav button:hover,.registrar-nav button.active{background:#fff;color:#075c51}
@@ -58,8 +76,23 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 <button class="primary full" type="submit">Save school profile</button></form></section>
 <section id="dashboard" class="hidden">
 <div id="dashboardTop" class="section-anchor"></div>
-<div class="dashboard-heading" style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin:22px 0"><div><h3 id="welcome">Registrar Dashboard</h3><p class="muted" style="margin:5px 0 0">Your school profile has been saved.</p></div><button id="edit" class="secondary">Edit profile</button></div>
-<div class="stats dashboard-stats"><div class="card stat"><span>School status</span><strong>Profile created</strong></div><div class="card stat"><span>Classes</span><strong>Not configured yet</strong></div><div class="card stat"><span>Connected teachers</span><strong>0 — not connected yet</strong></div></div>
+<section class="registrar-profile-hero dashboard-heading" aria-label="Registrar and school profile">
+<p class="profile-kicker">Registrar Dashboard</p>
+<div id="registrarAvatar" class="registrar-avatar" aria-label="Registrar profile photo">R</div>
+<h2 id="registrarDisplayName">Registrar</h2>
+<p id="registrarSchoolDisplay" class="school-name">School name</p>
+<div class="registrar-profile-actions"><label for="registrarPhotoFile" class="secondary" style="display:inline-flex;align-items:center;justify-content:center;margin:0;cursor:pointer">Change profile photo</label><input id="registrarPhotoFile" type="file" accept="image/*" class="hidden"><button id="edit" class="primary" type="button">Edit school profile</button></div><p id="registrarPhotoStatus" class="muted" aria-live="polite" style="margin:10px 0 0"></p>
+</section>
+<div class="stats dashboard-stats" aria-label="School statistics">
+<div class="card stat" style="--stat-accent:#176b45"><div class="stat-icon">👩‍🏫</div><span>Total Teachers</span><strong id="statTeachers">—</strong><small>Connected to this school</small></div>
+<div class="card stat" style="--stat-accent:#2877b9"><div class="stat-icon">👥</div><span>Total Students</span><strong id="statStudents">—</strong><small>Official student records</small></div>
+<div class="card stat" style="--stat-accent:#2877b9"><div class="stat-icon">👦</div><span>Male Students</span><strong id="statMaleStudents">—</strong><small>Official student records</small></div>
+<div class="card stat" style="--stat-accent:#bd5c91"><div class="stat-icon">👧</div><span>Female Students</span><strong id="statFemaleStudents">—</strong><small>Official student records</small></div>
+<div class="card stat" style="--stat-accent:#8b6ac4"><div class="stat-icon">🏫</div><span>Active Classes</span><strong id="statClasses">—</strong><small>Enabled in class management</small></div>
+<div class="card stat" style="--stat-accent:#b9822e"><div class="stat-icon">📅</div><span>Timetable Entries</span><strong id="statTimetable">—</strong><small>Published school timetable</small></div>
+<div class="card stat" style="--stat-accent:#c45b45"><div class="stat-icon">📝</div><span>Exam Entries</span><strong id="statExams">—</strong><small>Published exam schedule</small></div>
+<div class="card stat" style="--stat-accent:#0a9695"><div class="stat-icon">🏷️</div><span>School Status</span><strong id="statSchoolStatus" style="font-size:18px">Active</strong><small>School profile status</small></div>
+</div>
 <div class="card registrar-page-panel" data-page-panel="dashboard" id="schoolProfileCard"><h3>School Profile</h3><div style="display:flex;align-items:center;gap:16px;margin:12px 0"><img id="dashboardSchoolPhoto" class="hidden" alt="School profile photo" style="width:100px;height:100px;object-fit:contain;border:1px solid var(--line);border-radius:12px;background:#fff;padding:6px"><div style="flex:1;min-width:180px"><strong id="dashboardSchoolName"></strong><p id="schoolId" class="muted" style="margin:6px 0 8px;overflow-wrap:anywhere"></p><button id="copySchoolId" type="button" class="primary" style="padding:9px 13px;font-size:14px">Copy School ID</button><span id="copySchoolIdMessage" class="muted" aria-live="polite" style="display:block;margin-top:6px"></span></div></div><div id="details" class="details"></div></div>
 <div class="card registrar-page-panel" data-page-panel="classes" id="classManagementCard" style="margin-top:18px"><h3>Primary 1–6 Class Management</h3><p class="muted">Choose which primary classes are currently offered by your school. Only enabled classes will be available for teacher assignments.</p><div id="classManagementList" class="class-management-list" aria-label="Available primary classes"></div><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button id="saveSchoolClasses" type="button" class="primary">Save Class Settings</button><span id="classManagementStatus" class="muted" aria-live="polite" style="margin:0"></span></div></div>
 <div class="card section-anchor registrar-page-panel" data-page-panel="teachers" id="teacherConnectionsCard" style="margin-top:18px"><h3>Teacher Connection Requests</h3><p class="muted">Review teachers who requested to connect to this school. Approve only teachers you recognize.</p><div id="teacherConnectionsMessage" class="muted" style="margin:10px 0">Loading teacher requests…</div><div id="teacherConnectionList"></div><button id="refreshTeacherConnections" type="button" class="secondary" style="margin-top:12px">Refresh teacher requests</button></div>
@@ -119,7 +152,28 @@ function view(name){["setup","dashboard"].forEach(x=>$(x).classList.toggle("hidd
 function err(e){const map={"auth/email-already-in-use":"This email already has an account. Please sign in.","auth/invalid-credential":"Email or password is incorrect.","auth/weak-password":"Use a password with at least 6 characters.","auth/invalid-email":"Enter a valid email address.","permission-denied":"Firebase denied this operation. Check the Firestore security rules."};return map[e.code]||e.message||"Something went wrong. Please try again."}
 function setBusy(v){busy=v;document.querySelectorAll("form button[type=submit]").forEach(b=>{b.disabled=v;b.style.opacity=v?".6":"1"})}
 function detail(label,value){const d=document.createElement("div");d.className="item";const s=document.createElement("small"),b=document.createElement("strong");s.textContent=label;b.textContent=value||"Not provided";d.append(s,b);return d}
-function render(school){const headerLogo=$("headerSchoolLogo");if(headerLogo){if(school.photo){const img=document.createElement("img");img.src=school.photo;img.alt=(school.name||"School")+" logo";headerLogo.replaceChildren(img);headerLogo.setAttribute("aria-label",img.alt)}else{headerLogo.textContent="eN";headerLogo.setAttribute("aria-label","School logo")}}$("welcome").textContent="Welcome, "+(user.displayName||profile?.fullName||"Registrar");$("dashboardSchoolName").textContent=school.name||"School Profile";$("schoolId").textContent="School ID: "+school.id;const photo=$("dashboardSchoolPhoto");if(school.photo){photo.src=school.photo;photo.classList.remove("hidden")}else{photo.removeAttribute("src");photo.classList.add("hidden")}const d=$("details");d.replaceChildren(detail("Official school name",school.name),detail("School type",school.type),detail("School address",school.address),detail("School phone",school.phone),detail("Academic session",school.academicSession),detail("Registrar",profile?.fullName||user.displayName));view("dashboard");showRegistrarPage(activeRegistrarPage||"dashboard");loadAcademicSessionForm().catch(e=>console.error(e));renderSchoolClasses(school);populateOfficialStudentClasses();refreshOfficialStudents().catch(e=>console.error(e));refreshTeacherConnections().catch(e=>console.error(e));initializeTimetableModule().catch(e=>console.error(e))}
+async function refreshDashboardStatistics(school){
+ try{
+  if(!profile?.schoolId)return;
+  const [teacherSnap,studentSnap,timetableSnap,examSnap]=await Promise.all([
+   getDocs(query(collection(db,"schoolTeachers"),where("schoolId","==",profile.schoolId))),
+   getDocs(collection(db,"schools",profile.schoolId,"students")),
+   getDocs(collection(db,"schools",profile.schoolId,"timetable")),
+   getDocs(collection(db,"schools",profile.schoolId,"examTimetable"))
+  ]);
+  const teachers=teacherSnap.docs.map(d=>d.data()).filter(t=>t.status==="connected");
+  const students=studentSnap.docs.map(d=>d.data());
+  $("statTeachers").textContent=String(teachers.length);
+  $("statStudents").textContent=String(students.length);
+  $("statMaleStudents").textContent=String(students.filter(st=>String(st.gender||"").toLowerCase()==="male").length);
+  $("statFemaleStudents").textContent=String(students.filter(st=>String(st.gender||"").toLowerCase()==="female").length);
+  $("statTimetable").textContent=String(timetableSnap.size);
+  $("statExams").textContent=String(examSnap.size);
+  $("statClasses").textContent=String(activeSchoolClasses.length);
+  $("statSchoolStatus").textContent=school?.status||"Active";
+ }catch(e){console.warn("Dashboard statistics could not be refreshed",e);["statTeachers","statStudents","statMaleStudents","statFemaleStudents","statTimetable","statExams"].forEach(id=>{const el=$(id);if(el&&el.textContent==="—")el.textContent="—"})}
+}
+function render(school){const headerLogo=$("headerSchoolLogo");if(headerLogo){if(school.photo){const img=document.createElement("img");img.src=school.photo;img.alt=(school.name||"School")+" logo";headerLogo.replaceChildren(img);headerLogo.setAttribute("aria-label",img.alt)}else{headerLogo.textContent="eN";headerLogo.setAttribute("aria-label","School logo")}}$("welcome").textContent="Welcome, "+(user.displayName||profile?.fullName||"Registrar");const registrarName=profile?.fullName||profile?.name||user.displayName||"Registrar";$("registrarDisplayName").textContent=registrarName;$("registrarSchoolDisplay").textContent=school.name||"School name";const avatar=$("registrarAvatar");const registrarPhoto=profile?.photoURL||profile?.photoUrl||profile?.photo||user.photoURL||"";avatar.replaceChildren();if(registrarPhoto){const avatarImg=document.createElement("img");avatarImg.src=registrarPhoto;avatarImg.alt=registrarName+" profile photo";avatar.append(avatarImg)}else{avatar.textContent=registrarName.split(/\\s+/).filter(Boolean).slice(0,2).map(part=>part[0].toUpperCase()).join("")||"R"}$("statSchoolStatus").textContent=school.status||"Active";$("dashboardSchoolName").textContent=school.name||"School Profile";$("schoolId").textContent="School ID: "+school.id;const photo=$("dashboardSchoolPhoto");if(school.photo){photo.src=school.photo;photo.classList.remove("hidden")}else{photo.removeAttribute("src");photo.classList.add("hidden")}const d=$("details");d.replaceChildren(detail("Official school name",school.name),detail("School type",school.type),detail("School address",school.address),detail("School phone",school.phone),detail("Academic session",school.academicSession),detail("Registrar",profile?.fullName||user.displayName));view("dashboard");showRegistrarPage(activeRegistrarPage||"dashboard");loadAcademicSessionForm().catch(e=>console.error(e));renderSchoolClasses(school);populateOfficialStudentClasses();refreshOfficialStudents().catch(e=>console.error(e));refreshTeacherConnections().catch(e=>console.error(e));refreshDashboardStatistics(school);initializeTimetableModule().catch(e=>console.error(e))}
 async function copySchoolId(){
  const id=profile?.schoolId;
  const feedback=$("copySchoolIdMessage");
@@ -134,6 +188,23 @@ async function copySchoolId(){
  }catch(e){feedback.textContent="Copy failed. Please select and copy the School ID manually.";console.error(e);}
 }
 $("copySchoolId")?.addEventListener("click",copySchoolId);
+$("registrarPhotoFile")?.addEventListener("change",async()=>{
+ const file=$("registrarPhotoFile").files?.[0];if(!file)return;
+ const status=$("registrarPhotoStatus");status.textContent="Uploading profile photo…";
+ if(!user){status.textContent="Please sign in again before changing your photo.";return}
+ try{
+  if(!file.type.startsWith("image/"))throw new Error("Please choose an image file.");
+  if(file.size>10*1024*1024)throw new Error("Profile photo must be 10 MB or smaller.");
+  const fd=new FormData();fd.append("file",file);fd.append("upload_preset","Obaestate");fd.append("folder","registrars/"+user.uid);fd.append("public_id","registrar_profile_"+Date.now());
+  const response=await fetch("https://api.cloudinary.com/v1_1/hjdnytcb/image/upload",{method:"POST",body:fd});
+  const result=await response.json();if(!response.ok||!result.secure_url)throw new Error(result.error?.message||"Photo upload failed.");
+  await updateDoc(doc(db,"registrars",user.uid),{photo:result.secure_url,photoURL:result.secure_url,updatedAt:serverTimestamp()});
+  profile={...profile,photo:result.secure_url,photoURL:result.secure_url};
+  const avatar=$("registrarAvatar"),img=document.createElement("img");img.src=result.secure_url;img.alt=(profile.fullName||user.displayName||"Registrar")+" profile photo";avatar.replaceChildren(img);
+  status.textContent="Registrar profile photo updated.";
+ }catch(e){console.error(e);status.textContent=err(e)}
+ finally{$("registrarPhotoFile").value=""}
+});
 
 async function load(userObj){const snap=await getDoc(doc(db,"registrars",userObj.uid));if(!snap.exists()){profile=null;view("setup");return}profile={uid:userObj.uid,...snap.data()};if(!profile.schoolId){view("setup");return}const ss=await getDoc(doc(db,"schools",profile.schoolId));if(!ss.exists()){msg("The school record could not be found. Please contact support.","error");view("setup");return}render({id:ss.id,...ss.data()})}
 const DEFAULT_SCHOOL_CLASSES=["Primary 1","Primary 2","Primary 3","Primary 4","Primary 5","Primary 6"];
@@ -146,7 +217,7 @@ function renderSchoolClasses(school){
   const input=document.createElement("input");input.type="checkbox";input.value=name;input.checked=activeSchoolClasses.includes(name);input.dataset.schoolClass="true";
   const text=document.createElement("span");text.textContent=name;row.append(input,text);list.append(row);
  });
- const count=document.querySelector(".stats .stat:nth-child(2) strong");if(count)count.textContent=`${activeSchoolClasses.length} enabled`;
+ const count=$("statClasses");if(count)count.textContent=String(activeSchoolClasses.length);
  if(status)status.textContent=saved?"Saved school classes loaded.":"All six classes are enabled by default until you save your choices.";
 }
 async function saveSchoolClasses(){
@@ -158,7 +229,7 @@ async function saveSchoolClasses(){
   const classManagement=DEFAULT_SCHOOL_CLASSES.map(name=>({name,active:chosen.includes(name)}));
   await updateDoc(doc(db,"schools",profile.schoolId),{classManagement,enabledClasses:chosen,classesUpdatedAt:serverTimestamp(),classesUpdatedBy:user.uid,updatedAt:serverTimestamp()});
   activeSchoolClasses=chosen;
-  const count=document.querySelector(".stats .stat:nth-child(2) strong");if(count)count.textContent=`${chosen.length} enabled`;
+  const count=$("statClasses");if(count)count.textContent=String(chosen.length);
   if(status)status.textContent="Class settings saved successfully.";
   msg("School class settings saved. Teacher assignment dropdowns now use the enabled classes.","success");
   await refreshTeacherConnections();fillTimetableSelects();
@@ -196,7 +267,7 @@ async function refreshTeacherConnections(){
     }catch(backfillError){console.warn("Could not refresh legacy teacher assignment keys",backfillError)}
    }
   }
-  const active=rows.filter(r=>r.status==="connected").length;const stats=document.querySelector(".stats .stat:last-child strong");if(stats)stats.textContent=String(active)+" connected";
+  const active=rows.filter(r=>r.status==="connected").length;const stats=$("statTeachers");if(stats)stats.textContent=String(active);
   if(!rows.length){status.textContent="No teacher connection requests yet. Share the School ID shown above with your teachers.";return;}
   status.textContent=`${rows.filter(r=>r.status==="pending").length} pending · ${active} connected`;
   rows.forEach(r=>{
