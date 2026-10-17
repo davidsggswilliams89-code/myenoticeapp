@@ -4715,7 +4715,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     }
 
     const parentSnap=await getDoc(doc(db,'parents',user.uid));
-    if(parentSnap.exists() && parentSnap.data()?.role==='parent'){ window.location.replace('parent.html'); return 'parent'; }
+    if(parentSnap.exists() && parentSnap.data()?.role==='parent'){ window.location.replace('parents.html'); return 'parent'; }
     await signOut(auth);
     throw new Error('This account has no registered role. Please create an account or contact support.');
   }
@@ -4791,7 +4791,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     const name=document.getElementById('parentFullName').value.trim(),phone=document.getElementById('parentRegisterPhone').value.trim(),email=document.getElementById('parentRegisterEmail').value.trim(),password=document.getElementById('parentRegisterPassword').value,confirm=document.getElementById('parentConfirmPassword').value;
     if(password!==confirm){message('Passwords do not match.');return;}
     busy(parentRegisterForm,true);let cred=null;
-    try{cred=await createUserWithEmailAndPassword(auth,email,password);await updateProfile(cred.user,{displayName:name});await setDoc(doc(db,'parents',cred.user.uid),{uid:cred.user.uid,fullName:name,email:cred.user.email||email,phone,role:'parent',createdAt:serverTimestamp(),updatedAt:serverTimestamp()});message('Parent account created. Opening your dashboard…','success');window.location.replace('parent.html');}
+    try{cred=await createUserWithEmailAndPassword(auth,email,password);await updateProfile(cred.user,{displayName:name});await setDoc(doc(db,'parents',cred.user.uid),{uid:cred.user.uid,fullName:name,email:cred.user.email||email,phone,role:'parent',createdAt:serverTimestamp(),updatedAt:serverTimestamp()});message('Parent account created. Opening your dashboard…','success');window.location.replace('parents.html');}
     catch(err){if(cred?.user){try{await deleteUser(cred.user);}catch(cleanupErr){}}message(friendlyError(err));}
     finally{busy(parentRegisterForm,false);}
   });
