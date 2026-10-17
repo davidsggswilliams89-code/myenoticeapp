@@ -49,6 +49,7 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 .dashboard-stats .stat strong{font-size:clamp(22px,3vw,29px);font-weight:800;color:#173b29;overflow-wrap:anywhere}
 .dashboard-stats .stat small{display:block;margin-top:5px;color:#77867c;font-size:11px}
 @media(max-width:800px){.dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.payment-stats{grid-template-columns:1fr!important}}
 @media(max-width:420px){.registrar-profile-hero{padding:24px 14px}.registrar-avatar{width:100px;height:100px}.dashboard-stats{gap:10px}.dashboard-stats .stat{padding:15px 12px}.dashboard-stats .stat .stat-icon{width:34px;height:34px}}
 
 /* Registrar header/navigation matches the teacher dashboard's green-to-teal tab bar */
@@ -81,7 +82,7 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 <div id="registrarAvatar" class="registrar-avatar" aria-label="Registrar profile photo">R</div>
 <h2 id="registrarDisplayName">Registrar</h2>
 <p id="registrarSchoolDisplay" class="school-name">School name</p>
-<div class="registrar-profile-actions"><label for="registrarPhotoFile" class="secondary" style="display:inline-flex;align-items:center;justify-content:center;margin:0;cursor:pointer">Change profile photo</label><input id="registrarPhotoFile" type="file" accept="image/*" class="hidden"><button id="edit" class="primary" type="button">Edit school profile</button></div><p id="registrarPhotoStatus" class="muted" aria-live="polite" style="margin:10px 0 0"></p>
+<div class="registrar-profile-actions"><label for="registrarPhotoFile" class="secondary" style="display:inline-flex;align-items:center;justify-content:center;margin:0;cursor:pointer">Change profile photo</label><input id="registrarPhotoFile" type="file" accept="image/*" class="hidden"></div><p id="registrarPhotoStatus" class="muted" aria-live="polite" style="margin:10px 0 0"></p>
 </section>
 <div class="stats dashboard-stats" aria-label="School statistics">
 <div class="card stat" style="--stat-accent:#176b45"><div class="stat-icon">👩‍🏫</div><span>Total Teachers</span><strong id="statTeachers">—</strong><small>Connected to this school</small></div>
@@ -98,6 +99,21 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 <strong id="schoolId" style="display:block;font-size:clamp(16px,3vw,21px);letter-spacing:.3px;overflow-wrap:anywhere;margin:0 auto 15px">Loading School ID…</strong>
 <button id="copySchoolId" type="button" class="primary" style="padding:11px 20px">📋 Copy School ID</button><span id="copySchoolIdMessage" class="muted" aria-live="polite" style="display:block;margin:10px 0 0"></span>
 <span id="dashboardSchoolName" class="hidden" aria-hidden="true"></span><span id="details" class="hidden" aria-hidden="true"></span><img id="dashboardSchoolPhoto" class="hidden" alt="" aria-hidden="true">
+</section>
+<div class="card registrar-page-panel" data-page-panel="dashboard" id="editSchoolProfilePanel" style="margin:0 0 22px;text-align:center;padding:16px">
+<button id="edit" class="primary" type="button" style="min-width:min(100%,260px)">🏫 Edit School Profile</button>
+<p class="muted" style="margin:9px 0 0">Update your school's name, logo, address and contact details.</p>
+</div>
+<section class="card registrar-page-panel" data-page-panel="dashboard" id="paymentOverviewPanel" style="margin:0 0 22px">
+<h3>Student Payment Overview</h3>
+<p class="muted">These totals update from student payment records. Once the student payment section is connected, each student's fee and payment status will feed these summaries automatically.</p>
+<div class="stats payment-stats" style="grid-template-columns:repeat(2,minmax(0,1fr));margin:16px 0 0">
+<div class="card stat" style="margin:0;--stat-accent:#16805a"><span>💰 Total Amount Received</span><strong id="statAmountReceived">₦0.00</strong><small>Total recorded student payments</small></div>
+<div class="card stat" style="margin:0;--stat-accent:#c45b45"><span>🧾 Total Amount Remaining</span><strong id="statAmountRemaining">₦0.00</strong><small>Outstanding balance from recorded fees</small></div>
+<div class="card stat" style="margin:0;--stat-accent:#2877b9"><span>✅ Students Paid</span><strong id="statStudentsPaid">0</strong><small id="statStudentsPaidHint">Students marked paid</small></div>
+<div class="card stat" style="margin:0;--stat-accent:#bd5c91"><span>⏳ Students Remaining</span><strong id="statStudentsRemaining">0</strong><small id="statStudentsRemainingHint">Students not yet marked paid</small></div>
+</div>
+<p id="paymentStatsNote" class="muted" style="margin:12px 0 0">Payment figures will be calculated from each student's recorded fee amount, amount paid and payment status.</p>
 </section>
 <div class="card registrar-page-panel" data-page-panel="classes" id="classManagementCard" style="margin-top:18px"><h3>Primary 1–6 Class Management</h3><p class="muted">Choose which primary classes are currently offered by your school. Only enabled classes will be available for teacher assignments.</p><div id="classManagementList" class="class-management-list" aria-label="Available primary classes"></div><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button id="saveSchoolClasses" type="button" class="primary">Save Class Settings</button><span id="classManagementStatus" class="muted" aria-live="polite" style="margin:0"></span></div></div>
 <div class="card section-anchor registrar-page-panel" data-page-panel="teachers" id="teacherConnectionsCard" style="margin-top:18px"><h3>Teacher Connection Requests</h3><p class="muted">Review teachers who requested to connect to this school. Approve only teachers you recognize.</p><div id="teacherConnectionsMessage" class="muted" style="margin:10px 0">Loading teacher requests…</div><div id="teacherConnectionList"></div><button id="refreshTeacherConnections" type="button" class="secondary" style="margin-top:12px">Refresh teacher requests</button></div>
@@ -157,6 +173,15 @@ function view(name){["setup","dashboard"].forEach(x=>$(x).classList.toggle("hidd
 function err(e){const map={"auth/email-already-in-use":"This email already has an account. Please sign in.","auth/invalid-credential":"Email or password is incorrect.","auth/weak-password":"Use a password with at least 6 characters.","auth/invalid-email":"Enter a valid email address.","permission-denied":"Firebase denied this operation. Check the Firestore security rules."};return map[e.code]||e.message||"Something went wrong. Please try again."}
 function setBusy(v){busy=v;document.querySelectorAll("form button[type=submit]").forEach(b=>{b.disabled=v;b.style.opacity=v?".6":"1"})}
 function detail(label,value){const d=document.createElement("div");d.className="item";const s=document.createElement("small"),b=document.createElement("strong");s.textContent=label;b.textContent=value||"Not provided";d.append(s,b);return d}
+function formatNaira(amount){return new Intl.NumberFormat("en-NG",{style:"currency",currency:"NGN",minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(amount)||0)}
+function firstNumeric(record,keys){for(const key of keys){const value=record?.[key];if(value!==undefined&&value!==null&&value!==""&&Number.isFinite(Number(value)))return Math.max(0,Number(value));}return null;}
+function isStudentPaid(student){
+ const status=String(student?.paymentStatus||student?.feeStatus||student?.payment_state||"").trim().toLowerCase();
+ if(["paid","complete","completed","fully paid","success"].includes(status)||student?.paid===true||student?.isPaid===true)return true;
+ const fee=firstNumeric(student,["feeAmount","totalFee","schoolFee","expectedFee","amountDue","totalAmount"]);
+ const paid=firstNumeric(student,["amountPaid","paidAmount","paymentAmount","totalPaid"]);
+ return fee!==null&&paid!==null&&fee>0&&paid>=fee;
+}
 async function refreshDashboardStatistics(school){
  try{
   if(!profile?.schoolId)return;
@@ -176,6 +201,22 @@ async function refreshDashboardStatistics(school){
   $("statExams").textContent=String(examSnap.size);
   $("statClasses").textContent=String(activeSchoolClasses.length);
   $("statSchoolStatus").textContent=school?.status||"Active";
+  const paidStudents=students.filter(isStudentPaid);
+  const amountReceived=students.reduce((sum,st)=>sum+(firstNumeric(st,["amountPaid","paidAmount","paymentAmount","totalPaid"])||0),0);
+  let amountRemaining=0,hasFeeData=false;
+  students.forEach(st=>{
+   const fee=firstNumeric(st,["feeAmount","totalFee","schoolFee","expectedFee","amountDue","totalAmount"]);
+   const paid=firstNumeric(st,["amountPaid","paidAmount","paymentAmount","totalPaid"])||0;
+   if(fee!==null){hasFeeData=true;amountRemaining+=Math.max(0,fee-paid);}
+  });
+  $("statAmountReceived").textContent=formatNaira(amountReceived);
+  $("statAmountRemaining").textContent=formatNaira(amountRemaining);
+  $("statStudentsPaid").textContent=String(paidStudents.length);
+  $("statStudentsRemaining").textContent=String(Math.max(0,students.length-paidStudents.length));
+  $("statStudentsPaidHint").textContent=`Out of ${students.length} registered students`;
+  $("statStudentsRemainingHint").textContent=`Out of ${students.length} registered students`;
+  const note=$("paymentStatsNote");
+  if(note)note.textContent=students.length===0?"Register students first. Payment totals will appear here when student fee and payment records are added.":(!hasFeeData&&amountReceived===0?"Student count is connected. Amounts will update when fee and payment details are saved for students.":"Payment summaries are calculated from student records containing feeAmount/totalFee and amountPaid/paymentStatus fields.");
  }catch(e){console.warn("Dashboard statistics could not be refreshed",e);["statTeachers","statStudents","statMaleStudents","statFemaleStudents","statTimetable","statExams"].forEach(id=>{const el=$(id);if(el&&el.textContent==="—")el.textContent="—"})}
 }
 function render(school){const headerLogo=$("headerSchoolLogo");if(headerLogo){if(school.photo){const img=document.createElement("img");img.src=school.photo;img.alt=(school.name||"School")+" logo";headerLogo.replaceChildren(img);headerLogo.setAttribute("aria-label",img.alt)}else{headerLogo.textContent="eN";headerLogo.setAttribute("aria-label","School logo")}}const welcome=$("welcome");if(welcome)welcome.textContent="Welcome, "+(user.displayName||profile?.fullName||"Registrar");const registrarName=profile?.fullName||profile?.name||user.displayName||"Registrar";const registrarDisplayName=$("registrarDisplayName");if(registrarDisplayName)registrarDisplayName.textContent=registrarName;const registrarSchoolDisplay=$("registrarSchoolDisplay");if(registrarSchoolDisplay)registrarSchoolDisplay.textContent=school.name||"School name";const avatar=$("registrarAvatar");const registrarPhoto=profile?.photoURL||profile?.photoUrl||profile?.photo||user.photoURL||"";if(avatar)avatar.replaceChildren();if(registrarPhoto&&avatar){const avatarImg=document.createElement("img");avatarImg.src=registrarPhoto;avatarImg.alt=registrarName+" profile photo";avatar.append(avatarImg)}else{avatar.textContent=registrarName.split(/\\s+/).filter(Boolean).slice(0,2).map(part=>part[0].toUpperCase()).join("")||"R"}$("statSchoolStatus").textContent=school.status||"Active";$("dashboardSchoolName").textContent=school.name||"School Profile";const schoolIdEl=$("schoolId");if(schoolIdEl)schoolIdEl.textContent=school.id||"School ID unavailable";view("dashboard");showRegistrarPage(activeRegistrarPage||"dashboard");loadAcademicSessionForm().catch(e=>console.error(e));renderSchoolClasses(school);populateOfficialStudentClasses();refreshOfficialStudents().catch(e=>console.error(e));refreshTeacherConnections().catch(e=>console.error(e));refreshDashboardStatistics(school);initializeTimetableModule().catch(e=>console.error(e))}
