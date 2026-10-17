@@ -3834,16 +3834,21 @@ renderCurriculum();renderStudents();renderResults();
     const classMatches=curriculumCatalog.some(function(item){return item.className===selectedClass;});
     const termMatches=curriculumCatalog.some(function(item){return item.className===selectedClass && item.term===selectedTerm;});
     const subjectMatches=curriculumCatalog.some(function(item){return item.className===selectedClass && item.term===selectedTerm && String(item.subject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()===String(selectedSubject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();});
-    const curriculumMatches=!!selectedRecord && Array.isArray(curriculum) && curriculum.length>0;
+    // Always render the curriculum belonging to the exact selected subject, class and term.
+    // This prevents topics or periods from a previously selected subject being reused.
+    const selectedCurriculum = selectedRecord && Array.isArray(selectedRecord.curriculum)
+      ? selectedRecord.curriculum : [];
+    const curriculumMatches = selectedCurriculum.length > 0;
+    curriculum = selectedCurriculum;
     let visible=0;
-    box.innerHTML=curriculumMatches ? curriculum.map(function(c,i){
+    box.innerHTML=curriculumMatches ? selectedCurriculum.map(function(c,i){
       const periods=(c.periods||[]).map(function(p,j){
         const text=(c.topic+' '+p.title+' '+(p.subcontents||[]).join(' ')).toLowerCase();
         return {p,j,match:!q||text.includes(q)};
       }).filter(x=>x.match);
       if(!periods.length)return '';
       visible++;
-      return '<div class="library-week-card"><div class="library-week-head"><div><span class="library-week-number">'+(i+1)+'</span><span class="library-week-title"><strong>Week '+(i+1)+' — '+esc(c.topic)+'</strong><small>'+periods.length+' teaching period'+(periods.length===1?'':'s')+'</small></span></div><span class="library-week-badge">'+esc(selectedTerm.toUpperCase())+'</span></div><div class="library-periods">'+periods.map(function(x){return '<div class="library-period"><div class="library-period-top"><div class="library-period-name">Period '+(x.j+1)+': '+esc(x.p.title)+'</div><div class="library-period-actions"><button type="button" class="library-action library-plan"' onclick="openLessonPlan('+i+','+x.j+')">LESSON PLAN</button><button type="button" class="library-action library-note"' onclick="openLessonNote('+i+','+x.j+')">LESSON NOTE</button></div></div><div class="library-period-sub">'+esc((x.p.subcontents||[]).join(' • '))+'</div></div>';}).join('')+'</div></div>';
+      return '<div class="library-week-card"><div class="library-week-head"><div><span class="library-week-number">'+(i+1)+'</span><span class="library-week-title"><strong>Week '+(i+1)+' — '+esc(c.topic)+'</strong><small>'+periods.length+' teaching period'+(periods.length===1?'':'s')+'</small></span></div><span class="library-week-badge">'+esc(selectedTerm.toUpperCase())+'</span></div><div class="library-periods">'+periods.map(function(x){return '<div class="library-period"><div class="library-period-top"><div class="library-period-name">Period '+(x.j+1)+': '+esc(x.p.title)+'</div><div class="library-period-actions"><button type="button" class="library-action library-plan" onclick="openLessonPlan('+i+','+x.j+')">LESSON PLAN</button><button type="button" class="library-action library-note" onclick="openLessonNote('+i+','+x.j+')">LESSON NOTE</button></div></div><div class="library-period-sub">'+esc((x.p.subcontents||[]).join(' • '))+'</div></div>';}).join('')+'</div></div>';
     }).join('') : '';
     if(empty){
       empty.style.display=visible?'none':'block';
