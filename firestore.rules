@@ -1,0 +1,340 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =====================================================
+    // COMMON HELPERS
+    // =====================================================
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isRegistrar(registrarUid) {
+      return signedIn()
+        && request.auth.uid == registrarUid
+        && exists(/databases/$(database)/documents/registrars/$(registrarUid))
+        && get(/databases/$(database)/documents/registrars/$(registrarUid)).data.role == 'registrar';
+    }
+
+    function ownsSchool(schoolId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/schools/$(schoolId))
+        && get(/databases/$(database)/documents/schools/$(schoolId)).data.createdBy == request.auth.uid
+        && isRegistrar(request.auth.uid);
+    }
+
+    function membershipPath(schoolId) {
+      return /databases/$(database)/documents/schoolTeachers/$(schoolId + '_' + request.auth.uid);
+    }
+
+    function connectedTeacher(schoolId) {
+      return signedIn()
+        && exists(membershipPath(schoolId))
+        && get(membershipPath(schoolId)).data.status == 'connected'
+        && get(membershipPath(schoolId)).data.schoolId == schoolId
+        && get(membershipPath(schoolId)).data.teacherUid == request.auth.uid;
+    }
+
+    function parentConnectionPath(schoolId, parentUid) {
+      return /databases/$(database)/documents/parentSchoolConnections/$(schoolId + '_' + parentUid);
+    }
+
+    function isApprovedParentForStudent(schoolId, studentId) {
+      return signedIn()
+        && exists(parentConnectionPath(schoolId, request.auth.uid))
+        && get(parentConnectionPath(schoolId, request.auth.uid)).data.parentUid == request.auth.uid
+        && get(parentConnectionPath(schoolId, request.auth.uid)).data.schoolId == schoolId
+        && get(parentConnectionPath(schoolId, request.auth.uid)).data.status == 'approved'
+        && get(parentConnectionPath(schoolId, request.auth.uid)).data.matchedStudentIds is list
+        && studentId in get(parentConnectionPath(schoolId, request.auth.uid)).data.matchedStudentIds;
+    }
+
+    function isSubscriptionAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && (
+          get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true
+          || get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isSuperAdmin == true
+          || get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role in [
+            'admin', 'superadmin', 'super_admin', 'platformadmin', 'platform_admin'
+          ]
+        );
+    }
+
+    // =====================================================
+    // TEACHERS AND THEIR INDEPENDENT STUDENTS
+    // =====================================================
+    match /teachers/{teacherUid} {
+      allow read, write: if signedIn() && request.auth.uid == teacherUid;
+
+      match /students/{studentId} {
+        allow read, write: if signedIn() && request.auth.uid == teacherUid;
+      }
+
+      match /personalExamTimetable/{recordId} {
+        allow read, create, update, delete: if signedIn() && request.auth.uid == teacherUid;
+      }
+    }
+
+    // =====================================================
+    // REGISTRAR PROFILES
+    // =====================================================
+    match /registrars/{registrarUid} {
+      allow read, create, update: if signedIn() && request.auth.uid == registrarUid;
+      allow delete: if false;
+    }
+
+    // =====================================================
+    // PARENT PROFILES
+    // Parent photo is stored as a resized data URL in profileImage
+    // by the current parents.html (not Firebase Storage).
+    // =====================================================
+    match /parents/{parentUid} {
+      allow get: if signedIn() && request.auth.uid == parentUid;
+      allow list: if false;
+
+      // Parents create their own profile only. A parent cannot
+      // create an approved profile or assign student IDs.
+      allow create: if signedIn()
+        && request.auth.uid == parentUid
+        && request.resource.data.uid == parentUid
+        && request.resource.data.role == 'parent'
+        && request.resource.data.fullName is string
+        && request.resource.data.email is string
+        && request.resource.data.phone is string
+        && (!('status' in request.resource.data) || request.resource.data.status == 'pending')
+        && (!('matchedStudentIds' in request.resource.data)
+          || (request.resource.data.matchedStudentIds is list
+            && request.resource.data.matchedStudentIds.size() == 0))
+        && !('schoolId' in request.resource.data);
+
+      // Parents can edit only their display name, phone, and profile image.
+      // They cannot change role, approval status, UID, or school/student links.
+      allow update: if signedIn()
+        && request.auth.uid == parentUid
+        && resource.data.uid == parentUid
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'fullName', 'phone', 'profileImage', 'updatedAt'
+        ])
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() > 0
+        && request.resource.data.fullName.size() <= 120
+        && (!('profileImage' in request.resource.data)
+          || (request.resource.data.profileImage is string
+            && request.resource.data.profileImage.size() <= 900000));
+
+      allow delete: if false;
+    }
+
+    // =====================================================
+    // PARENT-SCHOOL CONNECTION REQUESTS
+    // Document ID must be: schoolId_parentUid
+    // Parent may request/re-request, but cannot approve or link children.
+    // Only the registrar who owns the school can approve/reject/link IDs.
+    // =====================================================
+    match /parentSchoolConnections/{connectionId} {
+      allow get: if signedIn()
+        && (resource.data.parentUid == request.auth.uid
+          || (resource.data.schoolId is string && ownsSchool(resource.data.schoolId)));
+
+      allow list: if signedIn()
+        && (resource.data.parentUid == request.auth.uid
+          || (resource.data.schoolId is string && ownsSchool(resource.data.schoolId)));
+
+      allow create: if signedIn()
+        && request.resource.data.parentUid == request.auth.uid
+        && request.resource.data.schoolId is string
+        && connectionId == request.resource.data.schoolId + '_' + request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.matchedStudentIds is list
+        && request.resource.data.matchedStudentIds.size() == 0
+        && request.resource.data.parentPhone is string
+        && exists(/databases/$(database)/documents/parents/$(request.auth.uid))
+        && get(/databases/$(database)/documents/parents/$(request.auth.uid)).data.role == 'parent'
+        && exists(/databases/$(database)/documents/schools/$(request.resource.data.schoolId))
+        && (!('status' in get(/databases/$(database)/documents/schools/$(request.resource.data.schoolId)).data)
+          || get(/databases/$(database)/documents/schools/$(request.resource.data.schoolId)).data.status in ['active', 'approved']);
+
+      allow update: if signedIn() && (
+        // Parent can only resubmit a rejected request; no student IDs permitted.
+        (resource.data.parentUid == request.auth.uid
+          && resource.data.status == 'rejected'
+          && request.resource.data.parentUid == resource.data.parentUid
+          && request.resource.data.schoolId == resource.data.schoolId
+          && request.resource.data.status == 'pending'
+          && request.resource.data.matchedStudentIds is list
+          && request.resource.data.matchedStudentIds.size() == 0
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'status', 'parentPhone', 'requestedAt', 'updatedAt'
+          ]))
+        ||
+        // School registrar verifies and links official student IDs.
+        (ownsSchool(resource.data.schoolId)
+          && request.resource.data.parentUid == resource.data.parentUid
+          && request.resource.data.schoolId == resource.data.schoolId
+          && request.resource.data.status in ['pending', 'approved', 'rejected']
+          && request.resource.data.matchedStudentIds is list
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'status', 'matchedStudentIds', 'approvedBy', 'approvedAt',
+            'rejectedBy', 'rejectedAt', 'updatedAt'
+          ])
+          && (request.resource.data.status != 'approved'
+            || request.resource.data.matchedStudentIds.size() > 0))
+      );
+
+      allow delete: if false;
+    }
+
+    // =====================================================
+    // SCHOOL PROFILES
+    // =====================================================
+    match /schools/{schoolId} {
+      allow create: if signedIn()
+        && request.resource.data.createdBy == request.auth.uid
+        && isRegistrar(request.auth.uid);
+
+      allow read: if signedIn()
+        && ((resource.data.createdBy == request.auth.uid && isRegistrar(request.auth.uid))
+          || !('status' in resource.data)
+          || resource.data.status in ['active', 'approved']
+          || connectedTeacher(schoolId));
+
+      allow update: if ownsSchool(schoolId);
+      allow delete: if false;
+
+      // Official school students
+      match /students/{studentId} {
+        allow read: if ownsSchool(schoolId)
+          || (connectedTeacher(schoolId)
+            && resource.data.className is string
+            && resource.data.className in get(membershipPath(schoolId)).data.assignedClasses)
+          || isApprovedParentForStudent(schoolId, studentId);
+
+        allow create, update, delete: if ownsSchool(schoolId);
+      }
+
+      // School timetable
+      match /timetable/{entryId} {
+        allow read: if ownsSchool(schoolId)
+          || (connectedTeacher(schoolId)
+            && resource.data.assignmentKey is string
+            && resource.data.assignmentKey in get(membershipPath(schoolId)).data.assignedPairKeys);
+
+        allow create: if ownsSchool(schoolId)
+          && request.resource.data.schoolId == schoolId
+          && request.resource.data.createdBy == request.auth.uid;
+        allow update: if ownsSchool(schoolId)
+          && request.resource.data.schoolId == schoolId;
+        allow delete: if ownsSchool(schoolId);
+      }
+
+      // Examination timetable
+      match /examTimetable/{entryId} {
+        allow read: if ownsSchool(schoolId)
+          || (connectedTeacher(schoolId)
+            && (resource.data.invigilatorUid == request.auth.uid
+              || (resource.data.assignmentKey is string
+                && resource.data.assignmentKey in get(membershipPath(schoolId)).data.assignedPairKeys)));
+
+        allow create: if ownsSchool(schoolId)
+          && request.resource.data.schoolId == schoolId
+          && request.resource.data.createdBy == request.auth.uid
+          && request.resource.data.invigilatorUid is string;
+        allow update: if ownsSchool(schoolId)
+          && request.resource.data.schoolId == schoolId
+          && request.resource.data.invigilatorUid is string;
+        allow delete: if ownsSchool(schoolId);
+      }
+    }
+
+    // =====================================================
+    // TEACHER CONNECTION REQUESTS
+    // =====================================================
+    match /teacherConnectionRequests/{requestId} {
+      allow get: if signedIn() && requestId.matches('.*_' + request.auth.uid);
+
+      allow list: if signedIn()
+        && (resource.data.teacherUid == request.auth.uid || ownsSchool(resource.data.schoolId));
+
+      allow create: if signedIn()
+        && request.resource.data.teacherUid == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.schoolId is string
+        && requestId == request.resource.data.schoolId + '_' + request.auth.uid
+        && exists(/databases/$(database)/documents/schools/$(request.resource.data.schoolId))
+        && (!('status' in get(/databases/$(database)/documents/schools/$(request.resource.data.schoolId)).data)
+          || get(/databases/$(database)/documents/schools/$(request.resource.data.schoolId)).data.status in ['active', 'approved']);
+
+      allow update: if signedIn() && (
+        (resource.data.teacherUid == request.auth.uid
+          && resource.data.status in ['rejected', 'deactivated']
+          && request.resource.data.teacherUid == resource.data.teacherUid
+          && request.resource.data.schoolId == resource.data.schoolId
+          && request.resource.data.status == 'pending'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'status', 'requestedAt', 'updatedAt'
+          ]))
+        ||
+        (ownsSchool(resource.data.schoolId)
+          && request.resource.data.schoolId == resource.data.schoolId
+          && request.resource.data.teacherUid == resource.data.teacherUid
+          && request.resource.data.status in ['pending', 'connected', 'rejected', 'deactivated'])
+      );
+
+      allow delete: if false;
+    }
+
+    // =====================================================
+    // SCHOOL-TEACHER MEMBERSHIPS
+    // =====================================================
+    match /schoolTeachers/{membershipId} {
+      allow get, list: if signedIn()
+        && (resource.data.teacherUid == request.auth.uid || ownsSchool(resource.data.schoolId));
+
+      allow create: if signedIn()
+        && request.resource.data.teacherUid is string
+        && request.resource.data.schoolId is string
+        && membershipId == request.resource.data.schoolId + '_' + request.resource.data.teacherUid
+        && ownsSchool(request.resource.data.schoolId)
+        && request.resource.data.status == 'connected';
+
+      allow update: if signedIn()
+        && ownsSchool(resource.data.schoolId)
+        && request.resource.data.schoolId == resource.data.schoolId
+        && request.resource.data.teacherUid == resource.data.teacherUid;
+
+      allow delete: if false;
+    }
+
+    // =====================================================
+    // SUBSCRIPTION ADMIN RECORDS
+    // =====================================================
+    match /admins/{adminUid} {
+      allow get: if signedIn() && request.auth.uid == adminUid;
+      allow list, create, update, delete: if false;
+    }
+
+    // =====================================================
+    // SUBSCRIPTION REQUESTS
+    // =====================================================
+    match /subscriptionRequests/{requestId} {
+      allow read, update, delete: if isSubscriptionAdmin();
+      allow create: if signedIn()
+        && (request.resource.data.teacherUid == request.auth.uid
+          || request.resource.data.uid == request.auth.uid)
+        && request.resource.data.status == 'pending';
+    }
+
+    // =====================================================
+    // ACTIVE SUBSCRIPTIONS
+    // =====================================================
+    match /subscriptions/{subscriptionId} {
+      allow read: if isSubscriptionAdmin()
+        || (signedIn() && resource.data.teacherUid == request.auth.uid);
+      allow create, update, delete: if isSubscriptionAdmin();
+    }
+  }
+}
