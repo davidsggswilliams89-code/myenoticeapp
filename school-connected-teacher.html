@@ -3977,13 +3977,13 @@ window.viewStudentResult=function(index){
 </script>
 
 
-<!-- Independent student-creation photo handler removed from school-connected dashboard. -->
-
+<!-- Attendance is stored in Firebase under each official school student. -->
 <script>
 (function(){
   const ATT_KEY="primaryTeacherAttendance";
   const dayNames=["Monday","Tuesday","Wednesday","Thursday","Friday"];
   let attendanceSelectedClass="";
+  let firebaseAttendanceCache={};
 
   function allStudentClasses(){
     if(typeof window.teacherIsSchoolConnected==="function" && window.teacherIsSchoolConnected()){
@@ -4016,6 +4016,7 @@ window.viewStudentResult=function(index){
   }
   window.changeAttendanceClass=function(value){
     attendanceSelectedClass=value;
+    firebaseAttendanceCache={};
     renderAttendance();
   };
 
@@ -4023,6 +4024,49 @@ window.viewStudentResult=function(index){
     try{return JSON.parse(localStorage.getItem(ATT_KEY)||"{}");}catch(e){return {};}
   }
   function saveAttendanceStore(data){try{localStorage.setItem(ATT_KEY,JSON.stringify(data));}catch(e){}}
+  function schoolAttendanceId(){
+    const c=window.activeTeacherConnection||{};
+    return String(c.schoolId||"");
+  }
+  function connectedFirebaseAttendance(){
+    return !!(schoolAttendanceId() && window.teacherFirestore && window.firebaseFirestoreFns && window.firebaseTeacherUID);
+  }
+  function studentSchoolDocId(s){
+    return String((s[8]&&s[8].schoolStudentId)||studentFirestoreId(s)||"");
+  }
+  function attendanceCacheKey(s,date){
+    return schoolAttendanceId()+"|"+studentSchoolDocId(s)+"|"+isoDate(date);
+  }
+  function attendanceDocRef(s,date){
+    const sid=studentSchoolDocId(s);
+    if(!sid)return null;
+    return window.firebaseFirestoreFns.doc(
+      window.teacherFirestore,
+      "schools",schoolAttendanceId(),"students",sid,"attendance",isoDate(date)
+    );
+  }
+  async function loadFirebaseAttendanceWeek(records,days){
+    if(!connectedFirebaseAttendance())return;
+    const tasks=[];
+    records.forEach(function(item){
+      days.forEach(function(d){
+        const cacheKey=attendanceCacheKey(item.s,d);
+        if(Object.prototype.hasOwnProperty.call(firebaseAttendanceCache,cacheKey))return;
+        tasks.push((async function(){
+          try{
+            const ref=attendanceDocRef(item.s,d);
+            if(!ref){firebaseAttendanceCache[cacheKey]=false;return;}
+            const snap=await window.firebaseFirestoreFns.getDoc(ref);
+            firebaseAttendanceCache[cacheKey]=snap.exists() && snap.data()?.present===true;
+          }catch(err){
+            console.error("Firebase attendance read failed:",err);
+            firebaseAttendanceCache[cacheKey]=null;
+          }
+        })());
+      });
+    });
+    await Promise.all(tasks);
+  }
   function mondayOfWeek(d){
     const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());
     const day=x.getDay();
@@ -4049,66 +4093,121 @@ window.viewStudentResult=function(index){
   }
   function studentAttendanceKey(s,date){return (attendanceSelectedClass || selectedDashboardClass())+"|"+selectedDashboardTerm()+"|"+String(s[0])+"|"+date;}
   function dayState(s,date){
-    const store=attendanceStore();
-    const key=studentAttendanceKey(s,date);
-    if(store[key]===true) return "present";
+    if(connectedFirebaseAttendance()){
+      const cacheKey=attendanceCacheKey(s,date);
+      if(firebaseAttendanceCache[cacheKey]===true)return "present";
+      if(firebaseAttendanceCache[cacheKey]===null)return "error";
+    }else{
+      const store=attendanceStore();
+      const key=studentAttendanceKey(s,isoDate(date));
+      if(store[key]===true)return "present";
+    }
     const now=new Date();
     const dayStart=new Date(date.getFullYear(),date.getMonth(),date.getDate(),0,0,0,0);
     const hours=(now-dayStart)/3600000;
-    if(hours>=24) return "absent";
-    if(date>new Date(now.getFullYear(),now.getMonth(),now.getDate())) return "future";
+    if(hours>=24)return "absent";
+    if(date>new Date(now.getFullYear(),now.getMonth(),now.getDate()))return "future";
     return "open";
   }
-  function toggleAttendance(index,date){
+  async function toggleAttendance(index,date){
     const records=attendanceStudents();
     const item=records[index];
     if(!item)return;
     const s=item.s, state=dayState(s,date);
     if(state!=="open" && state!=="present")return;
-    const store=attendanceStore(),key=studentAttendanceKey(s,date);
-    if(state==="present") delete store[key]; else store[key]=true;
+    if(connectedFirebaseAttendance()){
+      const ref=attendanceDocRef(s,date);
+      if(!ref){alert("This student is missing an official school student record ID.");return;}
+      try{
+        if(state==="present"){
+          await window.firebaseFirestoreFns.deleteDoc(ref);
+          firebaseAttendanceCache[attendanceCacheKey(s,date)]=false;
+        }else{
+          const info=studentInfo(s);
+          await window.firebaseFirestoreFns.setDoc(ref,{
+            studentId:studentSchoolDocId(s),
+            admissionNumber:String(s[0]||""),
+            studentName:String(s[1]||""),
+            className:String(info.className||""),
+            term:String(selectedDashboardTerm()||""),
+            date:isoDate(date),
+            present:true,
+            schoolId:schoolAttendanceId(),
+            markedByTeacherUid:String(window.firebaseTeacherUID||""),
+            markedAt:window.firebaseFirestoreFns.serverTimestamp(),
+            updatedAt:window.firebaseFirestoreFns.serverTimestamp()
+          },{merge:true});
+          firebaseAttendanceCache[attendanceCacheKey(s,date)]=true;
+        }
+        await renderAttendance();
+      }catch(err){
+        console.error("Firebase attendance save failed:",err);
+        alert("Attendance could not be saved to Firebase. Please check your internet connection and Firestore Rules.\n\n"+(err?.message||"Unknown error"));
+      }
+      return;
+    }
+    // Fallback for any non-connected/legacy mode. School-connected teachers use Firebase above.
+    const store=attendanceStore(),key=studentAttendanceKey(s,isoDate(date));
+    if(state==="present")delete store[key];else store[key]=true;
     saveAttendanceStore(store);
     renderAttendance();
   }
   window.toggleAttendance=toggleAttendance;
-  window.renderAttendance=function(){
+  window.renderAttendance=async function(){
     const head=document.getElementById("attendanceHead"),body=document.getElementById("attendanceBody");
     if(!head||!body)return;
     populateAttendanceClassFilter();
     const cls=document.getElementById("attendanceClassLabel");
     if(cls)cls.textContent=(attendanceSelectedClass || selectedDashboardClass() || "No class")+" • "+selectedDashboardTerm();
-    const monday=mondayOfWeek(new Date()), days=[];
+    const monday=mondayOfWeek(new Date()),days=[];
     for(let i=0;i<5;i++){const d=new Date(monday);d.setDate(monday.getDate()+i);days.push(d);}
     const label=document.getElementById("attendanceWeekLabel");
     if(label){const week=academicWeekNumber(monday);label.textContent=(week?"Week "+week+" · ":"Week · ")+prettyDate(days[0])+" – "+prettyDate(days[4]);}
     head.innerHTML='<tr><th>PHOTO</th><th>STUDENT NAME</th>'+days.map(function(d,i){return '<th class="attendance-day-head"><span class="attendance-day-name">'+dayNames[i]+'</span><span class="attendance-day-date">'+prettyDate(d)+'</span></th>';}).join("")+'</tr>';
     const records=attendanceStudents();
     if(!records.length){body.innerHTML='<tr><td colspan="7" class="attendance-empty">No students have been added to '+(attendanceSelectedClass || selectedDashboardClass())+' yet.</td></tr>';return;}
+    if(connectedFirebaseAttendance()){
+      body.innerHTML='<tr><td colspan="7" class="attendance-empty">Loading attendance from Firebase…</td></tr>';
+      await loadFirebaseAttendanceWeek(records,days);
+    }
     body.innerHTML=records.map(function(item,i){
       const s=item.s,info=studentInfo(s);
       const photo=info.photo?'<img class="attendance-student-photo" src="'+info.photo+'" alt="Student photo">':'<div class="attendance-student-photo"></div>';
       const cells=days.map(function(d){
         const state=dayState(s,d);
-        if(state==="present") return '<td><button type="button" class="attendance-present" title="Present — tap to remove" onclick="toggleAttendance('+i+',new Date(\''+isoDate(d)+'T00:00:00\'))">✓</button></td>';
-        if(state==="absent") return '<td><span class="attendance-x" title="Absent — attendance window closed">✕</span></td>';
-        if(state==="future") return '<td><input class="attendance-check" type="checkbox" disabled title="This day has not started"></td>';
+        if(state==="present")return '<td><button type="button" class="attendance-present" title="Present — tap to remove" onclick="toggleAttendance('+i+',new Date(\''+isoDate(d)+'T00:00:00\'))">✓</button></td>';
+        if(state==="error")return '<td><span class="attendance-x" title="Could not read Firebase attendance">⚠</span></td>';
+        if(state==="absent")return '<td><span class="attendance-x" title="Absent — attendance window closed">✕</span></td>';
+        if(state==="future")return '<td><input class="attendance-check" type="checkbox" disabled title="This day has not started"></td>';
         return '<td><input class="attendance-check" type="checkbox" title="Mark present" onchange="toggleAttendance('+i+',new Date(\''+isoDate(d)+'T00:00:00\'))"></td>';
       }).join("");
       return '<tr><td>'+photo+'</td><td><div class="attendance-student"><div class="attendance-student-name">'+s[1]+'</div></div></td>'+cells+'</tr>';
     }).join("");
+    const noteId="firebaseAttendanceStatus";
+    let note=document.getElementById(noteId);
+    if(!note){
+      note=document.createElement("div");note.id=noteId;note.style.cssText="margin-top:10px;padding:10px 12px;border-radius:9px;font-size:12px;line-height:1.45;";
+      body.closest(".card")?.appendChild(note);
+    }
+    if(connectedFirebaseAttendance()){
+      note.style.background="#edf8f1";note.style.border="1px solid #cde4d8";note.style.color="#126747";
+      note.textContent="✓ Attendance is connected to Firebase. Parents can receive these records remotely through their approved school connection.";
+    }else{
+      note.style.background="#fff8e8";note.style.border="1px solid #f0dcae";note.style.color="#775617";
+      note.textContent="Legacy local attendance mode: connect the teacher to an approved school to save attendance remotely in Firebase.";
+    }
   };
 
   // Keep attendance synchronized when class/term filters change.
   const cls=document.getElementById("classSelect"),term=document.getElementById("termSelect");
   if(cls)cls.addEventListener("change",function(){
     if(!attendanceSelectedClass || attendanceSelectedClass===this.dataset.previousAttendanceClass){attendanceSelectedClass=this.value;}
-    this.dataset.previousAttendanceClass=this.value;
-    setTimeout(renderAttendance,0);
+    this.dataset.previousAttendanceClass=this.value;firebaseAttendanceCache={};setTimeout(renderAttendance,0);
   });
-  if(term)term.addEventListener("change",function(){setTimeout(renderAttendance,0);});
+  if(term)term.addEventListener("change",function(){firebaseAttendanceCache={};setTimeout(renderAttendance,0);});
   const originalRefresh=window.refreshStudentViews;
   if(typeof originalRefresh==="function"){
-    window.refreshStudentViews=function(){originalRefresh();setTimeout(renderAttendance,0);};
+    window.refreshStudentViews=function(){originalRefresh();firebaseAttendanceCache={};setTimeout(renderAttendance,0);};
   }
   setTimeout(renderAttendance,0);
 })();
