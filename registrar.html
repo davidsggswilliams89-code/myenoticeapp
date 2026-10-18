@@ -49,7 +49,16 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 .dashboard-stats .stat strong{font-size:clamp(22px,3vw,29px);font-weight:800;color:#173b29;overflow-wrap:anywhere}
 .dashboard-stats .stat small{display:block;margin-top:5px;color:#77867c;font-size:11px}
 @media(max-width:800px){.dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
-/* PTA payment summary: keep the four statistics in a 2-by-2 grid on mobile and desktop */
+/* Distinct PTA class/school account panels with compact, balanced statistic cards */
+.pta-account-group .payment-stats{gap:10px!important}
+.pta-account-group .payment-stats .stat{padding:13px 14px;border-radius:13px}
+.pta-account-group .payment-stats .stat:before{top:10px;bottom:10px;width:4px}
+.pta-account-group .payment-stats .stat .stat-icon{width:34px;height:34px;border-radius:10px;font-size:19px;margin-bottom:8px}
+.pta-account-group .payment-stats .stat span{font-size:clamp(12px,2vw,15px);line-height:1.3;margin-bottom:5px}
+.pta-account-group .payment-stats .stat strong{font-size:clamp(18px,3vw,25px);line-height:1.2}
+.pta-account-group .payment-stats .stat small{font-size:11px;line-height:1.3;margin-top:5px}
+@media(max-width:420px){.pta-account-group{padding:10px!important}.pta-account-group .payment-stats{gap:8px!important}.pta-account-group .payment-stats .stat{padding:11px 10px}.pta-account-group .payment-stats .stat .stat-icon{width:30px;height:30px;font-size:17px}.pta-account-group .payment-stats .stat strong{font-size:clamp(17px,4.5vw,22px)}}
+\n/* PTA payment summary: keep the four statistics in a 2-by-2 grid on mobile and desktop */
 .payment-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important}
 .payment-stats .stat{position:relative;min-width:0;margin:0;padding:18px;border:1px solid #e1ebe4;border-radius:18px;box-shadow:0 5px 18px rgba(16,75,50,.045);background:#fff}
 .payment-stats .stat:before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:5px;border-radius:0 5px 5px 0;background:var(--stat-accent,#176b45)}
@@ -119,25 +128,29 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 <div class="card registrar-page-panel" data-page-panel="students" id="officialStudentsCard" style="margin-top:18px"><h3>Official Student Registration & Records</h3><p class="muted">Register pupils using the same core fields as the Teacher Dashboard. Official records are stored under this school's ID and are not automatically copied over or used to delete teachers’ existing records.</p><form id="officialStudentForm"><div class="grid" style="gap:0 14px"><div><label for="osName">Student full name *</label><input id="osName" required maxlength="160" placeholder="Full student name"></div><div><label for="osAdmission">Admission number *</label><input id="osAdmission" required maxlength="60" placeholder="e.g. P5/009"></div><div><label for="osGender">Gender *</label><select id="osGender" required><option value="">Select gender</option><option>Male</option><option>Female</option></select></div><div><label for="osClass">Class *</label><select id="osClass" required><option value="">Select class</option></select></div><div><label for="osDob">Date of birth</label><input id="osDob" type="date"></div><div><label for="osPhone">Parent phone number</label><input id="osPhone" type="tel" maxlength="40" placeholder="Parent phone number"></div><div><label for="osGuardian">Parent / guardian</label><input id="osGuardian" maxlength="160" placeholder="Parent or guardian name"></div><div><label for="osPhoto">Student photo</label><input id="osPhoto" type="file" accept="image/*"><small class="muted">Photo uploads to the existing Cloudinary account.</small></div><div style="grid-column:1/-1"><label for="osAddress">Parent address</label><input id="osAddress" maxlength="300" placeholder="Parent/guardian address"></div></div><button id="osSave" class="primary" type="submit" style="margin-top:16px">Register Student</button></form><div id="officialStudentStatus" class="notice hidden" style="margin-top:14px"></div><hr style="border:0;border-top:1px solid var(--line);margin:20px 0"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><h3 style="margin:0">Official Student List</h3><button id="refreshOfficialStudents" type="button" class="secondary">Refresh list</button></div><p id="officialStudentCount" class="muted" style="margin-top:8px">Loading official records…</p><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:650px"><thead><tr><th>Photo</th><th>Admission No.</th><th>Student Name</th><th>Gender</th><th>Class</th><th>Parent Phone</th><th>Actions</th></tr></thead><tbody id="officialStudentsBody"><tr><td colspan="6">Loading…</td></tr></tbody></table></div></div>
 <section class="card section-anchor registrar-page-panel" data-page-panel="payments" id="ptaPaymentsCard" style="margin-top:18px">
 <h2 style="margin:0 0 8px">💳 PTA Payment Report</h2>
-<h3 style="margin:0 0 14px">Total School Accounts</h3>
-<div class="card" style="margin:0 0 14px;padding:14px">
- <h3 style="margin:0 0 10px">🏫 Class Account</h3>
- <div class="grid" style="gap:0 12px">
-  <div><label for="ptaClassAccountFilter">Filter by class</label><select id="ptaClassAccountFilter"><option value="all">All classes</option></select></div>
-  <div><label for="ptaClassAccountTermFilter">Filter by term</label><select id="ptaClassAccountTermFilter"><option value="all">All terms</option><option value="firstTerm">First Term</option><option value="secondTerm">Second Term</option><option value="thirdTerm">Third Term</option></select></div>
+<div class="pta-account-group" style="margin:0 0 16px;padding:14px;border:1px solid #dce9e1;border-radius:16px;background:#f9fcfa">
+ <h3 style="margin:0 0 12px;color:#176b45">🏫 Class Accounts</h3>
+ <div class="card" style="margin:0 0 12px;padding:12px">
+  <div class="grid" style="gap:0 12px">
+   <div><label for="ptaClassAccountFilter">Filter by class</label><select id="ptaClassAccountFilter"><option value="all">All classes</option></select></div>
+   <div><label for="ptaClassAccountTermFilter">Filter by term</label><select id="ptaClassAccountTermFilter"><option value="all">All terms</option><option value="firstTerm">First Term</option><option value="secondTerm">Second Term</option><option value="thirdTerm">Third Term</option></select></div>
+  </div>
+ </div>
+ <div class="stats payment-stats pta-compact-stats" id="ptaClassAccountStats" aria-label="Class account statistics" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0">
+  <div class="card stat" style="--stat-accent:#16805a"><div class="stat-icon">💰</div><span>Class Amount Received</span><strong id="ptaClassAmountReceived">₦0.00</strong><small id="ptaClassAmountReceivedHint">Based on selected class and term</small></div>
+  <div class="card stat" style="--stat-accent:#c45b45"><div class="stat-icon">🧾</div><span>Class Amount Remaining</span><strong id="ptaClassAmountRemaining">₦0.00</strong><small>Outstanding PTA fees</small></div>
+  <div class="card stat" style="--stat-accent:#2877b9"><div class="stat-icon">✅</div><span>Students Paid</span><strong id="ptaClassStudentsPaid">0</strong><small id="ptaClassStudentsPaidHint">Out of 0 students</small></div>
+  <div class="card stat" style="--stat-accent:#bd5c91"><div class="stat-icon">⏳</div><span>Students Remaining</span><strong id="ptaClassStudentsRemaining">0</strong><small id="ptaClassStudentsRemainingHint">Out of 0 students</small></div>
  </div>
 </div>
-<div class="stats payment-stats" id="ptaClassAccountStats" aria-label="Class account statistics" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 20px">
- <div class="card stat" style="--stat-accent:#16805a"><div class="stat-icon">💰</div><span>Class Amount Received</span><strong id="ptaClassAmountReceived">₦0.00</strong><small id="ptaClassAmountReceivedHint">Based on selected class and term</small></div>
- <div class="card stat" style="--stat-accent:#c45b45"><div class="stat-icon">🧾</div><span>Class Amount Remaining</span><strong id="ptaClassAmountRemaining">₦0.00</strong><small>Outstanding PTA fees</small></div>
- <div class="card stat" style="--stat-accent:#2877b9"><div class="stat-icon">✅</div><span>Students Paid</span><strong id="ptaClassStudentsPaid">0</strong><small id="ptaClassStudentsPaidHint">Out of 0 students</small></div>
- <div class="card stat" style="--stat-accent:#bd5c91"><div class="stat-icon">⏳</div><span>Students Remaining</span><strong id="ptaClassStudentsRemaining">0</strong><small id="ptaClassStudentsRemainingHint">Out of 0 students</small></div>
-</div>
-<div class="stats payment-stats" aria-label="Total School Accounts" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0 20px">
-<div class="card stat" style="--stat-accent:#16805a"><div class="stat-icon">💰</div><span>Total Amount Received</span><strong id="statAmountReceived">₦0.00</strong><small>Total recorded student payments</small></div>
-<div class="card stat" style="--stat-accent:#c45b45"><div class="stat-icon">🧾</div><span>Total Amount Remaining</span><strong id="statAmountRemaining">₦0.00</strong><small>Outstanding balance from recorded fees</small></div>
-<div class="card stat" style="--stat-accent:#2877b9"><div class="stat-icon">✅</div><span>Students Paid</span><strong id="statStudentsPaid">0</strong><small id="statStudentsPaidHint">Students marked paid</small></div>
-<div class="card stat" style="--stat-accent:#bd5c91"><div class="stat-icon">⏳</div><span>Students Remaining</span><strong id="statStudentsRemaining">0</strong><small id="statStudentsRemainingHint">Students not yet marked paid</small></div>
+<div class="pta-account-group" style="margin:0 0 20px;padding:14px;border:1px solid #dce9e1;border-radius:16px;background:#f9fcfa">
+ <h3 style="margin:0 0 12px;color:#176b45">🏫 School Accounts</h3>
+ <div class="stats payment-stats pta-compact-stats" aria-label="Total School Accounts" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0">
+  <div class="card stat" style="--stat-accent:#16805a"><div class="stat-icon">💰</div><span>Total Amount Received</span><strong id="statAmountReceived">₦0.00</strong><small>Total recorded student payments</small></div>
+  <div class="card stat" style="--stat-accent:#c45b45"><div class="stat-icon">🧾</div><span>Total Amount Remaining</span><strong id="statAmountRemaining">₦0.00</strong><small>Outstanding balance from recorded fees</small></div>
+  <div class="card stat" style="--stat-accent:#2877b9"><div class="stat-icon">✅</div><span>Students Paid</span><strong id="statStudentsPaid">0</strong><small id="statStudentsPaidHint">Students marked paid</small></div>
+  <div class="card stat" style="--stat-accent:#bd5c91"><div class="stat-icon">⏳</div><span>Students Remaining</span><strong id="statStudentsRemaining">0</strong><small id="statStudentsRemainingHint">Students not yet marked paid</small></div>
+ </div>
 </div>
 <!-- Legacy summary values are kept hidden to preserve compatibility with existing JavaScript. -->
 <div class="hidden" aria-hidden="true">
