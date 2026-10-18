@@ -65,7 +65,7 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 .registrar-nav::-webkit-scrollbar{display:none}.registrar-nav button{flex:0 0 auto;min-width:116px;border:1px solid rgba(255,255,255,.18);border-radius:11px;background:rgba(255,255,255,.12);color:#fff;padding:10px 13px;font-size:13px;font-weight:800}.registrar-nav button span{display:block;font-size:18px;margin-bottom:3px}.registrar-nav button:hover,.registrar-nav button.active{background:#fff;color:#075c51}
 .section-anchor{scroll-margin-top:78px}.registrar-page-panel.page-hidden{display:none!important}#dashboardTop.page-hidden,.dashboard-heading.page-hidden,.dashboard-stats.page-hidden{display:none!important}.timetable-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}.timetable-form .wide{grid-column:1/-1}.table-actions{display:flex;gap:7px;flex-wrap:wrap}.small-action{padding:7px 10px;font-size:12px;border:1px solid var(--line);background:#fff;border-radius:7px}.danger-action{color:#a82929;border-color:#f0c9c9}.table-message{margin:10px 0 0;font-size:13px;line-height:1.5}.invigilator-field{min-width:0}
 @media(max-width:600px){.registrar-nav{padding:6px}.registrar-nav button{min-width:95px;padding:8px;font-size:11px}.timetable-form{grid-template-columns:1fr}.timetable-form .wide{grid-column:auto}.section-anchor{scroll-margin-top:72px}}
-</style>
+@media(max-width:560px){#ptaClassAccountStats{grid-template-columns:repeat(2,minmax(0,1fr))!important}}\n</style>
 </head>
 <body>
 
@@ -120,6 +120,19 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 <section class="card section-anchor registrar-page-panel" data-page-panel="payments" id="ptaPaymentsCard" style="margin-top:18px">
 <h2 style="margin:0 0 8px">💳 PTA Payment Report</h2>
 <h3 style="margin:0 0 14px">Total School Accounts</h3>
+<div class="card" style="margin:0 0 14px;padding:14px">
+ <h3 style="margin:0 0 10px">🏫 Class Account</h3>
+ <div class="grid" style="gap:0 12px">
+  <div><label for="ptaClassAccountFilter">Filter by class</label><select id="ptaClassAccountFilter"><option value="all">All classes</option></select></div>
+  <div><label for="ptaClassAccountTermFilter">Filter by term</label><select id="ptaClassAccountTermFilter"><option value="all">All terms</option><option value="firstTerm">First Term</option><option value="secondTerm">Second Term</option><option value="thirdTerm">Third Term</option></select></div>
+ </div>
+</div>
+<div class="stats payment-stats" id="ptaClassAccountStats" aria-label="Class account statistics" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 20px">
+ <div class="card stat" style="--stat-accent:#16805a"><div class="stat-icon">💰</div><span>Class Amount Received</span><strong id="ptaClassAmountReceived">₦0.00</strong><small id="ptaClassAmountReceivedHint">Based on selected class and term</small></div>
+ <div class="card stat" style="--stat-accent:#c45b45"><div class="stat-icon">🧾</div><span>Class Amount Remaining</span><strong id="ptaClassAmountRemaining">₦0.00</strong><small>Outstanding PTA fees</small></div>
+ <div class="card stat" style="--stat-accent:#2877b9"><div class="stat-icon">✅</div><span>Students Paid</span><strong id="ptaClassStudentsPaid">0</strong><small id="ptaClassStudentsPaidHint">Out of 0 students</small></div>
+ <div class="card stat" style="--stat-accent:#bd5c91"><div class="stat-icon">⏳</div><span>Students Remaining</span><strong id="ptaClassStudentsRemaining">0</strong><small id="ptaClassStudentsRemainingHint">Out of 0 students</small></div>
+</div>
 <div class="stats payment-stats" aria-label="Total School Accounts" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0 20px">
 <div class="card stat" style="--stat-accent:#16805a"><div class="stat-icon">💰</div><span>Total Amount Received</span><strong id="statAmountReceived">₦0.00</strong><small>Total recorded student payments</small></div>
 <div class="card stat" style="--stat-accent:#c45b45"><div class="stat-icon">🧾</div><span>Total Amount Remaining</span><strong id="statAmountRemaining">₦0.00</strong><small>Outstanding balance from recorded fees</small></div>
@@ -489,6 +502,33 @@ function renderPtaFilters(){
  const classSelect=$("ptaClassFilter"),classes=[...new Set(ptaStudentCache.map(s=>s.className||s.class).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
  if(classSelect){const previous=classSelect.value||"all";classSelect.replaceChildren(new Option("All classes","all"));classes.forEach(c=>classSelect.add(new Option(c,c)));classSelect.value=classes.includes(previous)?previous:"all";}
 }
+function renderPtaClassAccountFilter(){
+ const select=$("ptaClassAccountFilter");if(!select)return;
+ const previous=select.value||"all";
+ const classes=[...new Set(ptaStudentCache.map(st=>st.className||st.class).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+ select.replaceChildren(new Option("All classes","all"));
+ classes.forEach(cls=>select.add(new Option(cls,cls)));
+ select.value=classes.includes(previous)?previous:"all";
+}
+function renderPtaClassAccountStats(){
+ const classFilter=$("ptaClassAccountFilter")?.value||"all";
+ const termFilter=$("ptaClassAccountTermFilter")?.value||"all";
+ const group=ptaStudentCache.filter(st=>classFilter==="all"||(st.className||st.class)===classFilter);
+ const terms=termFilter==="all"?PTA_TERM_KEYS:[termFilter];
+ const expected=group.length*200*terms.length;
+ const received=group.reduce((sum,st)=>sum+terms.filter(key=>ptaTermPaid(st,key)).length*200,0);
+ const paid=termFilter==="all"?group.filter(st=>ptaPaidTermCount(st)===3).length:group.filter(st=>ptaTermPaid(st,termFilter)).length;
+ const remaining=Math.max(0,group.length-paid);
+ $("ptaClassAmountReceived").textContent=formatNaira(received);
+ $("ptaClassAmountRemaining").textContent=formatNaira(Math.max(0,expected-received));
+ $("ptaClassStudentsPaid").textContent=String(paid);
+ $("ptaClassStudentsRemaining").textContent=String(remaining);
+ const classLabel=classFilter==="all"?"All classes":classFilter;
+ const termLabel=termFilter==="all"?"All terms":ptaTermLabel(termFilter);
+ $("ptaClassAmountReceivedHint").textContent=`${classLabel} · ${termLabel}`;
+ $("ptaClassStudentsPaidHint").textContent=`Out of ${group.length} students`;
+ $("ptaClassStudentsRemainingHint").textContent=`Out of ${group.length} students`;
+}
 function ptaBadge(student,key){const record=student?.ptaPayments?.[key]||{},paid=String(record.status||"").toLowerCase()==="paid",wrap=document.createElement("div"),span=document.createElement("span");span.textContent=paid?"PAID":"NOT PAID";span.style.cssText=`display:inline-block;padding:5px 8px;border-radius:20px;font-size:11px;font-weight:800;background:${paid?"#e6f6eb":"#fff0f0"};color:${paid?"#176b45":"#a82929"}`;wrap.append(span);if(paid){const detail=document.createElement("small");detail.style.cssText="display:block;margin-top:4px;color:#667085;font-size:10px;line-height:1.35";const when=record.markedAt?.toDate?record.markedAt.toDate().toLocaleDateString():record.markedAtText||"";detail.textContent=[record.markedByTeacherName||"Form Master",when].filter(Boolean).join(" · ");wrap.append(detail);}return wrap;}
 function renderPtaRegister(){
  const body=$("ptaPaymentsBody"),message=$("ptaRegisterMessage");if(!body)return;body.replaceChildren();
@@ -513,12 +553,13 @@ async function loadPtaPayments(){
   if(ptaStudentsUnsub){ptaStudentsUnsub();ptaStudentsUnsub=null;}
   const ref=collection(db,"schools",profile.schoolId,"students");
   ptaStudentsUnsub=onSnapshot(ref,snap=>{
-   ptaStudentCache=snap.docs.map(d=>({id:d.id,...d.data()}));renderPtaFilters();renderPtaSummary();renderPtaRegister();
+   ptaStudentCache=snap.docs.map(d=>({id:d.id,...d.data()}));renderPtaFilters();renderPtaClassAccountFilter();renderPtaClassAccountStats();renderPtaSummary();renderPtaRegister();
    refreshDashboardStatistics(currentSchoolData).catch(e=>console.warn("Could not refresh live PTA statistics",e));
   },e=>{console.error("PTA report listener failed",e);if(message)message.textContent="Could not load the PTA report: "+err(e);});
  }catch(e){console.error("Could not load PTA report",e);if(message)message.textContent="Could not load the PTA report: "+err(e);}
 }
 ["ptaSearch","ptaClassFilter"].forEach(id=>$(id)?.addEventListener(id==="ptaSearch"?"input":"change",renderPtaRegister));
+["ptaClassAccountFilter","ptaClassAccountTermFilter"].forEach(id=>$(id)?.addEventListener("change",renderPtaClassAccountStats));
 $("refreshPtaPayments")?.addEventListener("click",async()=>{await loadPtaPayments();await refreshDashboardStatistics(currentSchoolData)});
 
 let activeRegistrarPage="dashboard";
