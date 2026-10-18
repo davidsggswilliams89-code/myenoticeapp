@@ -604,11 +604,34 @@ async function updatePtaFormMaster(record,className,remove=false,button=null){
   const isLegacyMaster=String(record.assignedRole||"").trim().toLowerCase()==="form master";
   const restoreRole=record.ptaPreviousAssignedRole||(isLegacyMaster?"Class Teacher":record.assignedRole||"Class Teacher");
   const patch=remove?{ptaFormMaster:false,ptaFormMasterClass:"",...(isLegacyMaster?{assignedRole:restoreRole}:{}),ptaFormMasterRemovedAt:serverTimestamp(),ptaFormMasterUpdatedAt:serverTimestamp(),updatedAt:serverTimestamp()}:{ptaFormMaster:true,ptaFormMasterClass:className,ptaPreviousAssignedRole:isLegacyMaster?(record.ptaPreviousAssignedRole||"Class Teacher"):(record.assignedRole||"Class Teacher"),ptaFormMasterAssignedBy:user.uid,ptaFormMasterAssignedAt:record.ptaFormMaster? (record.ptaFormMasterAssignedAt||serverTimestamp()):serverTimestamp(),ptaFormMasterUpdatedAt:serverTimestamp(),updatedAt:serverTimestamp()};
+  // Keep the connection request and school membership in sync. The teacher dashboard
+  // listens to teacherConnectionRequests, while school-level permissions use schoolTeachers.
+  const memberRef=doc(db,"schoolTeachers",profile.schoolId+"_"+record.teacherUid);
+  const memberPatch={
+   schoolId:profile.schoolId,
+   schoolName:record.schoolName||$("dashboardSchoolName")?.textContent||"",
+   registrarUid:user.uid,
+   teacherUid:record.teacherUid,
+   teacherName:record.teacherName||"Teacher",
+   teacherEmail:record.teacherEmail||"",
+   status:"connected",
+   ...patch
+  };
+  // Write the membership first so it contains the latest Form Master fields.
+  await setDoc(memberRef,memberPatch,{merge:true});
   await updateDoc(doc(db,"teacherConnectionRequests",record.id),patch);
-  await setDoc(doc(db,"schoolTeachers",profile.schoolId+"_"+record.teacherUid),{schoolId:profile.schoolId,teacherUid:record.teacherUid,teacherName:record.teacherName||"Teacher",teacherEmail:record.teacherEmail||"",status:"connected",...patch},{merge:true});
   ptaFormMasterStatus(remove?"Form Master access removed. Their ordinary teacher dashboard remains active.":label+" assigned as Form Master for "+className+".","success");
   await loadPtaFormMasterAssignments();
- }catch(e){console.error("Could not update Form Master assignment",e);ptaFormMasterStatus("Could not update assignment: "+(e.message||"Check Firestore permissions."),"error");if(button){button.disabled=false;button.textContent=remove?"Remove Form Master":"Assign Form Master";}throw e;}
+ }catch(e){
+  console.error("Could not update Form Master assignment",e);
+  const code=e?.code?(" ["+e.code+"]"):"";
+  const detail=e?.code==="permission-denied"
+   ?" Firebase rejected the write. Check that the signed-in registrar owns this school and that Firestore rules allow this registrar to update both teacherConnectionRequests and schoolTeachers."
+   :"";
+  ptaFormMasterStatus("Could not update assignment"+code+": "+(e.message||"Unknown Firebase error.")+detail,"error");
+  if(button){button.disabled=false;button.textContent=remove?"Remove Form Master":"Assign Form Master";}
+  throw e;
+ }
 }
 $("assignPtaFormMaster")?.addEventListener("click",async()=>{
  const id=$("ptaFormMasterTeacher")?.value,cls=$("ptaFormMasterClass")?.value;if(!id){ptaFormMasterStatus("Select a connected teacher.","error");return}if(!cls){ptaFormMasterStatus("Select the class this teacher will manage.","error");return}
