@@ -1465,6 +1465,20 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
 .today-agenda-empty{padding:22px 16px;text-align:center;color:#64748b;font-size:13px;line-height:1.5}
 @media(max-width:760px){.today-agenda{margin-top:18px;border-radius:15px}.today-agenda-head{padding:14px}.today-agenda-head h3{font-size:20px}.today-agenda-item{grid-template-columns:78px minmax(0,1fr);gap:10px;padding:13px}.today-agenda-time{font-size:12px}.today-agenda-item h4{font-size:15px}}
 </style>
+
+<style id="formMasterPtaDesign">
+/* Form Master PTA Payments — responsive, standalone dashboard styling */
+.pta-dashboard{margin-top:22px!important;padding:0!important;border:1px solid #dce9e5!important;border-radius:20px!important;background:#f7faf9!important;overflow:hidden;box-shadow:0 12px 34px rgba(16,58,48,.07)}
+.pta-hero{display:flex;align-items:center;gap:15px;flex-wrap:wrap;padding:23px;background:linear-gradient(125deg,#064e43 0%,#087d63 65%,#0ba987 100%);color:#fff}
+.pta-hero-icon{width:58px;height:58px;flex:0 0 58px;display:grid;place-items:center;border-radius:17px;background:rgba(255,255,255,.15);font-size:29px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.pta-hero-copy{flex:1;min-width:170px}.pta-eyebrow{display:block;font-size:10px;font-weight:800;letter-spacing:1.5px;color:#baf5df;margin-bottom:5px}.pta-hero-copy h3{font-size:clamp(22px,3vw,29px);line-height:1.15;margin:0 0 7px;color:#fff}.pta-hero-copy p{font-size:13px;line-height:1.5;color:#e1fff4;margin:0}
+.pta-term-control{width:180px;max-width:100%;font-size:11px;font-weight:800;letter-spacing:.4px;color:#e1fff4}.pta-term-control select{display:block;width:100%;margin-top:7px;padding:11px 12px;border:1px solid rgba(255,255,255,.35);border-radius:10px;background:#fff;color:#183b34;font-weight:700;outline-offset:2px}
+.pta-fee-note{display:flex;align-items:center;gap:12px;margin:18px 18px 0;padding:13px 15px;border:1px solid #bdebd6;border-radius:13px;background:#edfbf4;color:#145a40}.pta-fee-icon{display:grid;place-items:center;flex:0 0 39px;width:39px;height:39px;border-radius:12px;background:#d0f5e2;color:#08784f;font-size:22px;font-weight:900}.pta-fee-note strong{display:block;font-size:14px}.pta-fee-note small{display:block;margin-top:4px;color:#477064;font-size:12px;line-height:1.5}
+.pta-stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:17px 18px}.pta-stat{display:flex;align-items:center;gap:12px;min-width:0;padding:15px;border:1px solid #e3eae8;border-radius:15px;background:#fff;box-shadow:0 3px 10px rgba(25,60,50,.025)}.pta-stat-icon{display:grid;place-items:center;width:43px;height:43px;flex:0 0 43px;border-radius:13px;font-size:21px;font-weight:900}.pta-stat-total .pta-stat-icon{background:#e9f1ff;color:#2864b5}.pta-stat-paid .pta-stat-icon{background:#dcf8e8;color:#07834c}.pta-stat-pending .pta-stat-icon{background:#fff1d9;color:#a86208}.pta-stat small,.pta-stat-foot{display:block;color:#718078;font-size:11px}.pta-stat strong{display:block;margin:3px 0;font-size:26px;line-height:1.1;color:#183c34}.pta-stat-foot{font-size:10px}
+.pta-register-card{margin:0 18px 18px;border:1px solid #e0e9e5;border-radius:15px;background:#fff;overflow:hidden}.pta-register-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:17px 16px;border-bottom:1px solid #e9efec}.pta-register-head h4{margin:0;color:#183c34;font-size:17px}.pta-register-head p{margin:5px 0 0;color:#718078;font-size:12px;line-height:1.5}.pta-search-wrap{display:flex;align-items:center;gap:8px;min-width:min(100%,230px);padding:0 11px;border:1px solid #dbe5e0;border-radius:10px;background:#fbfdfc;color:#718078}.pta-search-wrap span{font-size:23px}.pta-search-wrap input{width:100%;min-width:0;padding:11px 0;border:0;outline:0;background:transparent;color:#183c34;font-size:12px}.pta-table-scroll{width:100%;overflow-x:auto}.pta-table{width:100%;min-width:630px;border-collapse:separate;border-spacing:0}.pta-table th{padding:12px 14px;background:#f3f8f5;border-bottom:1px solid #e1eae5;color:#64766e;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;white-space:nowrap}.pta-table td{padding:13px 14px;border-bottom:1px solid #edf1ef;color:#354a43;font-size:12px;vertical-align:middle}.pta-table tbody tr:last-child td{border-bottom:0}.pta-table tbody tr:hover{background:#f8fcfa}.pta-student-cell{display:flex;align-items:center;gap:10px;min-width:170px}.pta-student-photo{width:39px;height:43px;flex:0 0 39px;display:grid;place-items:center;object-fit:cover;border:1px solid #e0e9e4;border-radius:10px;background:#f1f6f3;font-size:18px}.pta-student-name{font-weight:800;color:#203f35}.pta-student-sub{display:block;margin-top:3px;color:#87938d;font-size:10px}.pta-call-link{display:inline-flex;align-items:center;gap:5px;padding:7px 9px;border:1px solid #cdebd9;border-radius:9px;background:#effaf3;color:#176642;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap}.pta-paid-badge{display:inline-flex;align-items:center;gap:5px;padding:7px 10px;border-radius:30px;background:#dcf8e8;color:#087547;font-size:10px;font-weight:900;white-space:nowrap}.pta-paid-meta{display:block;margin-top:5px;color:#87938d;font-size:10px}.pta-mark-btn{padding:10px 12px;border-radius:9px;background:#087d58;color:#fff;font-size:10px;font-weight:900;letter-spacing:.2px;white-space:nowrap;box-shadow:0 3px 8px rgba(8,125,88,.15)}.pta-mark-btn:hover{background:#056849}.pta-mark-btn:disabled{opacity:.6;cursor:wait}.pta-loading,.pta-empty{padding:26px!important;text-align:center!important;color:#87938d!important}.pta-register-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:11px 15px;border-top:1px solid #e9efec;background:#fbfdfc;color:#87938d;font-size:10px}
+@media(max-width:650px){.pta-hero{padding:18px;gap:12px}.pta-hero-icon{width:48px;height:48px;flex-basis:48px;border-radius:14px;font-size:24px}.pta-term-control{width:100%;margin-top:2px}.pta-stat-grid{grid-template-columns:1fr;gap:9px;padding:13px}.pta-stat{padding:12px}.pta-stat strong{font-size:23px}.pta-fee-note{margin:13px 13px 0;padding:12px}.pta-register-card{margin:0 13px 13px}.pta-register-head{align-items:stretch;padding:14px}.pta-search-wrap{width:100%;min-width:0}.pta-table th,.pta-table td{padding:11px 10px}.pta-register-foot{font-size:10px}}
+</style>
+
 </head>
 <body>
 <div id="teacherDashboardModeBadge" role="status" style="position:fixed;right:10px;bottom:10px;z-index:9998;padding:7px 10px;border-radius:999px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font:700 10px/1.2 Arial,sans-serif;box-shadow:0 2px 8px #00000012;pointer-events:none" aria-live="polite"></div>
@@ -1842,14 +1856,23 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
     </div>
   </div>
 
-  <section id="formMasterPtaSection" class="student-card" style="margin-top:20px;padding:16px;border:1px solid #cfe4dd;border-radius:14px;background:#fff;display:none">
-    <div style="display:flex;gap:12px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap">
-      <div><h3 style="margin:0 0 6px">💳 PTA Payment — My Class</h3><p id="ptaTeacherSummary" style="margin:0;color:#667085;font-size:13px;line-height:1.5">Form Master payment register.</p></div>
-      <label style="min-width:150px;margin:0">Term<select id="teacherPtaTerm" style="display:block;width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:9px;margin-top:5px"><option value="firstTerm">First Term</option><option value="secondTerm">Second Term</option><option value="thirdTerm">Third Term</option></select></label>
+  <section id="formMasterPtaSection" class="student-card pta-dashboard" style="display:none" aria-labelledby="ptaDashboardTitle">
+    <div class="pta-hero">
+      <div class="pta-hero-icon" aria-hidden="true">💳</div>
+      <div class="pta-hero-copy"><span class="pta-eyebrow">FORM MASTER • PAYMENT REGISTER</span><h3 id="ptaDashboardTitle">PTA Payments</h3><p id="ptaTeacherSummary">Manage PTA payments for your assigned class.</p></div>
+      <label class="pta-term-control" for="teacherPtaTerm">Academic term<select id="teacherPtaTerm"><option value="firstTerm">First Term</option><option value="secondTerm">Second Term</option><option value="thirdTerm">Third Term</option></select></label>
     </div>
-    <p style="background:#effaf4;border:1px solid #ccebd8;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.5;color:#166534;margin:12px 0">PTA fee: <strong>₦200 per student per term</strong>. After you have received the full payment, mark the student as paid. A paid status cannot be marked again for the same term.</p>
-    <p id="teacherPtaMessage" role="status" style="font-size:13px;line-height:1.5;color:#667085"></p>
-    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:680px"><thead><tr><th style="padding:10px;text-align:left">S/N</th><th style="padding:10px;text-align:left">Photo</th><th style="padding:10px;text-align:left">Student Name</th><th style="padding:10px;text-align:left">Admission No.</th><th style="padding:10px;text-align:left">Parent / Guardian</th><th style="padding:10px;text-align:left">Payment</th></tr></thead><tbody id="teacherPtaPaymentsBody"><tr><td colspan="6" style="padding:14px">Loading class payments…</td></tr></tbody></table></div>
+    <div class="pta-fee-note"><span class="pta-fee-icon">₦</span><div><strong>PTA fee: ₦200 per student</strong><small>Confirm you have received the full payment before marking a student as paid. A payment can only be recorded once per term.</small></div></div>
+    <div class="pta-stat-grid" aria-label="Payment summary">
+      <article class="pta-stat pta-stat-total"><span class="pta-stat-icon">👥</span><div><small>Total students</small><strong id="ptaTotalStudents">0</strong><span class="pta-stat-foot">Assigned class</span></div></article>
+      <article class="pta-stat pta-stat-paid"><span class="pta-stat-icon">✓</span><div><small>Paid</small><strong id="ptaPaidStudents">0</strong><span class="pta-stat-foot" id="ptaPaidAmount">₦0 collected</span></div></article>
+      <article class="pta-stat pta-stat-pending"><span class="pta-stat-icon">◷</span><div><small>Outstanding</small><strong id="ptaPendingStudents">0</strong><span class="pta-stat-foot" id="ptaPendingAmount">₦0 remaining</span></div></article>
+    </div>
+    <div class="pta-register-card">
+      <div class="pta-register-head"><div><h4>Student payment register</h4><p id="teacherPtaMessage" role="status">Loading payment information…</p></div><label class="pta-search-wrap" for="teacherPtaSearch"><span aria-hidden="true">⌕</span><input id="teacherPtaSearch" type="search" placeholder="Search name or admission no." autocomplete="off"></label></div>
+      <div class="pta-table-scroll"><table class="pta-table"><thead><tr><th>S/N</th><th>Student</th><th>Admission No.</th><th>Parent / Guardian</th><th>Payment status</th></tr></thead><tbody id="teacherPtaPaymentsBody"><tr><td colspan="5" class="pta-loading">Loading class payments…</td></tr></tbody></table></div>
+      <div class="pta-register-foot"><span>🔒 Only your assigned class is shown.</span><span>Payment records are saved to the school register.</span></div>
+    </div>
   </section>
 </div>
 
@@ -2800,19 +2823,24 @@ window.renderFormMasterPtaPayments=function(){
  if(!isMaster)return;
  const c=window.activeTeacherConnection||{},ptaClass=String(c.ptaFormMasterClass||"").trim(),classes=ptaClass?[ptaClass]:(typeof teacherAssignedClasses==="function"?teacherAssignedClasses():[]),termKey=document.getElementById("teacherPtaTerm")?.value||"firstTerm";
  const summary=document.getElementById("ptaTeacherSummary");if(summary)summary.textContent=`${c.schoolName||"Connected school"} · Form Master for ${ptaClass}`;
- const allowed=new Set(classes);const records=students.map((s,index)=>({s,index,info:studentInfo(s)})).filter(x=>allowed.has(x.info.className||""));
- const paid=records.filter(x=>String(x.s[8]?.ptaPayments?.[termKey]?.status||"").toLowerCase()==="paid").length;
- if(message)message.textContent=`${c.assignedClass||classes.join(", ")||"Assigned class"} · ${records.length} student(s) · ${paid} paid · ${records.length-paid} not paid · ${ptaTeacherTermLabel()}.`;
- body.replaceChildren();if(!records.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=6;td.textContent="No students are loaded for your assigned class. Ask the registrar to check your class assignment.";td.style.padding="14px";tr.append(td);body.append(tr);return;}
+ const allowed=new Set(classes);const allRecords=students.map((s,index)=>({s,index,info:studentInfo(s)})).filter(x=>allowed.has(x.info.className||""));
+ const paid=allRecords.filter(x=>String(x.s[8]?.ptaPayments?.[termKey]?.status||"").toLowerCase()==="paid").length;
+ const totalEl=document.getElementById("ptaTotalStudents"),paidEl=document.getElementById("ptaPaidStudents"),pendingEl=document.getElementById("ptaPendingStudents"),paidAmountEl=document.getElementById("ptaPaidAmount"),pendingAmountEl=document.getElementById("ptaPendingAmount");
+ if(totalEl)totalEl.textContent=allRecords.length;if(paidEl)paidEl.textContent=paid;if(pendingEl)pendingEl.textContent=allRecords.length-paid;if(paidAmountEl)paidAmountEl.textContent="₦"+(paid*200).toLocaleString()+" collected";if(pendingAmountEl)pendingAmountEl.textContent="₦"+((allRecords.length-paid)*200).toLocaleString()+" remaining";
+ const search=String(document.getElementById("teacherPtaSearch")?.value||"").trim().toLowerCase();const records=allRecords.filter(x=>!search||[x.s[1],x.s[0],x.info.phone].some(v=>String(v||"").toLowerCase().includes(search)));
+ if(message)message.textContent=`${c.assignedClass||classes.join(", ")||"Assigned class"} · ${allRecords.length} student(s) · ${paid} paid · ${allRecords.length-paid} outstanding · ${ptaTeacherTermLabel()}.`;
+ body.replaceChildren();if(!records.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=5;td.className="pta-empty";td.textContent=allRecords.length?("No students match “"+search+"”.") : "No students are loaded for your assigned class. Ask the registrar to check your class assignment.";tr.append(td);body.append(tr);return;}
  records.forEach((x,n)=>{
   const s=x.s,info=x.info,payment=s[8]?.ptaPayments?.[termKey]||{},isPaid=String(payment.status||"").toLowerCase()==="paid",tr=document.createElement("tr");
-  const photo=info.photo?`<img src="${ptaTeacherEscape(info.photo)}" alt="Student photo" style="width:44px;height:52px;object-fit:cover;border-radius:7px">`:'<span aria-label="No photo">👤</span>';
+  const photo=info.photo?`<img class="pta-student-photo" src="${ptaTeacherEscape(info.photo)}" alt="${ptaTeacherEscape(s[1]||"Student")} photo">`:'<span class="pta-student-photo" aria-label="No photo">👤</span>';
   const phone=String(info.phone||"").trim(),tel=phone.replace(/[^\d+]/g,"");
-  const cells=[String(n+1),photo,ptaTeacherEscape(s[1]||"Student"),ptaTeacherEscape(s[0]||"—"),phone?`<a href="tel:${ptaTeacherEscape(tel)}" style="display:inline-block;padding:7px 10px;background:#e7f8ee;color:#166534;border-radius:8px;text-decoration:none;font-weight:700">📞 Call ${ptaTeacherEscape(phone)}</a>`:'<span style="color:#9ca3af">No guardian number</span>'];
-  cells.forEach((val,i)=>{const td=document.createElement("td");td.style.cssText="padding:10px;border-bottom:1px solid #e5e7eb;vertical-align:middle";if(i===1)td.innerHTML=val;else if(i===4)td.innerHTML=val;else td.textContent=val;tr.append(td)});
-  const actionTd=document.createElement("td");actionTd.style.cssText="padding:10px;border-bottom:1px solid #e5e7eb;vertical-align:middle";
-  if(isPaid){const badge=document.createElement("span");badge.textContent="✓ PAID";badge.style.cssText="display:inline-block;padding:8px 12px;border-radius:20px;background:#dcfce7;color:#166534;font-weight:800;font-size:12px";actionTd.append(badge);const meta=document.createElement("small");meta.style.cssText="display:block;color:#667085;margin-top:5px";meta.textContent="₦200 · "+(payment.markedAt?.toDate?payment.markedAt.toDate().toLocaleDateString():payment.markedAtText||"Confirmed");actionTd.append(meta)}
-  else{const btn=document.createElement("button");btn.type="button";btn.textContent="MARK AS PAID · ₦200";btn.style.cssText="padding:9px 11px;border:0;border-radius:8px;background:#087f5b;color:#fff;font-weight:800;font-size:12px";btn.addEventListener("click",async()=>{
+  const snTd=document.createElement("td");snTd.textContent=String(n+1);tr.append(snTd);
+  const studentTd=document.createElement("td");studentTd.innerHTML=`<div class="pta-student-cell">${photo}<div><span class="pta-student-name">${ptaTeacherEscape(s[1]||"Student")}</span><small class="pta-student-sub">${ptaTeacherEscape(info.className||ptaClass)}</small></div></div>`;tr.append(studentTd);
+  const admissionTd=document.createElement("td");admissionTd.textContent=String(s[0]||"—");tr.append(admissionTd);
+  const contactTd=document.createElement("td");contactTd.innerHTML=phone?`<a class="pta-call-link" href="tel:${ptaTeacherEscape(tel)}">☎ Call guardian</a><small class="pta-student-sub">${ptaTeacherEscape(phone)}</small>`:'<span style="color:#9ca39e">No guardian number</span>';tr.append(contactTd);
+  const actionTd=document.createElement("td");
+  if(isPaid){const badge=document.createElement("span");badge.className="pta-paid-badge";badge.textContent="✓ PAID";actionTd.append(badge);const meta=document.createElement("small");meta.className="pta-paid-meta";meta.textContent="₦200 · "+(payment.markedAt?.toDate?payment.markedAt.toDate().toLocaleDateString():payment.markedAtText||"Confirmed");actionTd.append(meta)}
+  else{const btn=document.createElement("button");btn.type="button";btn.className="pta-mark-btn";btn.textContent="MARK AS PAID · ₦200";btn.addEventListener("click",async()=>{
     if(!confirm(`Confirm that you received the full ₦200 PTA payment for ${s[1]||"this student"} (${ptaTeacherTermLabel()})?`))return;
     const db=window.teacherFirestore,fns=window.firebaseFirestoreFns,uid=window.firebaseTeacherUID,conn=window.activeTeacherConnection,sid=s[8]?.schoolStudentId;
     if(!db||!fns||!uid||!conn?.schoolId||!sid){alert("The official student record or school connection is unavailable. Please refresh and try again.");return}
@@ -2834,6 +2862,7 @@ window.renderFormMasterPtaPayments=function(){
  });
 };
 document.getElementById("teacherPtaTerm")?.addEventListener("change",()=>window.renderFormMasterPtaPayments());
+document.getElementById("teacherPtaSearch")?.addEventListener("input",()=>window.renderFormMasterPtaPayments());
 function viewStudentResult(i){
  currentStudentIndex=i;
  const s=students[i];
