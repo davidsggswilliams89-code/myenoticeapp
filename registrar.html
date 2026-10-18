@@ -160,13 +160,12 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
  <span id="ptaSummaryBalance">₦0.00</span>
 </div>
 <div class="card" style="margin:0 0 18px">
- <h3>📚 Class-by-Class PTA Report</h3><p class="muted">Shows how many pupils have paid in each term and the money collected for that class.</p>
+ <h3>📚 Class-by-Class PTA Report</h3>
  <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:820px"><thead><tr><th>Class</th><th>Pupils</th><th>First Term Paid</th><th>Second Term Paid</th><th>Third Term Paid</th><th>Total Received</th><th>Remaining</th></tr></thead><tbody id="ptaClassReportBody"><tr><td colspan="7">Loading class report…</td></tr></tbody></table></div>
 </div>
 <div class="card" style="margin:0">
- <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><div><h3 style="margin:0 0 5px">👥 Student PTA Register</h3><p class="muted" style="margin:0">The register updates from the same official student records used by Form Masters and parents.</p></div><button type="button" id="refreshPtaPayments" class="secondary">Refresh Report</button></div>
+ <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><h3 style="margin:0">👥 Student PTA Register</h3></div>
  <div class="grid" style="gap:0 12px;margin:12px 0"><div><label for="ptaSearch">Search by pupil name or admission number</label><input id="ptaSearch" type="search" placeholder="Search pupils…"></div><div><label for="ptaClassFilter">Class</label><select id="ptaClassFilter"><option value="all">All classes</option></select></div></div>
- <p id="ptaRegisterMessage" class="muted" aria-live="polite">Loading PTA payment register…</p>
  <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:900px"><thead><tr><th>Admission No.</th><th>Pupil Name</th><th>Class</th><th>First Term</th><th>Second Term</th><th>Third Term</th><th>Amount Received</th><th>Balance</th><th>Overall Status</th></tr></thead><tbody id="ptaPaymentsBody"><tr><td colspan="9">Loading…</td></tr></tbody></table></div>
 </div>
 </section>
@@ -547,7 +546,7 @@ function renderPtaRegister(){
  const body=$("ptaPaymentsBody"),message=$("ptaRegisterMessage");if(!body)return;body.replaceChildren();
  const search=String($("ptaSearch")?.value||"").trim().toLowerCase(),classFilter=$("ptaClassFilter")?.value||"all";
  const rows=ptaStudentCache.filter(st=>{const name=String(st.name||st.fullName||"").toLowerCase(),adm=String(st.admissionNumber||"").toLowerCase(),cls=st.className||st.class||"";return (!search||name.includes(search)||adm.includes(search))&&(classFilter==="all"||cls===classFilter)}).sort((a,b)=>String(a.className||a.class||"").localeCompare(String(b.className||b.class||""))||String(a.name||a.fullName||"").localeCompare(String(b.name||b.fullName||"")));
- if(message)message.textContent=`Showing ${rows.length} of ${ptaStudentCache.length} pupil(s). PTA is ₦200 per term, ₦600 for all three terms.`;
+ if(message)message.textContent="";
  if(!rows.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=9;td.textContent=ptaStudentCache.length?"No pupils match the selected filters.":"No official pupils found. Register pupils in the Students section first.";td.style.padding="18px";tr.append(td);body.append(tr);}
  rows.forEach(st=>{const tr=document.createElement("tr");[st.admissionNumber||"—",st.name||st.fullName||"Unnamed pupil",st.className||st.class||"—"].forEach(v=>{const td=document.createElement("td");td.textContent=String(v);tr.append(td)});PTA_TERM_KEYS.forEach(key=>{const td=document.createElement("td");td.append(ptaBadge(st,key));tr.append(td)});const paid=ptaMoneyFromTerms(st),balance=600-paid;[formatNaira(paid),formatNaira(balance),ptaPaidTermCount(st)===3?"FULLY PAID":"PAYMENT REMAINING"].forEach(v=>{const td=document.createElement("td");td.textContent=v;tr.append(td)});body.append(tr)});
  renderPtaClassReport();
@@ -573,7 +572,7 @@ async function loadPtaPayments(){
 }
 ["ptaSearch","ptaClassFilter"].forEach(id=>$(id)?.addEventListener(id==="ptaSearch"?"input":"change",renderPtaRegister));
 ["ptaClassAccountFilter","ptaClassAccountTermFilter"].forEach(id=>$(id)?.addEventListener("change",renderPtaClassAccountStats));
-$("refreshPtaPayments")?.addEventListener("click",async()=>{await loadPtaPayments();await refreshDashboardStatistics(currentSchoolData)});
+
 
 let activeRegistrarPage="dashboard";
 function showRegistrarPage(page){
