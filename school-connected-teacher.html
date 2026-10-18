@@ -1580,7 +1580,7 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
     <span class="navicon">🗓️</span>
     <span>Academic Session</span>
   </button>
-  <button class="topnav-item" id="formMasterPtaNav" style="display:none" onclick="openFormMasterPta(this)">
+  <button class="topnav-item" id="formMasterPtaNav" style="display:none" onclick="window.location.href='pta-payment.html'">
     <span class="navicon">💳</span>
     <span>PTA Payments</span>
   </button>
@@ -1856,24 +1856,7 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
     </div>
   </div>
 
-  <section id="formMasterPtaSection" class="student-card pta-dashboard" style="display:none" aria-labelledby="ptaDashboardTitle">
-    <div class="pta-hero">
-      <div class="pta-hero-icon" aria-hidden="true">💳</div>
-      <div class="pta-hero-copy"><span class="pta-eyebrow">FORM MASTER • PAYMENT REGISTER</span><h3 id="ptaDashboardTitle">PTA Payments</h3><p id="ptaTeacherSummary">Manage PTA payments for your assigned class.</p></div>
-      <label class="pta-term-control" for="teacherPtaTerm">Academic term<select id="teacherPtaTerm"><option value="firstTerm">First Term</option><option value="secondTerm">Second Term</option><option value="thirdTerm">Third Term</option></select></label>
-    </div>
-    <div class="pta-fee-note"><span class="pta-fee-icon">₦</span><div><strong>PTA fee: ₦200 per student</strong><small>Confirm you have received the full payment before marking a student as paid. A payment can only be recorded once per term.</small></div></div>
-    <div class="pta-stat-grid" aria-label="Payment summary">
-      <article class="pta-stat pta-stat-total"><span class="pta-stat-icon">👥</span><div><small>Total students</small><strong id="ptaTotalStudents">0</strong><span class="pta-stat-foot">Assigned class</span></div></article>
-      <article class="pta-stat pta-stat-paid"><span class="pta-stat-icon">✓</span><div><small>Paid</small><strong id="ptaPaidStudents">0</strong><span class="pta-stat-foot" id="ptaPaidAmount">₦0 collected</span></div></article>
-      <article class="pta-stat pta-stat-pending"><span class="pta-stat-icon">◷</span><div><small>Outstanding</small><strong id="ptaPendingStudents">0</strong><span class="pta-stat-foot" id="ptaPendingAmount">₦0 remaining</span></div></article>
-    </div>
-    <div class="pta-register-card">
-      <div class="pta-register-head"><div><h4>Student payment register</h4><p id="teacherPtaMessage" role="status">Loading payment information…</p></div><label class="pta-search-wrap" for="teacherPtaSearch"><span aria-hidden="true">⌕</span><input id="teacherPtaSearch" type="search" placeholder="Search name or admission no." autocomplete="off"></label></div>
-      <div class="pta-table-scroll"><table class="pta-table"><thead><tr><th>S/N</th><th>Student</th><th>Admission No.</th><th>Parent / Guardian</th><th>Payment status</th></tr></thead><tbody id="teacherPtaPaymentsBody"><tr><td colspan="5" class="pta-loading">Loading class payments…</td></tr></tbody></table></div>
-      <div class="pta-register-foot"><span>🔒 Only your assigned class is shown.</span><span>Payment records are saved to the school register.</span></div>
-    </div>
-  </section>
+
 </div>
 
 
@@ -2816,11 +2799,11 @@ window.openFormMasterPta=function(button){
  if(typeof window.renderFormMasterPtaPayments==="function")window.renderFormMasterPtaPayments();
 };
 window.renderFormMasterPtaPayments=function(){
- const section=document.getElementById("formMasterPtaSection"),body=document.getElementById("teacherPtaPaymentsBody"),message=document.getElementById("teacherPtaMessage");if(!section||!body)return;
  const isMaster=ptaTeacherIsFormMaster(),nav=document.getElementById("formMasterPtaNav");
  if(nav)nav.style.display=isMaster?"flex":"none";
- section.style.display=isMaster?"block":"none";
- if(!isMaster)return;
+ // PTA Payments is managed by the dedicated pta-payment.html page.
+ // Do not render a duplicate payment register inside this teacher dashboard.
+ return;
  const c=window.activeTeacherConnection||{},ptaClass=String(c.ptaFormMasterClass||"").trim(),classes=ptaClass?[ptaClass]:(typeof teacherAssignedClasses==="function"?teacherAssignedClasses():[]),termKey=document.getElementById("teacherPtaTerm")?.value||"firstTerm";
  const summary=document.getElementById("ptaTeacherSummary");if(summary)summary.textContent=`${c.schoolName||"Connected school"} · Form Master for ${ptaClass}`;
  const allowed=new Set(classes);const allRecords=students.map((s,index)=>({s,index,info:studentInfo(s)})).filter(x=>allowed.has(x.info.className||""));
