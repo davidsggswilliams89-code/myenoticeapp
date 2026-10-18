@@ -92,6 +92,16 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 .connected-parent-row:last-child{border-bottom:0}.connected-parent-number{font-weight:700;color:var(--muted)}.connected-parent-name{font-weight:600;overflow-wrap:anywhere}.connected-parent-phone{color:var(--muted);overflow-wrap:anywhere}.connected-parent-disconnect{white-space:nowrap}
 @media(max-width:520px){.connected-parent-row{grid-template-columns:26px minmax(0,1fr) auto;gap:8px}.connected-parent-phone{grid-column:2;grid-row:2;font-size:13px}.connected-parent-disconnect{grid-column:3;grid-row:1/ span 2;white-space:normal;padding:7px 9px;font-size:12px}}
 
+
+/* Keep timetable time ranges and class labels on one horizontal line. */
+#timetableRows td:nth-child(2), #timetableRows td:nth-child(3),
+#examTimetableRows td:nth-child(2), #examTimetableRows td:nth-child(3) {
+  white-space: nowrap;
+  min-width: max-content;
+}
+#timetableRows td:nth-child(2), #examTimetableRows td:nth-child(2) { min-width: 125px; }
+#timetableRows td:nth-child(3), #examTimetableRows td:nth-child(3) { min-width: 105px; }
+
 </style>
 </head>
 <body>
