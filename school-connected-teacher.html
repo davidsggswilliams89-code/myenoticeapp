@@ -2506,7 +2506,7 @@ window.loadStudentsFromFirestore=async function(){
   }
   if(mode==="school-connected"&&isConnected){
    const pairClasses=teacherAssignedPairs().map(a=>a.className||a.class).filter(Boolean);
-   const classes=[...new Set(pairClasses.length?pairClasses:teacherAssignedClasses())];
+   const classes=[...new Set([...(pairClasses.length?pairClasses:teacherAssignedClasses()),...(c.ptaFormMaster===true&&c.ptaFormMasterClass?[c.ptaFormMasterClass]:[])])];
    if(!classes.length)throw new Error("Your school connection is active, but the registrar has not assigned any classes yet.");
    const ref=window.firebaseFirestoreFns.collection(db,"schools",c.schoolId,"students"),snaps=[];
    for(let i=0;i<classes.length;i+=10){snaps.push(await window.firebaseFirestoreFns.getDocs(window.firebaseFirestoreFns.query(ref,window.firebaseFirestoreFns.where("className","in",classes.slice(i,i+10)))));}
@@ -2780,11 +2780,11 @@ function renderStudents(){
 
 function ptaTeacherEscape(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;", "'":"&#39;"}[c]));}
 function ptaTeacherTermLabel(){const sel=document.getElementById("teacherPtaTerm");return sel?.selectedOptions?.[0]?.textContent||"First Term";}
-function ptaTeacherIsFormMaster(){const c=window.activeTeacherConnection||{};return (window.TEACHER_DASHBOARD_MODE||"")==="school-connected"&&["connected","approved","active"].includes(String(c.status||"").toLowerCase())&&String(c.assignedRole||"").trim().toLowerCase()==="form master";}
+function ptaTeacherIsFormMaster(){const c=window.activeTeacherConnection||{};return (window.TEACHER_DASHBOARD_MODE||"")==="school-connected"&&["connected","approved","active"].includes(String(c.status||"").toLowerCase())&&(c.ptaFormMaster===true||String(c.assignedRole||"").trim().toLowerCase()==="form master");}
 window.renderFormMasterPtaPayments=function(){
  const section=document.getElementById("formMasterPtaSection"),body=document.getElementById("teacherPtaPaymentsBody"),message=document.getElementById("teacherPtaMessage");if(!section||!body)return;
  const isMaster=ptaTeacherIsFormMaster();section.style.display=isMaster?"block":"none";if(!isMaster)return;
- const c=window.activeTeacherConnection||{},classes=c.assignedClass?[c.assignedClass]:(typeof teacherAssignedClasses==="function"?teacherAssignedClasses():[]),termKey=document.getElementById("teacherPtaTerm")?.value||"firstTerm";
+ const c=window.activeTeacherConnection||{},ptaClass=String(c.ptaFormMasterClass||c.assignedClass||"").trim(),classes=ptaClass?[ptaClass]:(typeof teacherAssignedClasses==="function"?teacherAssignedClasses():[]),termKey=document.getElementById("teacherPtaTerm")?.value||"firstTerm";
  const allowed=new Set(classes);const records=students.map((s,index)=>({s,index,info:studentInfo(s)})).filter(x=>allowed.has(x.info.className||""));
  const paid=records.filter(x=>String(x.s[8]?.ptaPayments?.[termKey]?.status||"").toLowerCase()==="paid").length;
  if(message)message.textContent=`${c.assignedClass||classes.join(", ")||"Assigned class"} · ${records.length} student(s) · ${paid} paid · ${records.length-paid} not paid · ${ptaTeacherTermLabel()}.`;
@@ -4650,7 +4650,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
 <script type="module" id="firebase-auth-module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut, updateProfile, deleteUser, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-  import { getFirestore, collection, doc, getDoc, getDocs, addDoc, setDoc, deleteDoc, serverTimestamp, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+  import { getFirestore, collection, doc, getDoc, getDocs, addDoc, setDoc, deleteDoc, serverTimestamp, query, where, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAyqE3tESdUlDPtAdmEa8pYsviiX2J8ltM",
@@ -4664,7 +4664,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  window.firebaseFirestoreFns = { collection, doc, getDoc, getDocs, addDoc, setDoc, deleteDoc, serverTimestamp, query, where, updateDoc };
+  window.firebaseFirestoreFns = { collection, doc, getDoc, getDocs, addDoc, setDoc, deleteDoc, serverTimestamp, query, where, updateDoc, onSnapshot };
   try { await setPersistence(auth, browserLocalPersistence); } catch(err) { console.error("Firebase auth persistence setup failed:", err); }
   window.firebaseApp = app;
   window.teacherFirebaseAuth = auth;
@@ -4859,6 +4859,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     const snap=await getDoc(doc(db,'teachers',user.uid));return snap.exists()?snap.data():{};
   }
   let activeTeacherConnection=null;
+  let teacherConnectionLiveUnsubscribe=null;
   function renderTeacherAssignments(record){
     const box=document.getElementById('dynamicMyClasses');if(!box)return;box.replaceChildren();
     const classes=record?.assignedClasses?.length?record.assignedClasses:(record?.assignedClass?[record.assignedClass]:[]);
@@ -4877,6 +4878,19 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   function showTeacherConnectionStatus(text,type='info'){
     const el=document.getElementById('teacherSchoolConnectionStatus');if(!el)return;
     el.textContent=text;el.style.background=type==='success'?'#dcfce7':type==='error'?'#fee2e2':'#fff';el.style.color=type==='success'?'#166534':type==='error'?'#991b1b':'#334155';
+  }
+  function watchTeacherConnectionRecord(record){
+    if(typeof teacherConnectionLiveUnsubscribe==="function"){teacherConnectionLiveUnsubscribe();teacherConnectionLiveUnsubscribe=null;}
+    if(!record?.id||!window.firebaseFirestoreFns?.onSnapshot)return;
+    try{
+      teacherConnectionLiveUnsubscribe=window.firebaseFirestoreFns.onSnapshot(window.firebaseFirestoreFns.doc(db,"teacherConnectionRequests",record.id),async snap=>{
+        if(!snap.exists())return;
+        const latest={id:snap.id,...snap.data()};
+        activeTeacherConnection=latest;window.activeTeacherConnection=latest;
+        if(typeof window.loadStudentsFromFirestore==="function")await window.loadStudentsFromFirestore();
+        if(typeof window.renderFormMasterPtaPayments==="function")window.renderFormMasterPtaPayments();
+      },err=>console.warn("Live Form Master assignment updates unavailable:",err));
+    }catch(e){console.warn("Could not listen for Form Master changes:",e);}
   }
   async function refreshTeacherSchoolConnection(){
     try{
@@ -4922,6 +4936,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         return;
       }
       activeTeacherConnection=r;window.activeTeacherConnection=r;
+      watchTeacherConnectionRecord(r);
       renderTeacherAssignments(r);
       window.dispatchEvent(new Event('teacherAccountContextChanged'));
       if(typeof window.applyAssignedClassFilters==='function'&&teacherIsSchoolConnected())window.applyAssignedClassFilters();
