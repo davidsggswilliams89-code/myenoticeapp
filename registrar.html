@@ -933,18 +933,32 @@ async function loadPtaPayments(){
 ["ptaClassAccountFilter","ptaClassAccountTermFilter"].forEach(id=>$(id)?.addEventListener("change",renderPtaClassAccountStats));
 
 
-let activeRegistrarPage="dashboard";
-function showRegistrarPage(page){
- const validPages=["dashboard","classes","teachers","students","payments","timetable","exams","academic","parents"];
- if(!validPages.includes(page))page="dashboard";
+const REGISTRAR_PAGE_KEY="registrarPortalActivePage";
+const REGISTRAR_VALID_PAGES=["dashboard","classes","teachers","students","payments","timetable","exams","academic","parents"];
+function getSavedRegistrarPage(){
+ const fromHash=String(window.location.hash||"").replace(/^#(?:page=)?/,"").trim();
+ let saved="";
+ try{saved=sessionStorage.getItem(REGISTRAR_PAGE_KEY)||localStorage.getItem(REGISTRAR_PAGE_KEY)||""}catch(e){}
+ const candidate=REGISTRAR_VALID_PAGES.includes(fromHash)?fromHash:saved;
+ return REGISTRAR_VALID_PAGES.includes(candidate)?candidate:"dashboard";
+}
+let activeRegistrarPage=getSavedRegistrarPage();
+function showRegistrarPage(page,options={}){
+ if(!REGISTRAR_VALID_PAGES.includes(page))page="dashboard";
  activeRegistrarPage=page;
+ try{sessionStorage.setItem(REGISTRAR_PAGE_KEY,page);localStorage.setItem(REGISTRAR_PAGE_KEY,page)}catch(e){}
+ // Keep the current section in the URL too, so a refresh restores this exact section.
+ if(options.updateUrl!==false && window.location.hash!=="#"+page){
+  try{history.replaceState(null,"",window.location.pathname+window.location.search+"#"+page)}catch(e){window.location.hash=page}
+ }
  document.querySelectorAll("#registrarNav button[data-page]").forEach(btn=>btn.classList.toggle("active",btn.dataset.page===page));
  document.querySelectorAll("[data-page-panel]").forEach(panel=>panel.classList.toggle("page-hidden",panel.dataset.pagePanel!==page));
  ["dashboardTop"].forEach(id=>$(id)?.classList.toggle("page-hidden",page!=="dashboard"));
  document.querySelectorAll(".dashboard-heading,.dashboard-stats").forEach(el=>el.classList.toggle("page-hidden",page!=="dashboard"));
- window.scrollTo({top:0,behavior:"smooth"});
+ if(options.scroll!==false)window.scrollTo({top:0,behavior:options.smooth===false?"auto":"smooth"});
 }
 document.querySelectorAll("#registrarNav button[data-page]").forEach(btn=>btn.addEventListener("click",()=>{showRegistrarPage(btn.dataset.page);if(btn.dataset.page==="parents")loadParentRequests();if(btn.dataset.page==="payments")loadPtaPayments();}));
+window.addEventListener("hashchange",()=>{const page=String(window.location.hash||"").replace(/^#(?:page=)?/,"");if(REGISTRAR_VALID_PAGES.includes(page))showRegistrarPage(page,{updateUrl:false,scroll:false});});
 
 async function uploadSchoolPhoto(file,uid){if(!file)throw new Error("Please select a school photo.");if(!file.type.startsWith("image/"))throw new Error("Please select an image file.");if(file.size>10*1024*1024)throw new Error("School photo must be 10 MB or smaller.");const formData=new FormData();formData.append("file",file);formData.append("upload_preset","Obaestate");formData.append("folder","schools/"+uid);formData.append("public_id","school_profile_"+Date.now());const response=await fetch("https://api.cloudinary.com/v1_1/hjdnytcb/image/upload",{method:"POST",body:formData});const result=await response.json();if(!response.ok||!result.secure_url)throw new Error(result.error?.message||"Cloudinary upload failed.");return result.secure_url}
 $("schoolPhotoFile").addEventListener("change",()=>{const file=$("schoolPhotoFile").files?.[0];if(!file)return;const preview=$("schoolPhotoPreview");preview.src=URL.createObjectURL(file);preview.classList.remove("hidden")});
