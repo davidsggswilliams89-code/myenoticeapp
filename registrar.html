@@ -601,6 +601,22 @@ async function updatePtaFormMaster(record,className,remove=false,button=null){
  if(remove&&!confirm("Remove PTA Form Master access from "+label+"? Their previous payment records will be preserved."))return;
  if(button){button.disabled=true;button.textContent=remove?"Removing…":"Saving…";}
  try{
+  // Preflight the same registrar/school ownership conditions required by Firestore rules.
+  // This provides a specific message instead of a generic permission-denied error.
+  const registrarSnap=await getDoc(doc(db,"registrars",user.uid));
+  if(!registrarSnap.exists()) throw new Error("Your registrar profile is missing from registrars/"+user.uid+".");
+  const registrarData=registrarSnap.data()||{};
+  if(String(registrarData.role||"").trim().toLowerCase()!=="registrar")
+   throw new Error("Your registrar profile role must be exactly 'registrar'. Current role: "+String(registrarData.role||"(missing)"));
+  const schoolSnap=await getDoc(doc(db,"schools",profile.schoolId));
+  if(!schoolSnap.exists()) throw new Error("School document schools/"+profile.schoolId+" does not exist.");
+  const schoolData=schoolSnap.data()||{};
+  const owns=schoolData.createdBy===user.uid || schoolData.registrarUid===user.uid || schoolData.ownerUid===user.uid || registrarData.schoolId===profile.schoolId;
+  if(!owns) throw new Error("Firestore ownership check failed: none of schools/"+profile.schoolId+".createdBy, registrarUid, ownerUid, or registrars/"+user.uid+".schoolId matches the signed-in registrar and this school. Update the correct ownership field in Firestore Console.");
+  if(record.schoolId && record.schoolId!==profile.schoolId)
+   throw new Error("The selected teacher connection belongs to a different school (connection schoolId does not match your registrar schoolId).");
+  if(!["connected","approved","active"].includes(String(record.status||"").toLowerCase()))
+   throw new Error("This teacher connection is not active. Refresh the connected-teacher list and try again.");
   const isLegacyMaster=String(record.assignedRole||"").trim().toLowerCase()==="form master";
   const restoreRole=record.ptaPreviousAssignedRole||(isLegacyMaster?"Class Teacher":record.assignedRole||"Class Teacher");
   const patch=remove?{ptaFormMaster:false,ptaFormMasterClass:"",...(isLegacyMaster?{assignedRole:restoreRole}:{}),ptaFormMasterRemovedAt:serverTimestamp(),ptaFormMasterUpdatedAt:serverTimestamp(),updatedAt:serverTimestamp()}:{ptaFormMaster:true,ptaFormMasterClass:className,ptaPreviousAssignedRole:isLegacyMaster?(record.ptaPreviousAssignedRole||"Class Teacher"):(record.assignedRole||"Class Teacher"),ptaFormMasterAssignedBy:user.uid,ptaFormMasterAssignedAt:record.ptaFormMaster? (record.ptaFormMasterAssignedAt||serverTimestamp()):serverTimestamp(),ptaFormMasterUpdatedAt:serverTimestamp(),updatedAt:serverTimestamp()};
@@ -626,7 +642,7 @@ async function updatePtaFormMaster(record,className,remove=false,button=null){
   console.error("Could not update Form Master assignment",e);
   const code=e?.code?(" ["+e.code+"]"):"";
   const detail=e?.code==="permission-denied"
-   ?" Firebase rejected the write. Check that the signed-in registrar owns this school and that Firestore rules allow this registrar to update both teacherConnectionRequests and schoolTeachers."
+   ?" Firebase rejected a database operation. Confirm registrars/"+user.uid+" has role='registrar', the school ownership fields match this UID, and the teacher connection belongs to the same school. Check the browser console for the failed operation."
    :"";
   ptaFormMasterStatus("Could not update assignment"+code+": "+(e.message||"Unknown Firebase error.")+detail,"error");
   if(button){button.disabled=false;button.textContent=remove?"Remove Form Master":"Assign Form Master";}
