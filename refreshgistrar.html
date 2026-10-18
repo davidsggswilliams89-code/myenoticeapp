@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>my e-notice app | Registrar Portal</title>
+<style>
+:root{--g:#176b45;--gd:#104b32;--bg:#f3f7f4;--line:#dce6df;--muted:#65736a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#17251d;font:16px Arial,sans-serif}
+header{background:var(--gd);color:white;padding:14px 5%;display:flex;align-items:center;justify-content:center;gap:10px;min-height:96px}
+.brand{display:flex;align-items:center;justify-content:center;gap:14px;width:100%;max-width:720px;text-align:center}
+.logo{width:60px;height:60px;flex:0 0 60px;background:white;color:var(--gd);font-weight:bold;border-radius:50%;display:grid;place-items:center;padding:4px;overflow:hidden}
+.logo img{width:100%;height:100%;object-fit:contain;border-radius:50%;display:block}
+.brand-copy{min-width:0;flex:1}
+h1{font-size:clamp(25px,5vw,34px);line-height:1.15;margin:0 0 8px;text-align:center;font-weight:800}
+header p{margin:0;font-size:16px;opacity:.9;text-align:center;line-height:1.25}header p{margin:0;font-size:14px;opacity:.85;text-align:center}
+#signOut{position:static;right:auto;top:auto}.registrar-nav .nav-logout{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.3);color:#fff}.registrar-nav .nav-logout:hover{background:#fff;color:#075c51}
+@media(max-width:700px){header{padding:14px 12px;min-height:104px}.brand{gap:12px}.logo{width:64px;height:64px;flex-basis:64px}h1{font-size:25px}header p{font-size:12px}#signOut{padding:8px 12px;font-size:11px}}
+main{max-width:1050px;margin:26px auto;padding:0 16px}.hero{display:none!important;background:linear-gradient(120deg,var(--g),#278657);color:white;padding:26px;border-radius:16px;margin-bottom:20px}
+.hero h2{margin:0 0 8px;font-size:clamp(24px,4vw,34px)}.hero p{margin:0;line-height:1.5}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.card{background:white;border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:18px}
+h3{margin:0 0 8px}.muted{color:var(--muted);font-size:14px;line-height:1.5;margin:0 0 16px}
+label{display:block;font-size:13px;font-weight:bold;margin:13px 0 6px}input,select{width:100%;padding:12px;border:1px solid #cbd8cf;border-radius:8px;font:inherit}table th,table td{padding:10px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}table th{background:#f4f8f5;color:#445248}
+button{cursor:pointer;border-radius:9px;padding:11px 15px;font-weight:bold;font:inherit}.primary{background:var(--g);border:0;color:white}.primary:hover{background:var(--gd)}.secondary{background:white;border:1px solid var(--line);color:#17251d}.full{width:100%;margin-top:17px}
+.notice{padding:12px 14px;border-radius:9px;margin-bottom:16px;font-size:14px;line-height:1.45}.info{background:#eef5ff;color:#234f83}.error{background:#fff0f0;color:#a82929}.success{background:#eaf5ee;color:var(--gd)}
+.hidden{display:none!important}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0}.stat span{display:block;color:var(--muted);font-size:12px;margin-bottom:8px}.stat strong{font-size:18px}
+.details{display:grid;grid-template-columns:1fr 1fr;gap:12px}.item{border:1px solid var(--line);border-radius:9px;padding:13px;overflow-wrap:anywhere}.item small{display:block;color:var(--muted);margin-bottom:6px}
+ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+@media(max-width:700px){.grid,.details{grid-template-columns:1fr}.stats{grid-template-columns:1fr}.card{padding:17px}header{padding:12px 14px;min-height:86px}.brand{gap:10px}.logo{width:52px;height:52px;flex-basis:52px}h1{font-size:clamp(23px,5.5vw,29px);margin-bottom:6px}header p{font-size:14px}}
+/* Comfortable, mobile-friendly class/subject assignment rows */
+.assignment-row{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) auto!important;width:100%;min-width:0}
+.assignment-row select{min-width:0;max-width:100%;}
+.assignment-remove{width:auto!important;min-width:0;max-width:100%;padding:8px 12px!important;white-space:normal;justify-self:start;}
+.class-management-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}.class-management-item{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:13px;background:#f8fbf9}.class-management-item input{width:20px;height:20px;flex:0 0 auto}.class-management-item span{font-weight:600}.assignment-hint{display:block;max-width:100%;overflow-wrap:anywhere;word-break:normal;line-height:1.5;margin:0;}
+@media(max-width:560px){.class-management-list{grid-template-columns:1fr}.assignment-row{grid-template-columns:minmax(0,1fr)!important;gap:8px!important;padding:10px!important}.assignment-row select{width:100%;}.assignment-remove{width:auto!important;justify-self:start;}.assignment-hint{font-size:14px;}}
+
+/* Professional registrar dashboard profile and statistic cards */
+.registrar-profile-hero{position:relative;overflow:hidden;text-align:center;padding:30px 20px 24px;border:1px solid #d8e7de;border-radius:20px;background:radial-gradient(circle at top right,#e4f6ee 0,transparent 38%),linear-gradient(135deg,#fff 0%,#f3faf6 100%);box-shadow:0 12px 32px rgba(16,75,50,.07);margin:20px 0 22px}
+.registrar-avatar{width:116px;height:116px;display:grid;place-items:center;margin:0 auto 14px;border-radius:50%;overflow:hidden;border:5px solid #fff;box-shadow:0 0 0 2px #b9ddc9,0 8px 22px rgba(16,75,50,.15);background:linear-gradient(135deg,#176b45,#0aa4a5);color:#fff;font-size:38px;font-weight:800}
+.registrar-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.registrar-profile-hero h2{font-size:clamp(22px,4vw,30px);margin:0 0 7px;color:#123c2a;overflow-wrap:anywhere}
+.registrar-profile-hero .school-name{font-size:15px;font-weight:700;color:#176b45;margin:0 0 16px;overflow-wrap:anywhere}
+.registrar-profile-hero .profile-kicker{font-size:11px;text-transform:uppercase;letter-spacing:1.8px;font-weight:800;color:#6b8174;margin:0 0 12px}
+.registrar-profile-actions{display:flex;justify-content:center;gap:9px;flex-wrap:wrap}
+.dashboard-stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:0 0 24px}
+.dashboard-stats .stat{position:relative;min-width:0;margin:0;padding:18px;border-radius:15px;border:1px solid #e1ebe4;box-shadow:0 5px 18px rgba(16,75,50,.045)}
+.dashboard-stats .stat:before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:0 5px 5px 0;background:var(--stat-accent,#176b45)}
+.dashboard-stats .stat .stat-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:#edf7f0;font-size:20px;margin-bottom:12px}
+.dashboard-stats .stat span{font-size:12px;font-weight:700;line-height:1.4;margin-bottom:7px}
+.dashboard-stats .stat strong{font-size:clamp(22px,3vw,29px);font-weight:800;color:#173b29;overflow-wrap:anywhere}
+.dashboard-stats .stat small{display:block;margin-top:5px;color:#77867c;font-size:11px}
+@media(max-width:800px){.dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Distinct PTA class/school account panels with compact, balanced statistic cards */
+.pta-account-group .payment-stats{gap:10px!important}
+.pta-account-group .payment-stats .stat{padding:13px 14px;border-radius:13px}
+.pta-account-group .payment-stats .stat:before{top:10px;bottom:10px;width:4px}
+.pta-account-group .payment-stats .stat .stat-icon{width:34px;height:34px;border-radius:10px;font-size:19px;margin-bottom:8px}
+.pta-account-group .payment-stats .stat span{font-size:clamp(12px,2vw,15px);line-height:1.3;margin-bottom:5px}
+.pta-account-group .payment-stats .stat strong{font-size:clamp(18px,3vw,25px);line-height:1.2}
+.pta-account-group .payment-stats .stat small{font-size:11px;line-height:1.3;margin-top:5px}
+@media(max-width:420px){.pta-account-group{padding:10px!important}.pta-account-group .payment-stats{gap:8px!important}.pta-account-group .payment-stats .stat{padding:11px 10px}.pta-account-group .payment-stats .stat .stat-icon{width:30px;height:30px;font-size:17px}.pta-account-group .payment-stats .stat strong{font-size:clamp(17px,4.5vw,22px)}}
+\n/* PTA payment summary: keep the four statistics in a 2-by-2 grid on mobile and desktop */
+.payment-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important}
+.payment-stats .stat{position:relative;min-width:0;margin:0;padding:18px;border:1px solid #e1ebe4;border-radius:18px;box-shadow:0 5px 18px rgba(16,75,50,.045);background:#fff}
+.payment-stats .stat:before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:5px;border-radius:0 5px 5px 0;background:var(--stat-accent,#176b45)}
+.payment-stats .stat .stat-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:#edf7f0;font-size:25px;margin-bottom:14px}
+.payment-stats .stat span{display:block;color:#65736a;font-size:clamp(13px,2.5vw,17px);font-weight:700;line-height:1.4;margin-bottom:8px}
+.payment-stats .stat strong{display:block;font-size:clamp(21px,4vw,32px);font-weight:800;color:#173b29;overflow-wrap:anywhere;line-height:1.25}
+.payment-stats .stat small{display:block;margin-top:7px;color:#77867c;font-size:clamp(11px,2vw,14px);line-height:1.4}
+@media(max-width:420px){.payment-stats{gap:10px!important}.payment-stats .stat{padding:15px 12px}.payment-stats .stat .stat-icon{width:38px;height:38px;font-size:21px}.payment-stats .stat strong{font-size:clamp(19px,5vw,25px)}}
+@media(max-width:420px){.registrar-profile-hero{padding:24px 14px}.registrar-avatar{width:100px;height:100px}.dashboard-stats{gap:10px}.dashboard-stats .stat{padding:15px 12px}.dashboard-stats .stat .stat-icon{width:34px;height:34px}}
+
+/* Registrar header/navigation matches the teacher dashboard's green-to-teal tab bar */
+.registrar-nav{position:sticky;top:0;z-index:50;display:flex;gap:7px;overflow-x:auto;white-space:nowrap;padding:7px 10px;background:linear-gradient(90deg,#075c51 0%,#087c60 45%,#0aa4a5 100%);box-shadow:0 5px 18px rgba(7,92,81,.2);scrollbar-width:none}
+.registrar-nav::-webkit-scrollbar{display:none}.registrar-nav button{flex:0 0 auto;min-width:116px;border:1px solid rgba(255,255,255,.18);border-radius:11px;background:rgba(255,255,255,.12);color:#fff;padding:10px 13px;font-size:13px;font-weight:800}.registrar-nav button span{display:block;font-size:18px;margin-bottom:3px}.registrar-nav button:hover,.registrar-nav button.active{background:#fff;color:#075c51}
+.section-anchor{scroll-margin-top:78px}.registrar-page-panel.page-hidden{display:none!important}#dashboardTop.page-hidden,.dashboard-heading.page-hidden,.dashboard-stats.page-hidden{display:none!important}.timetable-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}.timetable-form .wide{grid-column:1/-1}.table-actions{display:flex;gap:7px;flex-wrap:wrap}.small-action{padding:7px 10px;font-size:12px;border:1px solid var(--line);background:#fff;border-radius:7px}.danger-action{color:#a82929;border-color:#f0c9c9}.table-message{margin:10px 0 0;font-size:13px;line-height:1.5}.invigilator-field{min-width:0}
+@media(max-width:600px){.registrar-nav{padding:6px}.registrar-nav button{min-width:95px;padding:8px;font-size:11px}.timetable-form{grid-template-columns:1fr}.timetable-form .wide{grid-column:auto}.section-anchor{scroll-margin-top:72px}}
+@media(max-width:560px){#ptaClassAccountStats{grid-template-columns:repeat(2,minmax(0,1fr))!important}}\n
+/* PTA only: keep the Class-by-Class report heading on one line */
+.pta-class-report-title {
+  white-space: nowrap;
+  font-size: clamp(11px, 3.6vw, 16px);
+  line-height: 1.2;
+}
+@media (min-width: 600px) {
+  .pta-class-report-title {
+    font-size: 16px;
+  }
+}
+
+/* Parent Requests: numbered connected-parent rows with aligned name, phone and disconnect action */
+.connected-parent-row{display:grid;grid-template-columns:34px minmax(0,1fr) minmax(130px,auto) auto;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
+.connected-parent-row:last-child{border-bottom:0}.connected-parent-number{font-weight:700;color:var(--muted)}.connected-parent-name{font-weight:600;overflow-wrap:anywhere}.connected-parent-phone{color:var(--muted);overflow-wrap:anywhere}.connected-parent-disconnect{white-space:nowrap}
+@media(max-width:520px){.connected-parent-row{grid-template-columns:26px minmax(0,1fr) auto;gap:8px}.connected-parent-phone{grid-column:2;grid-row:2;font-size:13px}.connected-parent-disconnect{grid-column:3;grid-row:1/ span 2;white-space:normal;padding:7px 9px;font-size:12px}}
+
+
+/* Align published timetable Edit/Delete controls and keep timetable values on one line. */
+.timetable-row-action{width:68px;min-width:68px;text-align:center;display:inline-block;padding:7px 0;}
+
+/* Keep timetable time ranges and class labels on one horizontal line. */
+#timetableRows td:nth-child(2), #timetableRows td:nth-child(3),
+#examTimetableRows td:nth-child(2), #examTimetableRows td:nth-child(3) {
+  white-space: nowrap;
+  min-width: max-content;
+}
+#timetableRows td:nth-child(2), #examTimetableRows td:nth-child(2) { min-width: 125px; }
+#timetableRows td:nth-child(3), #examTimetableRows td:nth-child(3) { min-width: 105px; }
+
+
+.timetable-print-heading{display:none}
+@media print{
+ @page{size:A4 landscape;margin:12mm}
+ body{background:#fff!important;color:#000!important;font-size:10pt}
+ body *{visibility:hidden!important}
+ #publishedTimetablePrintArea,#publishedTimetablePrintArea *{visibility:visible!important}
+ #publishedTimetablePrintArea{position:absolute!important;left:0!important;top:0!important;width:100%!important;margin:0!important;padding:0!important;border:0!important;background:#fff!important}
+ #publishedTimetablePrintArea h3:first-child{display:none!important}
+ #timetablePrintHeading{display:block!important;text-align:center;margin:0 0 12px!important;color:#000!important}
+ #timetablePrintHeading h2{font-size:18pt;margin:0 0 5px!important}
+ #timetablePrintHeading p{font-size:10pt;margin:3px 0!important}
+ #timetablePrintHeading h3{font-size:14pt;margin:8px 0 0!important}
+ #publishedTimetablePrintArea div[style*="overflow-x:auto"]{overflow:visible!important;margin-top:0!important}
+ #publishedTimetableTable{width:100%!important;min-width:0!important;border-collapse:collapse!important;table-layout:auto!important}
+ #publishedTimetableTable th,#publishedTimetableTable td{visibility:visible!important;border:1px solid #555!important;padding:6px 5px!important;font-size:8.5pt!important;color:#000!important;background:#fff!important;white-space:normal!important}
+ #publishedTimetableTable th{font-weight:bold!important;background:#eee!important}
+ #publishedTimetableTable .timetable-action-column,#publishedTimetableTable td:last-child{display:none!important}
+ #publishedTimetablePrintArea button{display:none!important}
+}
+
+</style>
+</head>
+<body>
+
+<nav id="registrarNav" class="registrar-nav hidden" aria-label="Registrar dashboard navigation">
+<button class="active" data-page="dashboard"><span>🏠</span>Dashboard</button><button data-page="classes"><span>🏫</span>Classes</button><button data-page="teachers"><span>👩‍🏫</span>Teachers</button><button data-page="students"><span>👥</span>Students</button><button data-page="payments"><span>💳</span>PTA Payments</button><button data-page="timetable"><span>📅</span>Timetable</button><button data-page="exams"><span>📝</span>Exam Timetable</button><button data-page="academic"><span>🗓️</span>Academic Session</button><button data-page="parents"><span>👨‍👩‍👧</span>Parent Requests</button><button type="button" id="signOut" class="nav-logout"><span>↪️</span>Logout</button>
+</nav>
+<main>
+<section class="hero"><h2>Welcome to your Registrar Portal</h2><p>Complete your school profile, add the official school photo, and manage your school information from one dashboard.</p></section>
+<div id="message" class="notice hidden" role="status" aria-live="polite"></div>
+<section id="setup" class="card hidden"><h3>Set up your school profile</h3><p class="muted">Enter the school's official details. A unique internal school ID will be generated automatically.</p>
+<form id="schoolForm"><label for="schoolName">Official school name</label><input id="schoolName" required maxlength="160" placeholder="e.g. Bright Future Primary School">
+<label for="schoolPhotoFile">School profile photo / logo</label><input id="schoolPhotoFile" type="file" accept="image/*"><div style="display:flex;align-items:center;gap:12px;margin-top:10px"><img id="schoolPhotoPreview" alt="School profile photo preview" class="hidden" style="width:88px;height:88px;object-fit:contain;background:#f3f7f4;border:1px solid var(--line);border-radius:12px;padding:5px"><span class="muted" style="margin:0">Upload the school's official logo or profile photo. It will be stored in Cloudinary.</span></div><input id="schoolPhotoUrl" type="hidden">
+<label for="schoolType">School type</label><input id="schoolType" required maxlength="80" value="Primary School">
+<label for="schoolAddress">School address</label><input id="schoolAddress" required maxlength="250">
+<label for="schoolPhone">School phone (optional)</label><input id="schoolPhone" type="tel" maxlength="40">
+<label for="session">Current academic session</label><input id="session" required maxlength="30" value="2026/2027">
+<button class="primary full" type="submit">Save school profile</button></form></section>
+<section id="dashboard" class="hidden">
+<div id="dashboardTop" class="section-anchor"></div>
+<section class="registrar-profile-hero dashboard-heading" aria-label="Registrar and school profile">
+<p class="profile-kicker">Registrar Dashboard</p>
+<div id="registrarAvatar" class="registrar-avatar" aria-label="Registrar profile photo">R</div>
+<h2 id="registrarDisplayName">Registrar</h2>
+<p id="registrarSchoolDisplay" class="school-name">School name</p>
+<div class="registrar-profile-actions"><label for="registrarPhotoFile" class="secondary" style="display:inline-flex;align-items:center;justify-content:center;margin:0;cursor:pointer">Change profile photo</label><input id="registrarPhotoFile" type="file" accept="image/*" class="hidden"></div><p id="registrarPhotoStatus" class="muted" aria-live="polite" style="margin:10px 0 0"></p>
+</section>
+<div class="stats dashboard-stats" aria-label="School statistics">
+<div class="card stat" style="--stat-accent:#176b45"><div class="stat-icon">👩‍🏫</div><span>Total Teachers</span><strong id="statTeachers">—</strong><small>Connected to this school</small></div>
+<div class="card stat" style="--stat-accent:#2877b9"><div class="stat-icon">👥</div><span>Total Students</span><strong id="statStudents">—</strong><small>Official student records</small></div>
+<div class="card stat" style="--stat-accent:#2877b9"><div class="stat-icon">👦</div><span>Male Students</span><strong id="statMaleStudents">—</strong><small>Official student records</small></div>
+<div class="card stat" style="--stat-accent:#bd5c91"><div class="stat-icon">👧</div><span>Female Students</span><strong id="statFemaleStudents">—</strong><small>Official student records</small></div>
+<div class="card stat" style="--stat-accent:#8b6ac4"><div class="stat-icon">🏫</div><span>Active Classes</span><strong id="statClasses">—</strong><small>Enabled in class management</small></div>
+<div class="card stat" style="--stat-accent:#b9822e"><div class="stat-icon">📅</div><span>Timetable Entries</span><strong id="statTimetable">—</strong><small>Published school timetable</small></div>
+<div class="card stat" style="--stat-accent:#c45b45"><div class="stat-icon">📝</div><span>Exam Entries</span><strong id="statExams">—</strong><small>Published exam schedule</small></div>
+<div class="card stat" style="--stat-accent:#0a9695"><div class="stat-icon">🏷️</div><span>School Status</span><strong id="statSchoolStatus" style="font-size:18px">Active</strong><small>School profile status</small></div>
+
+</div>
+<section class="card registrar-page-panel school-id-panel" data-page-panel="dashboard" id="schoolIdPanel" aria-label="School ID" style="text-align:center;margin:0 0 22px;background:linear-gradient(135deg,#ffffff,#f2faf5);border:1px solid #d8e7de;border-radius:16px;padding:22px">
+<h3 style="margin-bottom:7px">Your School ID</h3><p class="muted" style="margin-bottom:14px">Share this ID with teachers so they can request to connect to your school.</p>
+<strong id="schoolId" style="display:block;font-size:clamp(16px,3vw,21px);letter-spacing:.3px;overflow-wrap:anywhere;margin:0 auto 15px">Loading School ID…</strong>
+<button id="copySchoolId" type="button" class="primary" style="padding:11px 20px">📋 Copy School ID</button><span id="copySchoolIdMessage" class="muted" aria-live="polite" style="display:block;margin:10px 0 0"></span>
+<span id="dashboardSchoolName" class="hidden" aria-hidden="true"></span><span id="details" class="hidden" aria-hidden="true"></span><img id="dashboardSchoolPhoto" class="hidden" alt="" aria-hidden="true">
+</section>
+<div class="card registrar-page-panel" data-page-panel="dashboard" id="editSchoolProfilePanel" style="margin:0 0 22px;text-align:center;padding:16px">
+<button id="edit" class="primary" type="button" style="min-width:min(100%,260px)">🏫 Edit School Profile</button>
+<p class="muted" style="margin:9px 0 0">Update your school's name, logo, address and contact details.</p>
+</div>
+
+<div class="card registrar-page-panel" data-page-panel="classes" id="classManagementCard" style="margin-top:18px"><h3>Primary 1–6 Class Management</h3><p class="muted">Choose which primary classes are currently offered by your school. Only enabled classes will be available for teacher assignments.</p><div id="classManagementList" class="class-management-list" aria-label="Available primary classes"></div><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button id="saveSchoolClasses" type="button" class="primary">Save Class Settings</button><span id="classManagementStatus" class="muted" aria-live="polite" style="margin:0"></span></div></div>
+<div class="card section-anchor registrar-page-panel" data-page-panel="teachers" id="teacherConnectionsCard" style="margin-top:18px"><h3>Teacher Connection Requests</h3><p class="muted">Review teachers who requested to connect to this school. Approve only teachers you recognize.</p><div id="teacherConnectionsMessage" class="muted" style="margin:10px 0">Loading teacher requests…</div><div id="teacherConnectionList"></div><button id="refreshTeacherConnections" type="button" class="secondary" style="margin-top:12px">Refresh teacher requests</button></div>
+<div class="card registrar-page-panel" data-page-panel="students" id="officialStudentsCard" style="margin-top:18px"><h3>Official Student Registration & Records</h3><p class="muted">Register pupils using the same core fields as the Teacher Dashboard. Official records are stored under this school's ID and are not automatically copied over or used to delete teachers’ existing records.</p><form id="officialStudentForm"><div class="grid" style="gap:0 14px"><div><label for="osName">Student full name *</label><input id="osName" required maxlength="160" placeholder="Full student name"></div><div><label for="osAdmission">Admission number *</label><input id="osAdmission" required maxlength="60" placeholder="e.g. P5/009"></div><div><label for="osGender">Gender *</label><select id="osGender" required><option value="">Select gender</option><option>Male</option><option>Female</option></select></div><div><label for="osClass">Class *</label><select id="osClass" required><option value="">Select class</option></select></div><div><label for="osDob">Date of birth</label><input id="osDob" type="date"></div><div><label for="osPhone">Parent phone number</label><input id="osPhone" type="tel" maxlength="40" placeholder="Parent phone number"></div><div><label for="osGuardian">Parent / guardian</label><input id="osGuardian" maxlength="160" placeholder="Parent or guardian name"></div><div><label for="osPhoto">Student photo</label><input id="osPhoto" type="file" accept="image/*"><small class="muted">Photo uploads to the existing Cloudinary account.</small></div><div style="grid-column:1/-1"><label for="osAddress">Parent address</label><input id="osAddress" maxlength="300" placeholder="Parent/guardian address"></div></div><button id="osSave" class="primary" type="submit" style="margin-top:16px">Register Student</button></form><div id="officialStudentStatus" class="notice hidden" style="margin-top:14px"></div><hr style="border:0;border-top:1px solid var(--line);margin:20px 0"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><h3 style="margin:0">Official Student List</h3><button id="refreshOfficialStudents" type="button" class="secondary">Refresh list</button></div><p id="officialStudentCount" class="muted" style="margin-top:8px">Loading official records…</p><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:650px"><thead><tr><th>Photo</th><th>Admission No.</th><th>Student Name</th><th>Gender</th><th>Class</th><th>Parent Phone</th><th>Actions</th></tr></thead><tbody id="officialStudentsBody"><tr><td colspan="6">Loading…</td></tr></tbody></table></div></div>
+<section class="card section-anchor registrar-page-panel" data-page-panel="payments" id="ptaPaymentsCard" style="margin-top:18px">
+<h2 style="margin:0 0 8px">💳 PTA Payment Report</h2>
+<div class="pta-account-group" style="margin:0 0 16px;padding:14px;border:1px solid #dce9e1;border-radius:16px;background:#f9fcfa">
+ <h3 style="margin:0 0 12px;color:#176b45">🏫 Class Accounts</h3>
+ <div class="card" style="margin:0 0 12px;padding:12px">
+  <div class="grid" style="gap:0 12px">
+   <div><label for="ptaClassAccountFilter">Filter by class</label><select id="ptaClassAccountFilter"><option value="all">All classes</option></select></div>
+   <div><label for="ptaClassAccountTermFilter">Filter by term</label><select id="ptaClassAccountTermFilter"><option value="all">All terms</option><option value="firstTerm">First Term</option><option value="secondTerm">Second Term</option><option value="thirdTerm">Third Term</option></select></div>
+  </div>
+ </div>
+ <div class="stats payment-stats pta-compact-stats" id="ptaClassAccountStats" aria-label="Class account statistics" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0">
+  <div class="card stat" style="--stat-accent:#16805a"><div class="stat-icon">💰</div><span>Class Amount Received</span><strong id="ptaClassAmountReceived">₦0.00</strong><small id="ptaClassAmountReceivedHint">Based on selected class and term</small></div>
+  <div class="card stat" style="--stat-accent:#c45b45"><div class="stat-icon">🧾</div><span>Class Amount Remaining</span><strong id="ptaClassAmountRemaining">₦0.00</strong><small>Outstanding PTA fees</small></div>
+  <div class="card stat" style="--stat-accent:#2877b9"><div class="stat-icon">✅</div><span>Students Paid</span><strong id="ptaClassStudentsPaid">0</strong><small id="ptaClassStudentsPaidHint">Out of 0 students</small></div>
+  <div class="card stat" style="--stat-accent:#bd5c91"><div class="stat-icon">⏳</div><span>Students Remaining</span><strong id="ptaClassStudentsRemaining">0</strong><small id="ptaClassStudentsRemainingHint">Out of 0 students</small></div>
+ </div>
+</div>
+<div class="pta-account-group" style="margin:0 0 20px;padding:14px;border:1px solid #dce9e1;border-radius:16px;background:#f9fcfa">
+ <h3 style="margin:0 0 12px;color:#176b45">🏫 School Accounts</h3>
+ <div class="stats payment-stats pta-compact-stats" aria-label="Total School Accounts" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0">
+  <div class="card stat" style="--stat-accent:#16805a"><div class="stat-icon">💰</div><span>Total Amount Received</span><strong id="statAmountReceived">₦0.00</strong><small>Total recorded student payments</small></div>
+  <div class="card stat" style="--stat-accent:#c45b45"><div class="stat-icon">🧾</div><span>Total Amount Remaining</span><strong id="statAmountRemaining">₦0.00</strong><small>Outstanding balance from recorded fees</small></div>
+  <div class="card stat" style="--stat-accent:#2877b9"><div class="stat-icon">✅</div><span>Students Paid</span><strong id="statStudentsPaid">0</strong><small id="statStudentsPaidHint">Students marked paid</small></div>
+  <div class="card stat" style="--stat-accent:#bd5c91"><div class="stat-icon">⏳</div><span>Students Remaining</span><strong id="statStudentsRemaining">0</strong><small id="statStudentsRemainingHint">Students not yet marked paid</small></div>
+ </div>
+</div>
+<!-- Legacy summary values are kept hidden to preserve compatibility with existing JavaScript. -->
+<div class="hidden" aria-hidden="true">
+ <span id="ptaSummaryPaid">0</span>
+ <span id="ptaSummaryUnpaid">0</span>
+ <span id="ptaSummaryReceived">₦0.00</span>
+ <span id="ptaSummaryBalance">₦0.00</span>
+</div>
+<div class="card" style="margin:0 0 18px">
+ <h3 class="pta-class-report-title">📚 Class-by-Class PTA Report</h3>
+ <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:820px"><thead><tr><th>Class</th><th>Pupils</th><th>First Term Paid</th><th>Second Term Paid</th><th>Third Term Paid</th><th>Total Received</th><th>Remaining</th></tr></thead><tbody id="ptaClassReportBody"><tr><td colspan="7">Loading class report…</td></tr></tbody></table></div>
+</div>
+<div class="card" style="margin:0">
+ <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><h3 style="margin:0">👥 Student PTA Register</h3></div>
+ <div class="grid" style="gap:0 12px;margin:12px 0"><div><label for="ptaSearch">Search by pupil name or admission number</label><input id="ptaSearch" type="search" placeholder="Search pupils…"></div><div><label for="ptaClassFilter">Class</label><select id="ptaClassFilter"><option value="all">All classes</option></select></div></div>
+ <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:900px"><thead><tr><th>Admission No.</th><th>Pupil Name</th><th>Class</th><th>First Term</th><th>Second Term</th><th>Third Term</th><th>Amount Received</th><th>Balance</th><th>Overall Status</th></tr></thead><tbody id="ptaPaymentsBody"><tr><td colspan="9">Loading…</td></tr></tbody></table></div>
+</div>
+</section>
+<section class="card section-anchor registrar-page-panel" data-page-panel="timetable" id="generalTimetableCard" style="margin-top:18px">
+<hr style="border:0;border-top:1px solid var(--line);margin:20px 0"><div id="publishedTimetablePrintArea"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h3 style="margin:0">Published Timetable</h3></div><div id="timetablePrintHeading" class="timetable-print-heading"><h2 id="printSchoolName"></h2><p><strong>Academic Session:</strong> <span id="printAcademicSession"></span></p><p><strong>Date Printed:</strong> <span id="printDate"></span></p><h3>School Timetable</h3></div><div style="overflow-x:auto;margin-top:10px"><table id="publishedTimetableTable" style="width:100%;border-collapse:collapse;min-width:800px"><thead><tr><th>Day</th><th>Subject</th><th>Time</th><th>Class</th><th>Teacher</th><th>Term</th><th>Session</th><th class="timetable-action-column">Action</th></tr></thead><tbody id="timetableRows"><tr><td colspan="8">Loading timetable…</td></tr></tbody></table></div></div><button class="primary" type="button" id="printPublishedTimetable" style="margin-top:14px">🖨️ Print Timetable (A4)</button>
+<hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
+<h3 style="margin:0 0 12px">Create Timetable</h3>
+<form id="generalTimetableForm"><div class="timetable-form"><div><label for="ttDay">Day</label><select id="ttDay" required><option value="">Select day</option><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option></select></div><div><label for="ttClass">Class</label><select id="ttClass" required></select></div><div><label for="ttSubject">Subject</label><select id="ttSubject" required></select></div><div><label for="ttStart">Start time</label><input id="ttStart" type="time" required></div><div><label for="ttEnd">End time</label><input id="ttEnd" type="time" required></div><div><label for="ttVenue">Venue / classroom</label><input id="ttVenue" maxlength="100" required placeholder="e.g. Primary 5 classroom"></div><div><label for="ttSession">Academic session</label><input id="ttSession" maxlength="30" required value="2026/2027"></div><div><label for="ttTerm">Term</label><select id="ttTerm" required><option>First Term</option><option>Second Term</option><option>Third Term</option></select></div><div><label for="ttTeacher">Assigned teacher (optional)</label><select id="ttTeacher"><option value="">Auto-match by class and subject</option></select></div><div class="wide"><label for="ttNotes">Notes (optional)</label><input id="ttNotes" maxlength="300" placeholder="Additional timetable information"></div></div><button class="primary" type="submit" id="saveTimetableEntry" style="margin-top:15px">Add to General Timetable</button><p id="timetableStatus" class="table-message muted" aria-live="polite"></p></form>
+</section>
+<section class="card section-anchor registrar-page-panel" data-page-panel="exams" id="examTimetableCard" style="margin-top:18px"><h3>Examination Timetable & Invigilators</h3><p class="muted">Create the school's general exam schedule and assign an invigilator. Teachers see only exams matching their assigned class and subject.</p>
+<div class="exam-published-first">
+<hr style="border:0;border-top:1px solid var(--line);margin:20px 0"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h3 style="margin:0">Published examination timetable</h3><button class="secondary" type="button" id="refreshExamTimetable">Refresh exam timetable</button></div><div style="overflow-x:auto;margin-top:10px"><table style="width:100%;border-collapse:collapse;min-width:850px"><thead><tr><th>Date</th><th>Time</th><th>Class</th><th>Subject</th><th>Venue</th><th>Invigilator</th><th>Term / Session</th><th>Action</th></tr></thead><tbody id="examTimetableRows"><tr><td colspan="8">Loading examination timetable…</td></tr></tbody></table></div>
+</div>
+<hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
+<h3 style="margin:0 0 12px">Prepare / Add Examination</h3>
+<form id="examTimetableForm"><div class="timetable-form"><div><label for="exDate">Examination date</label><input id="exDate" type="date" required></div><div><label for="exClass">Class</label><select id="exClass" required></select></div><div><label for="exSubject">Subject</label><select id="exSubject" required></select></div><div><label for="exStart">Start time</label><input id="exStart" type="time" required></div><div><label for="exEnd">End time</label><input id="exEnd" type="time" required></div><div><label for="exVenue">Examination venue</label><input id="exVenue" maxlength="100" required placeholder="e.g. Exam Hall / Primary 5 room"></div><div><label for="exTerm">Term</label><select id="exTerm" required><option>First Term</option><option>Second Term</option><option>Third Term</option></select></div><div><label for="exSession">Academic session</label><input id="exSession" maxlength="30" required value="2026/2027"></div><div><label for="exInvigilator">Assigned invigilator</label><select id="exInvigilator" required><option value="">Select invigilator</option></select></div><div><label for="exPaper">Exam / paper (optional)</label><input id="exPaper" maxlength="100" placeholder="e.g. Paper 1"></div><div class="wide"><label for="exNotes">Instructions / notes (optional)</label><input id="exNotes" maxlength="300" placeholder="Additional exam or invigilation instructions"></div></div><button class="primary" type="submit" id="saveExamEntry" style="margin-top:15px">Add Examination & Invigilator</button><p id="examTimetableStatus" class="table-message muted" aria-live="polite"></p></form>
+</section>
+<section class="card registrar-page-panel" data-page-panel="parents" id="parentRequestsCard" style="margin-top:18px"><h3>Parent / Guardian Connection Requests</h3><p class="muted">Verify each parent against the official student register. Approve only the children that match the parent’s registered phone number. A School ID alone never grants access.</p><div class="card" style="margin:12px 0;padding:14px;border:1px solid var(--line);border-radius:12px"><h3 style="margin:0 0 10px">Connected Parents</h3><div id="connectedParentsMessage" class="muted" style="margin:8px 0">Loading connected parents…</div><div id="connectedParentsList"></div></div><div id="parentRequestsMessage" class="muted" style="margin:10px 0">Loading parent requests…</div><div id="parentRequestsList"></div><button id="refreshParentRequests" type="button" class="secondary" style="margin-top:12px">Refresh parent requests</button></section>
+<section class="card registrar-page-panel" data-page-panel="academic" id="academicSessionCard" style="margin-top:18px">
+<h3>Academic Session &amp; Calendar</h3>
+<p class="muted">Publish academic-session information for teachers connected to this school. Saved details will appear in their Academic Session section.</p>
+<div class="official-calendar" style="margin:16px 0 22px;padding:16px;border:1px solid var(--line);border-radius:14px;background:#f7fbf8">
+<h3 style="margin-top:0">Official 2026/2027 School Academic Calendar</h3>
+<p class="muted">Source: Zamfara State Education Quality Assurance Authority document dated 16 September 2025. The document describes this calendar as proposed.</p>
+<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:650px;background:#fff"><thead><tr><th style="text-align:left;padding:9px;border:1px solid var(--line)">Term</th><th style="text-align:left;padding:9px;border:1px solid var(--line)">Activity</th><th style="text-align:left;padding:9px;border:1px solid var(--line)">Start / Resumption</th><th style="text-align:left;padding:9px;border:1px solid var(--line)">End / Closing</th><th style="text-align:left;padding:9px;border:1px solid var(--line)">Duration</th></tr></thead><tbody>
+<tr><td style="padding:9px;border:1px solid var(--line)">First Term</td><td style="padding:9px;border:1px solid var(--line)">Academic activities</td><td style="padding:9px;border:1px solid var(--line)">27 Sep 2026</td><td style="padding:9px;border:1px solid var(--line)">18 Dec 2026</td><td style="padding:9px;border:1px solid var(--line)">12 weeks</td></tr>
+<tr><td style="padding:9px;border:1px solid var(--line)">First Term</td><td style="padding:9px;border:1px solid var(--line)">Holiday</td><td style="padding:9px;border:1px solid var(--line)">19 Dec 2026</td><td style="padding:9px;border:1px solid var(--line)">9 Jan 2027</td><td style="padding:9px;border:1px solid var(--line)">3 weeks</td></tr>
+<tr><td style="padding:9px;border:1px solid var(--line)">Second Term</td><td style="padding:9px;border:1px solid var(--line)">Academic activities</td><td style="padding:9px;border:1px solid var(--line)">10 Jan 2027</td><td style="padding:9px;border:1px solid var(--line)">26 Feb 2027</td><td style="padding:9px;border:1px solid var(--line)">7 weeks</td></tr>
+<tr><td style="padding:9px;border:1px solid var(--line)">Second Term</td><td style="padding:9px;border:1px solid var(--line)">Ramadan/Sallah break</td><td style="padding:9px;border:1px solid var(--line)">27 Feb 2027</td><td style="padding:9px;border:1px solid var(--line)">13 Mar 2027</td><td style="padding:9px;border:1px solid var(--line)">2 weeks</td></tr>
+<tr><td style="padding:9px;border:1px solid var(--line)">Second Term</td><td style="padding:9px;border:1px solid var(--line)">Academic activities continue</td><td style="padding:9px;border:1px solid var(--line)">14 Mar 2027</td><td style="padding:9px;border:1px solid var(--line)">30 Apr 2027</td><td style="padding:9px;border:1px solid var(--line)">7 weeks</td></tr>
+<tr><td style="padding:9px;border:1px solid var(--line)">Third Term</td><td style="padding:9px;border:1px solid var(--line)">Holiday</td><td style="padding:9px;border:1px solid var(--line)">1 May 2027</td><td style="padding:9px;border:1px solid var(--line)">15 May 2027</td><td style="padding:9px;border:1px solid var(--line)">2 weeks</td></tr>
+<tr><td style="padding:9px;border:1px solid var(--line)">Third Term</td><td style="padding:9px;border:1px solid var(--line)">Academic activities</td><td style="padding:9px;border:1px solid var(--line)">16 May 2027</td><td style="padding:9px;border:1px solid var(--line)">20 Aug 2027</td><td style="padding:9px;border:1px solid var(--line)">14 weeks</td></tr>
+<tr><td style="padding:9px;border:1px solid var(--line)">Third Term</td><td style="padding:9px;border:1px solid var(--line)">Holiday</td><td style="padding:9px;border:1px solid var(--line)">21 Aug 2027</td><td style="padding:9px;border:1px solid var(--line)">25 Sep 2027</td><td style="padding:9px;border:1px solid var(--line)">5 weeks</td></tr>
+</tbody></table></div>
+<h4>Examination periods</h4><ul><li>First Term: 30 November–11 December 2026</li><li>Second Term: 12–23 April 2027</li><li>Third Term: 2–13 August 2027</li></ul>
+<p class="muted" style="margin-bottom:0">Expected religious dates in the source: Ramadan fasting 7–8 February 2027; Eid-el-Fitr 9–10 March 2027; Eid-el-Adha 16–17 May 2027. Proposed start of 2027/2028 session: 26 September 2027. Dates may be subject to official change.</p>
+</div>
+<form id="academicSessionForm">
+<div class="timetable-form">
+<div><label for="academicSessionInput">Academic session</label><input id="academicSessionInput" maxlength="30" required placeholder="2026/2027"></div>
+<div><label for="academicCurrentTerm">Current term</label><select id="academicCurrentTerm" required><option>First Term</option><option>Second Term</option><option>Third Term</option></select></div>
+<div class="wide"><label for="academicCurrentStatus">Current status</label><select id="academicCurrentStatus" required><option>Teaching Period</option><option>Resumption</option><option>Examination Period</option><option>Holiday</option><option>Term Break</option></select></div>
+<div><label for="academicResumption">Term resumption date</label><input id="academicResumption" type="date"></div>
+<div><label for="academicExamination">Examination period/date</label><input id="academicExamination" type="text" maxlength="100" placeholder="e.g. 10–20 December 2026"></div>
+<div><label for="academicTermEnd">Term closing date</label><input id="academicTermEnd" type="date"></div>
+</div>
+<label for="academicEventsText">Academic calendar events (one per line)</label>
+<p class="muted">Format each line as: Title | Date | Description | Badge | Badge label. Example: First Term Resumption | 2026-09-14 | School resumes | TERM | START</p>
+<textarea id="academicEventsText" rows="5" style="width:100%;padding:12px;border:1px solid #cbd8cf;border-radius:8px;font:inherit;resize:vertical" placeholder="First Term Resumption | 2026-09-14 | School resumes | TERM | START"></textarea>
+<label for="academicHolidaysText">Public holidays (one per line)</label>
+<p class="muted">Format each line as: Holiday name | Date. Example: Christmas Day | 2026-12-25</p>
+<textarea id="academicHolidaysText" rows="4" style="width:100%;padding:12px;border:1px solid #cbd8cf;border-radius:8px;font:inherit;resize:vertical" placeholder="Christmas Day | 2026-12-25"></textarea>
+<button id="saveAcademicSession" class="primary" type="submit" style="margin-top:15px">Save Academic Information</button>
+<p id="academicSessionStatus" class="table-message muted" aria-live="polite"></p>
+</form>
+</section>
+</section>
+</main><footer>my e-notice app · Registrar Portal</footer>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+import {getFirestore,doc,getDoc,setDoc,updateDoc,collection,addDoc,getDocs,query,where,serverTimestamp,deleteDoc,onSnapshot} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+const firebaseConfig={apiKey:"AIzaSyAyqE3tESdUlDPtAdmEa8pYsviiX2J8ltM",authDomain:"myschoolbook-4d23d.firebaseapp.com",projectId:"myschoolbook-4d23d",storageBucket:"myschoolbook-4d23d.firebasestorage.app",messagingSenderId:"60153250746",appId:"1:60153250746:web:a3342f87235e6a3c515383"};
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
+const $=id=>document.getElementById(id);let user=null,profile=null,busy=false,currentSchoolData=null,ptaStudentCache=[],ptaStudentsUnsub=null;
+function normalizeParentPhone(v){return String(v||'').replace(/\D/g,'').replace(/^0/,'234')}
+async function loadParentRequests(){
+ const box=$('parentRequestsList'),status=$('parentRequestsMessage'),connectedBox=$('connectedParentsList'),connectedStatus=$('connectedParentsMessage');
+ if(!box||!profile?.schoolId){if(status)status.textContent='Set up your school before reviewing parent requests.';if(connectedStatus)connectedStatus.textContent='Set up your school before viewing connected parents.';return}
+ box.innerHTML='';connectedBox.innerHTML='';status.textContent='Loading requests…';connectedStatus.textContent='Loading connected parents…';
+ try{
+  const snap=await getDocs(query(collection(db,'parentSchoolConnections'),where('schoolId','==',profile.schoolId)));
+  const all=snap.docs.map(d=>({id:d.id,...d.data()})),connected=all.filter(r=>r.status==='approved'),requests=all.filter(r=>r.status==='pending');
+  connected.sort((a,b)=>String(a.parentName||a.parentEmail||'').localeCompare(String(b.parentName||b.parentEmail||'')));
+  connectedStatus.textContent=connected.length?`${connected.length} connected parent(s).`:'No connected parents yet.';
+  connected.forEach((r,i)=>{
+   const row=document.createElement('div');row.className='connected-parent-row';
+   const num=document.createElement('div');num.className='connected-parent-number';num.textContent=`${i+1}.`;
+   const name=document.createElement('div');name.className='connected-parent-name';name.textContent=r.parentName||r.parentEmail||'Parent';
+   const phone=document.createElement('div');phone.className='connected-parent-phone';phone.textContent=r.parentPhone||'Phone not provided';
+   const btn=document.createElement('button');btn.type='button';btn.className='secondary danger-action connected-parent-disconnect';btn.textContent='Disconnect';
+   btn.addEventListener('click',async()=>{const label=r.parentName||r.parentPhone||r.parentEmail||'this parent';if(!confirm(`Disconnect ${label} from your school? The connection record will be retained.`))return;btn.disabled=true;btn.textContent='Disconnecting…';try{await updateDoc(doc(db,'parentSchoolConnections',r.id),{status:'disconnected',disconnectedBy:user.uid,disconnectedAt:serverTimestamp(),updatedAt:serverTimestamp()});await loadParentRequests()}catch(e){alert(e.message||'Could not disconnect parent. Check Firestore rules.');btn.disabled=false;btn.textContent='Disconnect'}});
+   row.append(num,name,phone,btn);connectedBox.append(row);
+  });
+  if(!requests.length){status.textContent='No pending parent connection requests.';return}
+  status.textContent=`${requests.length} pending request(s).`;
+  const studentsSnap=await getDocs(collection(db,'schools',profile.schoolId,'students')),students=studentsSnap.docs.map(d=>({id:d.id,...d.data()}));
+  for(const r of requests){
+   const phone=normalizeParentPhone(r.parentPhone),matches=students.filter(s=>normalizeParentPhone(s.parentPhone||s.guardianPhone||s.phone||'')===phone);
+   const card=document.createElement('div');card.className='card';card.style.cssText='border:1px solid var(--line);margin:12px 0;padding:15px';
+   const title=document.createElement('h4');title.textContent=r.parentName||r.parentEmail||'Parent';
+   const info=document.createElement('p');info.className='muted';info.textContent=`School: ${r.schoolName||profile.schoolName||profile.schoolId} · Phone: ${r.parentPhone||'Not provided'} · Email: ${r.parentEmail||'Not provided'}`;
+   const label=document.createElement('label');label.textContent='Verify matching children (select only children you have confirmed)';
+   const select=document.createElement('select');select.multiple=true;select.size=Math.min(Math.max(matches.length,2),6);select.style.cssText='width:100%;padding:10px;border:1px solid var(--line);border-radius:8px';
+   matches.forEach(st=>{const o=document.createElement('option');o.value=st.id;o.textContent=`${st.name||st.fullName||'Student'} · ${st.admissionNumber||'No admission no.'} · ${st.className||st.class||'Class not set'}`;select.append(o)});
+   if(!matches.length){const o=document.createElement('option');o.disabled=true;o.textContent='No automatic phone match. Confirm identity and update the official student phone first.';select.append(o)}
+   const note=document.createElement('p');note.className='muted';note.textContent=matches.length?`${matches.length} record(s) match the registered phone. Manually verify before approving.`:'No matching official student phone was found. Do not approve until the student record is corrected/verified.';
+   const actions=document.createElement('div');actions.className='table-actions';
+   const approve=document.createElement('button');approve.className='primary';approve.textContent='Approve selected children';approve.disabled=!matches.length;
+   approve.onclick=async()=>{const ids=[...select.selectedOptions].filter(o=>!o.disabled).map(o=>o.value);if(!ids.length){alert('Select at least one verified child.');return}approve.disabled=true;try{await updateDoc(doc(db,'parentSchoolConnections',r.id),{status:'approved',matchedStudentIds:ids,approvedBy:user.uid,approvedAt:serverTimestamp(),updatedAt:serverTimestamp()});await loadParentRequests()}catch(e){alert(e.message||'Could not approve request. Check Firestore rules.');approve.disabled=false}};
+   const reject=document.createElement('button');reject.className='secondary danger-action';reject.textContent='Reject request';reject.onclick=async()=>{if(!confirm('Reject this parent connection request?'))return;try{await updateDoc(doc(db,'parentSchoolConnections',r.id),{status:'rejected',rejectedBy:user.uid,rejectedAt:serverTimestamp(),updatedAt:serverTimestamp()});await loadParentRequests()}catch(e){alert(e.message||'Could not reject request.')}};
+   actions.append(approve,reject);card.append(title,info,label,select,note,actions);box.append(card);
+  }
+ }catch(e){console.error(e);status.textContent='Could not load parent requests. Check Firestore rules and school setup.';connectedStatus.textContent='Could not load connected parents. Check Firestore rules and school setup.'}
+}
+$('refreshParentRequests')?.addEventListener('click',loadParentRequests);let activeSchoolClasses=["Primary 1","Primary 2","Primary 3","Primary 4","Primary 5","Primary 6"];
+function msg(t,type="info"){const e=$("message");e.textContent=t;e.className="notice "+type}
+function hideMsg(){$("message").classList.add("hidden")}
+function view(name){["setup","dashboard"].forEach(x=>$(x).classList.toggle("hidden",x!==name));$("signOut")?.classList.toggle("hidden",!user);$("registrarNav")?.classList.toggle("hidden",name!=="dashboard")}
+function err(e){const map={"auth/email-already-in-use":"This email already has an account. Please sign in.","auth/invalid-credential":"Email or password is incorrect.","auth/weak-password":"Use a password with at least 6 characters.","auth/invalid-email":"Enter a valid email address.","permission-denied":"Firebase denied this operation. Check the Firestore security rules."};return map[e.code]||e.message||"Something went wrong. Please try again."}
+function setBusy(v){busy=v;document.querySelectorAll("form button[type=submit]").forEach(b=>{b.disabled=v;b.style.opacity=v?".6":"1"})}
+function detail(label,value){const d=document.createElement("div");d.className="item";const s=document.createElement("small"),b=document.createElement("strong");s.textContent=label;b.textContent=value||"Not provided";d.append(s,b);return d}
+function formatNaira(amount){return new Intl.NumberFormat("en-NG",{style:"currency",currency:"NGN",minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(amount)||0)}
+function firstNumeric(record,keys){for(const key of keys){const value=record?.[key];if(value!==undefined&&value!==null&&value!==""&&Number.isFinite(Number(value)))return Math.max(0,Number(value));}return null;}
+const PTA_TERM_KEYS=["firstTerm","secondTerm","thirdTerm"];
+function ptaTermPaid(student,key){return String(student?.ptaPayments?.[key]?.status||"").toLowerCase()==="paid";}
+function ptaPaidTermCount(student){return PTA_TERM_KEYS.filter(key=>ptaTermPaid(student,key)).length;}
+function ptaFeeForStudent(student,school=currentSchoolData){return 600;}
+function ptaPaidForStudent(student){return ptaPaidTermCount(student)*200;}
+function ptaStatusForStudent(student,school=currentSchoolData){return ptaPaidTermCount(student)===3?"paid":"unpaid";}
+function isStudentPaid(student){return ptaStatusForStudent(student)==="paid";}
+async function refreshDashboardStatistics(school){
+ try{
+  if(!profile?.schoolId)return;
+  const [teacherSnap,studentSnap,timetableSnap,examSnap]=await Promise.all([
+   getDocs(query(collection(db,"schoolTeachers"),where("schoolId","==",profile.schoolId))),
+   getDocs(collection(db,"schools",profile.schoolId,"students")),
+   getDocs(collection(db,"schools",profile.schoolId,"timetable")),
+   getDocs(collection(db,"schools",profile.schoolId,"examTimetable"))
+  ]);
+  const teachers=teacherSnap.docs.map(d=>d.data()).filter(t=>t.status==="connected");
+  const students=studentSnap.docs.map(d=>d.data());
+  $("statTeachers").textContent=String(teachers.length);
+  $("statStudents").textContent=String(students.length);
+  $("statMaleStudents").textContent=String(students.filter(st=>String(st.gender||"").toLowerCase()==="male").length);
+  $("statFemaleStudents").textContent=String(students.filter(st=>String(st.gender||"").toLowerCase()==="female").length);
+  $("statTimetable").textContent=String(timetableSnap.size);
+  $("statExams").textContent=String(examSnap.size);
+  $("statClasses").textContent=String(activeSchoolClasses.length);
+  $("statSchoolStatus").textContent=school?.status||"Active";
+  currentSchoolData=school||currentSchoolData;
+  const paidStudents=students.filter(st=>ptaStatusForStudent(st,school)==="paid");
+  const amountReceived=students.reduce((sum,st)=>sum+ptaPaidForStudent(st),0);
+  let amountRemaining=0;
+  students.forEach(st=>{
+   const fee=ptaFeeForStudent(st,school);
+   const paid=ptaPaidForStudent(st);
+   if(fee!==null){amountRemaining+=Math.max(0,fee-paid);}
+  });
+  $("statAmountReceived").textContent=formatNaira(amountReceived);
+  $("statAmountRemaining").textContent=formatNaira(amountRemaining);
+  $("statStudentsPaid").textContent=String(paidStudents.length);
+  $("statStudentsRemaining").textContent=String(Math.max(0,students.length-paidStudents.length));
+  $("statStudentsPaidHint").textContent=`Out of ${students.length} registered students`;
+  $("statStudentsRemainingHint").textContent=`Out of ${students.length} registered students`;
+ }catch(e){console.warn("Dashboard statistics could not be refreshed",e);["statTeachers","statStudents","statMaleStudents","statFemaleStudents","statTimetable","statExams"].forEach(id=>{const el=$(id);if(el&&el.textContent==="—")el.textContent="—"})}
+}
+function render(school){currentSchoolData=school||currentSchoolData;const headerLogo=$("headerSchoolLogo");if(headerLogo){if(school.photo){const img=document.createElement("img");img.src=school.photo;img.alt=(school.name||"School")+" logo";headerLogo.replaceChildren(img);headerLogo.setAttribute("aria-label",img.alt)}else{headerLogo.textContent="eN";headerLogo.setAttribute("aria-label","School logo")}}const welcome=$("welcome");if(welcome)welcome.textContent="Welcome, "+(user.displayName||profile?.fullName||"Registrar");const registrarName=profile?.fullName||profile?.name||user.displayName||"Registrar";const registrarDisplayName=$("registrarDisplayName");if(registrarDisplayName)registrarDisplayName.textContent=registrarName;const registrarSchoolDisplay=$("registrarSchoolDisplay");if(registrarSchoolDisplay)registrarSchoolDisplay.textContent=school.name||"School name";const avatar=$("registrarAvatar");const registrarPhoto=profile?.photoURL||profile?.photoUrl||profile?.photo||user.photoURL||"";if(avatar)avatar.replaceChildren();if(registrarPhoto&&avatar){const avatarImg=document.createElement("img");avatarImg.src=registrarPhoto;avatarImg.alt=registrarName+" profile photo";avatar.append(avatarImg)}else{avatar.textContent=registrarName.split(/\\s+/).filter(Boolean).slice(0,2).map(part=>part[0].toUpperCase()).join("")||"R"}$("statSchoolStatus").textContent=school.status||"Active";$("dashboardSchoolName").textContent=school.name||"School Profile";const schoolIdEl=$("schoolId");if(schoolIdEl)schoolIdEl.textContent=school.id||"School ID unavailable";view("dashboard");showRegistrarPage(activeRegistrarPage||"dashboard");loadAcademicSessionForm().catch(e=>console.error(e));renderSchoolClasses(school);populateOfficialStudentClasses();refreshOfficialStudents().catch(e=>console.error(e));refreshTeacherConnections().catch(e=>console.error(e));refreshDashboardStatistics(school);loadPtaPayments().catch(e=>console.error(e));initializeTimetableModule().catch(e=>console.error(e))}
+async function copySchoolId(){
+ const id=profile?.schoolId;
+ const feedback=$("copySchoolIdMessage");
+ if(!id){feedback.textContent="School ID is not available yet.";return;}
+ try{
+  if(navigator.clipboard && window.isSecureContext){await navigator.clipboard.writeText(id);}
+  else{
+   const temp=document.createElement("textarea");temp.value=id;temp.setAttribute("readonly","");temp.style.position="fixed";temp.style.opacity="0";document.body.append(temp);temp.select();
+   const copied=document.execCommand("copy");temp.remove();if(!copied)throw new Error("Copy is not supported by this browser.");
+  }
+  feedback.textContent="School ID copied. Share it with your teachers.";
+ }catch(e){feedback.textContent="Copy failed. Please select and copy the School ID manually.";console.error(e);}
+}
+$("copySchoolId")?.addEventListener("click",copySchoolId);
+$("registrarPhotoFile")?.addEventListener("change",async()=>{
+ const file=$("registrarPhotoFile").files?.[0];if(!file)return;
+ const status=$("registrarPhotoStatus");status.textContent="Uploading profile photo…";
+ if(!user){status.textContent="Please sign in again before changing your photo.";return}
+ try{
+  if(!file.type.startsWith("image/"))throw new Error("Please choose an image file.");
+  if(file.size>10*1024*1024)throw new Error("Profile photo must be 10 MB or smaller.");
+  const fd=new FormData();fd.append("file",file);fd.append("upload_preset","Obaestate");fd.append("folder","registrars/"+user.uid);fd.append("public_id","registrar_profile_"+Date.now());
+  const response=await fetch("https://api.cloudinary.com/v1_1/hjdnytcb/image/upload",{method:"POST",body:fd});
+  const result=await response.json();if(!response.ok||!result.secure_url)throw new Error(result.error?.message||"Photo upload failed.");
+  await updateDoc(doc(db,"registrars",user.uid),{photo:result.secure_url,photoURL:result.secure_url,updatedAt:serverTimestamp()});
+  profile={...profile,photo:result.secure_url,photoURL:result.secure_url};
+  const avatar=$("registrarAvatar"),img=document.createElement("img");img.src=result.secure_url;img.alt=(profile.fullName||user.displayName||"Registrar")+" profile photo";avatar.replaceChildren(img);
+  status.textContent="Registrar profile photo updated.";
+ }catch(e){console.error(e);status.textContent=err(e)}
+ finally{$("registrarPhotoFile").value=""}
+});
+
+async function load(userObj){const snap=await getDoc(doc(db,"registrars",userObj.uid));if(!snap.exists()){profile=null;view("setup");return}profile={uid:userObj.uid,...snap.data()};if(!profile.schoolId){view("setup");return}const ss=await getDoc(doc(db,"schools",profile.schoolId));if(!ss.exists()){msg("The school record could not be found. Please contact support.","error");view("setup");return}render({id:ss.id,...ss.data()})}
+const DEFAULT_SCHOOL_CLASSES=["Primary 1","Primary 2","Primary 3","Primary 4","Primary 5","Primary 6"];
+function renderSchoolClasses(school){
+ const list=$("classManagementList"),status=$("classManagementStatus");if(!list)return;list.replaceChildren();
+ const saved=Array.isArray(school?.classManagement)?school.classManagement:null;
+ activeSchoolClasses=saved?saved.filter(c=>c&&c.active!==false).map(c=>c.name).filter(name=>DEFAULT_SCHOOL_CLASSES.includes(name)):DEFAULT_SCHOOL_CLASSES.slice();
+ DEFAULT_SCHOOL_CLASSES.forEach(name=>{
+  const row=document.createElement("label");row.className="class-management-item";
+  const input=document.createElement("input");input.type="checkbox";input.value=name;input.checked=activeSchoolClasses.includes(name);input.dataset.schoolClass="true";
+  const text=document.createElement("span");text.textContent=name;row.append(input,text);list.append(row);
+ });
+ const count=$("statClasses");if(count)count.textContent=String(activeSchoolClasses.length);
+ if(status)status.textContent=saved?"Saved school classes loaded.":"All six classes are enabled by default until you save your choices.";
+}
+async function saveSchoolClasses(){
+ const btn=$("saveSchoolClasses"),status=$("classManagementStatus");if(!profile?.schoolId||!user){if(status)status.textContent="Save your school profile first.";return}
+ const chosen=[...document.querySelectorAll('[data-school-class="true"]:checked')].map(el=>el.value);
+ if(!chosen.length){if(status)status.textContent="Enable at least one class.";return}
+ if(btn){btn.disabled=true;btn.textContent="Saving…"}if(status)status.textContent="Saving class settings…";
+ try{
+  const classManagement=DEFAULT_SCHOOL_CLASSES.map(name=>({name,active:chosen.includes(name)}));
+  await updateDoc(doc(db,"schools",profile.schoolId),{classManagement,enabledClasses:chosen,classesUpdatedAt:serverTimestamp(),classesUpdatedBy:user.uid,updatedAt:serverTimestamp()});
+  activeSchoolClasses=chosen;
+  const count=$("statClasses");if(count)count.textContent=String(chosen.length);
+  if(status)status.textContent="Class settings saved successfully.";
+  msg("School class settings saved. Teacher assignment dropdowns now use the enabled classes.","success");
+  await refreshTeacherConnections();fillTimetableSelects();
+ }catch(e){console.error(e);if(status)status.textContent=err(e);msg(err(e),"error")}
+ finally{if(btn){btn.disabled=false;btn.textContent="Save Class Settings"}}
+}
+$("saveSchoolClasses")?.addEventListener("click",saveSchoolClasses);
+const SUBJECT_OPTIONS=["English Studies","Mathematics","Basic Science and Technology","National Values Education","Pre-Vocational Studies","Religion and National Values","Physical and Health Education","Cultural and Creative Arts","Nigerian Languages","Computer Studies","Social Studies","Agricultural Science"];
+function createAssignmentEditor(initial=[]){
+ const wrap=document.createElement("div");wrap.style.cssText="width:100%;display:grid;gap:10px;margin:10px 0";
+ const rows=document.createElement("div");rows.style.cssText="display:grid;gap:8px";wrap.append(rows);
+ function addRow(value={}){
+  const row=document.createElement("div");row.className="assignment-row";row.style.cssText="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) auto;gap:7px;align-items:center;padding:10px;background:#f5faf6;border:1px solid var(--line);border-radius:10px;width:100%;min-width:0";
+  const cls=document.createElement("select");cls.setAttribute("aria-label","Class");cls.style.cssText="width:100%;min-width:0;padding:10px;border:1px solid #cbd8cf;border-radius:8px;font:inherit";cls.innerHTML='<option value="">Select class</option>'+activeSchoolClasses.map(name=>`<option value="${name}">${name}</option>`).join("");cls.value=value.className||value.class||"";if(cls.value&&!activeSchoolClasses.includes(cls.value)){const legacyOption=document.createElement("option");legacyOption.value=cls.value;legacyOption.textContent=cls.value+" (previous assignment)";cls.append(legacyOption)}
+  const sub=document.createElement("select");sub.setAttribute("aria-label","Subject");sub.style.cssText="width:100%;min-width:0;padding:10px;border:1px solid #cbd8cf;border-radius:8px;font:inherit";sub.innerHTML='<option value="">Select subject</option>'+SUBJECT_OPTIONS.map(x=>`<option value="${x}">${x}</option>`).join("");sub.value=value.subject||"";
+  const remove=document.createElement("button");remove.type="button";remove.className="secondary assignment-remove";remove.textContent="Remove";remove.style.cssText="padding:8px 12px;font-size:13px;width:auto;white-space:normal";remove.onclick=()=>{row.remove();if(!rows.children.length)addRow()};row.append(cls,sub,remove);rows.append(row);
+ }
+ (initial.length?initial:[{}]).forEach(addRow);
+ const add=document.createElement("button");add.type="button";add.className="secondary";add.textContent="+ Add class and subject";add.style.justifySelf="start";add.onclick=()=>addRow();wrap.append(add);
+ return {element:wrap,read(){const result=[];for(const row of rows.children){const selects=row.querySelectorAll('select');const className=selects[0].value,subject=selects[1].value;if(!className&&!subject)continue;if(!className||!subject)throw new Error('For every assignment row, select both a class and a subject.');if(!activeSchoolClasses.includes(className))throw new Error(className+' is disabled in Class Management. Enable it before assigning it to a teacher.');if(result.some(x=>x.className===className&&x.subject===subject))continue;result.push({className,subject})}if(!result.length)throw new Error('Add at least one class and subject assignment.');return result}};
+}
+async function refreshTeacherConnections(){
+ const box=$("teacherConnectionList"),status=$("teacherConnectionsMessage");if(!box||!profile?.schoolId)return;
+ status.textContent="Loading connection requests…";box.replaceChildren();
+ try{
+  const snap=await getDocs(query(collection(db,"teacherConnectionRequests"),where("schoolId","==",profile.schoolId)));
+  const rows=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.requestedAt?.seconds||0)-(a.requestedAt?.seconds||0));
+  // Backfill assignment-pair keys for already-connected teachers so timetable rules work with older records.
+  for(const r of rows.filter(x=>x.status==="connected")){
+   const pairs=Array.isArray(r.assignedTeachingAssignments)?r.assignedTeachingAssignments:[];
+   const keys=[...new Set(pairs.map(a=>String(a.className||a.class)+"::"+String(a.subject)))];
+   if(keys.length && (!Array.isArray(r.assignedPairKeys)||!r.assignedPairKeys.length)){
+    try{await updateDoc(doc(db,"teacherConnectionRequests",r.id),{assignedPairKeys:keys});r.assignedPairKeys=keys;
+     await setDoc(doc(db,"schoolTeachers",profile.schoolId+"_"+r.teacherUid),{assignedPairKeys:keys,assignedTeachingAssignments:pairs,assignedClasses:r.assignedClasses||[...new Set(pairs.map(a=>a.className||a.class))],assignedSubjects:r.assignedSubjects||[...new Set(pairs.map(a=>a.subject))],updatedAt:serverTimestamp()},{merge:true});
+    }catch(backfillError){console.warn("Could not refresh legacy teacher assignment keys",backfillError)}
+   }
+  }
+  const active=rows.filter(r=>r.status==="connected").length;const stats=$("statTeachers");if(stats)stats.textContent=String(active);
+  if(!rows.length){status.textContent="No teacher connection requests yet. Share the School ID shown above with your teachers.";return;}
+  status.textContent=`${rows.filter(r=>r.status==="pending").length} pending · ${active} connected`;
+  rows.forEach(r=>{
+   const card=document.createElement("div");card.style.cssText="border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0;display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap";
+   if(r.teacherPhoto){const img=document.createElement("img");img.src=r.teacherPhoto;img.alt="Teacher photo";img.style.cssText="width:58px;height:58px;object-fit:cover;border-radius:50%;border:1px solid var(--line)";card.append(img)}
+   const info=document.createElement("div");info.style.cssText="flex:1;min-width:180px";const name=document.createElement("strong");name.textContent=r.teacherName||"Teacher";const meta=document.createElement("p");meta.className="muted";meta.style.margin="5px 0";meta.textContent=[r.teacherEmail,r.teacherPhone,"Status: "+(r.status||"unknown")].filter(Boolean).join(" · ");info.append(name,meta);
+   const controls=document.createElement("div");controls.style.cssText="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;min-width:100%;flex-direction:column";
+   if(r.status==="pending"||r.status==="connected"){
+    const role=document.createElement("select");role.setAttribute("aria-label","Teaching role");role.style.cssText="padding:10px;border:1px solid #cbd8cf;border-radius:8px;font:inherit;max-width:100%";role.innerHTML='<option value="Form Master">Form Master</option><option value="Class Teacher">Class Teacher</option><option value="Subject Teacher">Subject Teacher</option><option value="Primary Teacher">Primary Teacher</option>';role.value=r.assignedRole||"Class Teacher";
+    const existing=r.assignedTeachingAssignments||[];
+    const legacy=existing.length?existing:((r.assignedClasses|| (r.assignedClass?[r.assignedClass]:[])).flatMap(c=>(r.assignedSubjects||[]).map(subject=>({className:c,subject}))));
+    const editor=createAssignmentEditor(r.status==="connected"?legacy:[]);controls.append(role,editor.element);
+    const save=document.createElement("button");save.className="primary";save.textContent=r.status==="pending"?"Approve & Save Assignments":"Save Changes";save.onclick=()=>{try{const assignments=editor.read();decideTeacherConnection(r,"connected",role.value,assignments)}catch(e){msg(e.message,"error")}};controls.append(save);
+    if(r.status==="pending"){const reject=document.createElement("button");reject.className="secondary";reject.textContent="Reject";reject.onclick=()=>decideTeacherConnection(r,"rejected",role.value,[]);controls.append(reject)}
+    else {const deactivate=document.createElement("button");deactivate.className="secondary";deactivate.textContent="Deactivate";deactivate.onclick=()=>decideTeacherConnection(r,"deactivated",r.assignedRole||"Class Teacher",[]);controls.append(deactivate)}
+   }else if(r.status==="deactivated"){
+    const label=document.createElement("small");label.className="muted";label.textContent="This teacher connection is deactivated.";controls.append(label);
+   }
+   card.append(info,controls);box.append(card);
+  });
+ }catch(e){console.error(e);status.textContent="Could not load requests. Check Firestore security rules for teacherConnectionRequests and schoolTeachers."}
+}
+async function decideTeacherConnection(r,status,assignedRole,assignments=[]){
+ const assignedClasses=[...new Set(assignments.map(a=>a.className))];const assignedSubjects=[...new Set(assignments.map(a=>a.subject))];const assignedPairKeys=[...new Set(assignments.map(a=>String(a.className)+"::"+String(a.subject)))];const assignedClass=assignedClasses[0]||"";
+ try{
+  if(!profile?.schoolId||!user)throw new Error("Registrar or school profile is not ready.");
+  const requestRef=doc(db,"teacherConnectionRequests",r.id);
+  await updateDoc(requestRef,{status,assignedRole:status==="connected"?assignedRole:"",assignedClass:status==="connected"?assignedClass:"",assignedClasses:status==="connected"?assignedClasses:[],assignedSubjects:status==="connected"?assignedSubjects:[],assignedPairKeys:status==="connected"?assignedPairKeys:[],assignedTeachingAssignments:status==="connected"?assignments:[],reviewedBy:user.uid,updatedAt:serverTimestamp(),...(status==="connected"?{approvedAt:r.status==="pending"?serverTimestamp():(r.approvedAt||serverTimestamp())}:status==="deactivated"?{deactivatedAt:serverTimestamp(),deactivatedBy:user.uid}:{reviewedAt:serverTimestamp()})});
+  const memberId=profile.schoolId+"_"+r.teacherUid;const memberRef=doc(db,"schoolTeachers",memberId);
+  if(status==="connected")await setDoc(memberRef,{schoolId:profile.schoolId,schoolName:r.schoolName||$("dashboardSchoolName").textContent,registrarUid:user.uid,teacherUid:r.teacherUid,teacherName:r.teacherName||"Teacher",teacherEmail:r.teacherEmail||"",teacherPhoto:r.teacherPhoto||"",status:"connected",assignedRole,assignedClass,assignedClasses,assignedSubjects,assignedPairKeys,assignedTeachingAssignments:assignments,connectedAt:r.status==="pending"?serverTimestamp():(r.connectedAt||serverTimestamp()),updatedAt:serverTimestamp()},{merge:true});
+  else if(status==="deactivated")await setDoc(memberRef,{schoolId:profile.schoolId,teacherUid:r.teacherUid,status:"deactivated",updatedAt:serverTimestamp(),deactivatedAt:serverTimestamp()},{merge:true});
+  msg(status==="connected"?(r.status==="pending"?"Teacher connection approved and assignments saved.":"Teacher assignments updated successfully."):status==="rejected"?"Teacher request rejected.":"Teacher connection deactivated.","success");await refreshTeacherConnections();
+ }catch(e){console.error(e);msg(err(e),"error")}
+}
+$("refreshTeacherConnections")?.addEventListener("click",refreshTeacherConnections);
+
+const OFFICIAL_CLASSES=["Primary 1","Primary 2","Primary 3","Primary 4","Primary 5","Primary 6"];
+function populateOfficialStudentClasses(){const sel=$("osClass");if(!sel)return;const keep=sel.value;sel.replaceChildren(new Option("Select class",""));(activeSchoolClasses.length?activeSchoolClasses:OFFICIAL_CLASSES).forEach(c=>sel.add(new Option(c,c)));if([...sel.options].some(o=>o.value===keep))sel.value=keep;}
+function officialStudentMessage(text,type="info"){const el=$("officialStudentStatus");if(!el)return;el.textContent=text;el.className="notice "+type;el.classList.remove("hidden");}
+async function uploadOfficialStudentPhoto(file){if(!file)return "";if(!file.type.startsWith("image/"))throw new Error("Please choose an image file for the pupil photo.");if(file.size>10*1024*1024)throw new Error("Student photo must be 10 MB or smaller.");const fd=new FormData();fd.append("file",file);fd.append("upload_preset","Obaestate");fd.append("folder","schools/"+profile.schoolId+"/students");const response=await fetch("https://api.cloudinary.com/v1_1/hjdnytcb/image/upload",{method:"POST",body:fd});const result=await response.json();if(!response.ok||!result.secure_url)throw new Error(result.error?.message||"Student photo upload failed.");return result.secure_url;}
+let editingOfficialStudentId=null;
+async function refreshOfficialStudents(){const body=$("officialStudentsBody"),count=$("officialStudentCount");if(!profile?.schoolId){if(count)count.textContent="Save the school profile first.";return;}if(body)body.innerHTML='<tr><td colspan="7">Loading official records…</td></tr>';try{const snap=await getDocs(collection(db,"schools",profile.schoolId,"students"));const rows=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));if(count)count.textContent=rows.length+" official student record"+(rows.length===1?"":"s");if(!body)return;body.replaceChildren();if(!rows.length){body.innerHTML='<tr><td colspan="7" style="padding:18px;color:var(--muted)">No official students registered yet.</td></tr>';return;}rows.forEach(r=>{const tr=document.createElement("tr");const photo=document.createElement("td");if(r.photo){const img=document.createElement("img");img.src=r.photo;img.alt="Student photo";img.style.cssText="width:42px;height:52px;object-fit:cover;border-radius:6px";photo.append(img)}else photo.textContent="—";[photo,r.admissionNumber||"",r.name||"",r.gender||"",r.className||"",r.parentPhone||""].forEach(v=>{const td=v instanceof HTMLElement?v:document.createElement("td");if(!(v instanceof HTMLElement))td.textContent=String(v);tr.append(td)});
+const actions=document.createElement("td");actions.style.cssText="white-space:nowrap;display:flex;gap:6px;flex-wrap:wrap";
+const viewBtn=document.createElement("button");viewBtn.type="button";viewBtn.className="secondary";viewBtn.textContent="View";viewBtn.onclick=()=>{const details=[["Student name",r.name],["Admission number",r.admissionNumber],["Gender",r.gender],["Class",r.className],["Date of birth",r.dob],["Parent phone",r.parentPhone],["Parent/guardian",r.guardian],["Parent address",r.address]].map(([k,v])=>'<div style="padding:10px 0;border-bottom:1px solid #e5e7eb"><b>'+k+'</b><div>'+String(v||"—").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")+'</div></div>').join("");const modal=document.createElement("div");modal.style.cssText="position:fixed;inset:0;z-index:99999;background:#0008;display:flex;align-items:center;justify-content:center;padding:16px";modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:22px;max-width:520px;width:100%;max-height:85vh;overflow:auto"><h2 style="margin-top:0">Student Details</h2>'+details+'<button type="button" style="margin-top:16px;padding:10px 18px" class="secondary">Close</button></div>';modal.addEventListener("click",e=>{if(e.target===modal||e.target.closest("button"))modal.remove()});document.body.append(modal);};
+const editBtn=document.createElement("button");editBtn.type="button";editBtn.className="primary";editBtn.textContent="Edit";editBtn.onclick=()=>{editingOfficialStudentId=r.id;$("osName").value=r.name||"";$("osAdmission").value=r.admissionNumber||"";$("osGender").value=r.gender||"";$("osClass").value=r.className||"";$("osDob").value=r.dob||"";$("osPhone").value=r.parentPhone||"";$("osGuardian").value=r.guardian||"";$("osAddress").value=r.address||"";officialStudentMessage("Editing "+(r.name||"student")+". Save the form to update this record.","info");$("osSave").textContent="Update Student";$("osName").focus();document.getElementById("officialStudentForm").scrollIntoView({behavior:"smooth",block:"start"});};
+const deleteBtn=document.createElement("button");deleteBtn.type="button";deleteBtn.className="danger";deleteBtn.textContent="Delete";deleteBtn.onclick=async()=>{if(!confirm("Delete the official record for "+(r.name||"this student")+"? This cannot be undone."))return;try{await deleteDoc(doc(db,"schools",profile.schoolId,"students",r.id));officialStudentMessage("Student record deleted.","success");await refreshOfficialStudents();}catch(e){console.error(e);officialStudentMessage(err(e),"error");}};
+actions.append(viewBtn,editBtn,deleteBtn);tr.append(actions);body.append(tr);});}catch(e){console.error(e);if(count)count.textContent="Could not load official records: "+err(e)+". Check Firestore rules for schools/{schoolId}/students.";if(body)body.innerHTML='<tr><td colspan="7">Records unavailable because Firestore denied access or the request failed.</td></tr>';}}
+$("officialStudentForm")?.addEventListener("submit",async e=>{e.preventDefault();const btn=$("osSave");if(!user||!profile?.schoolId){officialStudentMessage("Registrar or school profile is not ready.","error");return;}const name=$("osName").value.trim(),admission=$("osAdmission").value.trim(),gender=$("osGender").value,className=$("osClass").value;if(!name||!admission||!gender||!className){officialStudentMessage("Complete student name, admission number, gender and class.","error");return;}btn.disabled=true;btn.textContent="Saving…";try{const existing=await getDocs(query(collection(db,"schools",profile.schoolId,"students"),where("admissionNumber","==",admission)));if(existing.docs.some(d=>d.id!==editingOfficialStudentId))throw new Error("That admission number already exists in this school's official register.");const chosenPhoto=$("osPhoto").files?.[0];const photo=chosenPhoto?await uploadOfficialStudentPhoto(chosenPhoto):(editingOfficialStudentId?(await getDoc(doc(db,"schools",profile.schoolId,"students",editingOfficialStudentId))).data()?.photo||"":"");const payload={schoolId:profile.schoolId,schoolName:$("dashboardSchoolName").textContent,admissionNumber:admission,name,gender,className,dob:$("osDob").value,parentPhone:$("osPhone").value.trim(),guardian:$("osGuardian").value.trim(),address:$("osAddress").value.trim(),photo,recordType:"official",createdBy:user.uid,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};if(editingOfficialStudentId){await updateDoc(doc(db,"schools",profile.schoolId,"students",editingOfficialStudentId),{...payload,updatedAt:serverTimestamp()});editingOfficialStudentId=null;$("osSave").textContent="Register Student";officialStudentMessage(name+" updated successfully.","success");}else{await addDoc(collection(db,"schools",profile.schoolId,"students"),payload);officialStudentMessage(name+" registered successfully in the school's official student register.","success");}$("officialStudentForm").reset();editingOfficialStudentId=null;$("osSave").textContent="Register Student";populateOfficialStudentClasses();await refreshOfficialStudents();}catch(e){console.error(e);officialStudentMessage(err(e),"error");}finally{btn.disabled=false;btn.textContent="Register Student";}});
+$("officialStudentForm")?.addEventListener("reset",()=>{editingOfficialStudentId=null;const b=$("osSave");if(b)b.textContent="Register Student";});$("refreshOfficialStudents")?.addEventListener("click",refreshOfficialStudents);
+
+
+const TIMETABLE_SUBJECTS=["English Studies","Mathematics","Basic Science and Technology","National Values Education","Pre-Vocational Studies","Religion and National Values","Physical and Health Education","Cultural and Creative Arts","Nigerian Languages","Computer Studies","Social Studies","Agricultural Science"];
+let connectedTeacherCache=[];
+function setSelectOptions(id,items,placeholder){const el=$(id);if(!el)return;const old=el.value;el.replaceChildren(new Option(placeholder||"Select",""));items.forEach(v=>el.add(new Option(typeof v==="string"?v:(v.label||v.name),typeof v==="string"?v:v.value)));if([...el.options].some(o=>o.value===old))el.value=old;}
+function fillTimetableSelects(){["ttClass","exClass"].forEach(id=>setSelectOptions(id,activeSchoolClasses,"Select class"));["ttSubject","exSubject"].forEach(id=>setSelectOptions(id,TIMETABLE_SUBJECTS,"Select subject"));}
+async function loadConnectedTeachers(){if(!profile?.schoolId)return [];const snap=await getDocs(query(collection(db,"schoolTeachers"),where("schoolId","==",profile.schoolId)));connectedTeacherCache=snap.docs.map(d=>({id:d.id,...d.data()})).filter(t=>t.status==="connected");const options=connectedTeacherCache.map(t=>({value:t.teacherUid,label:(t.teacherName||t.teacherEmail||t.teacherUid)+" — "+(t.assignedRole||"Teacher")}));setSelectOptions("ttTeacher",options,"Auto-match by class and subject");setSelectOptions("exInvigilator",options.map(o=>({...o,label:o.label})),"Select invigilator");return connectedTeacherCache;}
+function teacherMatchesPair(t,cls,subject){return (t.assignedTeachingAssignments||[]).some(a=>(a.className||a.class)===cls&&a.subject===subject)}
+function populateInvigilatorOptions(){const cls=$("exClass")?.value,subject=$("exSubject")?.value;const matches=connectedTeacherCache.filter(t=>teacherMatchesPair(t,cls,subject));const all=connectedTeacherCache.map(t=>({value:t.teacherUid,label:(t.teacherName||t.teacherEmail||"Teacher")+(teacherMatchesPair(t,cls,subject)?" — assigned to this class/subject":" — connected teacher")}));setSelectOptions("exInvigilator",all,"Select invigilator");const sel=$("exInvigilator");if(sel&&matches.length){const matchIds=new Set(matches.map(t=>t.teacherUid));[...sel.options].forEach(o=>{if(o.value&&!matchIds.has(o.value))o.textContent=o.textContent.replace(" — assigned to this class/subject","")});}}
+function setTableStatus(id,text,type="info"){const el=$(id);if(!el)return;el.textContent=text;el.style.color=type==="error"?"#a82929":type==="success"?"#176b45":"var(--muted)";}
+function appendCell(tr,value){const td=document.createElement("td");td.textContent=value||"—";tr.append(td);return td;}
+let editingTimetableId="";
+function stopTimetableEdit(){
+ editingTimetableId="";
+ const btn=$("saveTimetableEntry");if(btn)btn.textContent="Add to General Timetable";
+ const cancel=$("cancelTimetableEdit");if(cancel)cancel.remove();
+}
+function beginTimetableEdit(r){
+ editingTimetableId=r.id;
+ $("ttDay").value=r.day||"";$("ttClass").value=r.className||"";$("ttSubject").value=r.subject||"";
+ $("ttStart").value=r.startTime||"";$("ttEnd").value=r.endTime||"";$("ttVenue").value=r.venue||"";
+ $("ttSession").value=r.academicSession||"";$("ttTerm").value=r.term||"First Term";$("ttTeacher").value=r.teacherUid||"";
+ $("ttNotes").value=r.notes||"";
+ const btn=$("saveTimetableEntry");if(btn)btn.textContent="Save Timetable Changes";
+ if(!$("cancelTimetableEdit")){const cancel=document.createElement("button");cancel.id="cancelTimetableEdit";cancel.type="button";cancel.className="secondary";cancel.textContent="Cancel Edit";cancel.style.marginLeft="8px";cancel.onclick=()=>{ $("generalTimetableForm").reset();$("ttSession").value=$("session").value||"2026/2027";fillTimetableSelects();stopTimetableEdit();setTableStatus("timetableStatus","Edit cancelled.");};btn?.after(cancel);}
+ $("generalTimetableForm").scrollIntoView({behavior:"smooth",block:"start"});
+ setTableStatus("timetableStatus","Editing published timetable entry. Make corrections, then save.","info");
+}
+async function refreshTimetableCollection(kind){const body=$(kind==="lesson"?"timetableRows":"examTimetableRows"),sub=kind==="lesson"?"timetable":"examTimetable";if(!body||!profile?.schoolId)return;body.replaceChildren();const cols=kind==="lesson"?8:8;try{const snap=await getDocs(collection(db,"schools",profile.schoolId,sub));const rows=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(a.date||a.day||"").localeCompare(String(b.date||b.day||""))||String(a.startTime||"").localeCompare(String(b.startTime||"")));if(!rows.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=cols;td.textContent=kind==="lesson"?"No timetable entries have been published yet.":"No examination entries have been published yet.";tr.append(td);body.append(tr);return;}rows.forEach(r=>{const tr=document.createElement("tr");if(kind==="lesson"){appendCell(tr,r.day||"");appendCell(tr,r.subject);appendCell(tr,(r.startTime||"")+" – "+(r.endTime||""));appendCell(tr,r.className);appendCell(tr,r.teacherName||"Auto-match by class/subject");appendCell(tr,r.term);appendCell(tr,r.academicSession);}else{appendCell(tr,r.date);appendCell(tr,(r.startTime||"")+" – "+(r.endTime||""));appendCell(tr,r.className);appendCell(tr,r.subject);appendCell(tr,r.venue);appendCell(tr,r.invigilatorName);appendCell(tr,[r.term,r.academicSession].filter(Boolean).join(" · "));}const action=appendCell(tr,"");action.textContent="";action.style.whiteSpace="nowrap";if(kind==="lesson"){const edit=document.createElement("button");edit.type="button";edit.className="small-action timetable-row-action";edit.textContent="Edit";edit.style.marginRight="6px";edit.onclick=()=>beginTimetableEdit(r);action.append(edit);}const del=document.createElement("button");del.type="button";del.className="small-action danger-action timetable-row-action";del.textContent="Delete";del.onclick=async()=>{if(!confirm("Delete this timetable entry?"))return;try{await deleteDoc(doc(db,"schools",profile.schoolId,sub,r.id));setTableStatus(kind==="lesson"?"timetableStatus":"examTimetableStatus","Entry deleted.","success");await refreshTimetableCollection(kind)}catch(e){setTableStatus(kind==="lesson"?"timetableStatus":"examTimetableStatus",err(e),"error")}};action.append(del);body.append(tr)});}catch(e){console.error(e);const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=cols;td.textContent="Could not load entries: "+err(e)+". Check Firestore rules for schools/{schoolId}/"+sub+".";tr.append(td);body.append(tr);}}
+async function initializeTimetableModule(){if(!profile?.schoolId)return;fillTimetableSelects();await loadConnectedTeachers();populateInvigilatorOptions();await Promise.all([refreshTimetableCollection("lesson"),refreshTimetableCollection("exam")]);}
+$("ttClass")?.addEventListener("change",()=>{});$("exClass")?.addEventListener("change",populateInvigilatorOptions);$("exSubject")?.addEventListener("change",populateInvigilatorOptions);
+$("printPublishedTimetable")?.addEventListener("click",()=>{const schoolName=$("dashboardSchoolName")?.textContent?.trim()||profile?.schoolName||profile?.name||"School";const session=$("ttSession")?.value?.trim()||profile?.academicSession||$("session")?.value?.trim()||"Not specified";const now=new Date();const printed=now.toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"});$("printSchoolName").textContent=schoolName;$("printAcademicSession").textContent=session;$("printDate").textContent=printed;window.print()});
+$("generalTimetableForm")?.addEventListener("submit",async e=>{e.preventDefault();const btn=$("saveTimetableEntry");if(!user||!profile?.schoolId)return setTableStatus("timetableStatus","School profile is not ready.","error");const cls=$("ttClass").value,subject=$("ttSubject").value,startTime=$("ttStart").value,endTime=$("ttEnd").value;if(endTime<=startTime)return setTableStatus("timetableStatus","End time must be later than start time.","error");btn.disabled=true;try{await loadConnectedTeachers();const selected=connectedTeacherCache.find(t=>t.teacherUid===$("ttTeacher").value);const matched=selected||connectedTeacherCache.find(t=>teacherMatchesPair(t,cls,subject));const payload={schoolId:profile.schoolId,day:$("ttDay").value,className:cls,subject,assignmentKey:cls+"::"+subject,startTime,endTime,venue:$("ttVenue").value.trim(),academicSession:$("ttSession").value.trim(),term:$("ttTerm").value,teacherUid:matched?.teacherUid||"",teacherName:matched?.teacherName||"",notes:$("ttNotes").value.trim(),updatedAt:serverTimestamp()};if(editingTimetableId){await updateDoc(doc(db,"schools",profile.schoolId,"timetable",editingTimetableId),payload);stopTimetableEdit();setTableStatus("timetableStatus","Published timetable entry updated successfully.","success");}else{await addDoc(collection(db,"schools",profile.schoolId,"timetable"),{...payload,createdBy:user.uid,createdAt:serverTimestamp()});$("generalTimetableForm").reset();$("ttSession").value=$("session").value||"2026/2027";fillTimetableSelects();setTableStatus("timetableStatus","Timetable entry published successfully.","success");}await refreshTimetableCollection("lesson");}catch(e){console.error(e);setTableStatus("timetableStatus",err(e),"error")}finally{btn.disabled=false}});
+$("examTimetableForm")?.addEventListener("submit",async e=>{e.preventDefault();const btn=$("saveExamEntry");if(!user||!profile?.schoolId)return setTableStatus("examTimetableStatus","School profile is not ready.","error");const cls=$("exClass").value,subject=$("exSubject").value,startTime=$("exStart").value,endTime=$("exEnd").value;if(endTime<=startTime)return setTableStatus("examTimetableStatus","End time must be later than start time.","error");btn.disabled=true;try{await loadConnectedTeachers();const teacher=connectedTeacherCache.find(t=>t.teacherUid===$("exInvigilator").value);if(!teacher)throw new Error("Select a connected teacher to serve as invigilator.");const payload={schoolId:profile.schoolId,date:$("exDate").value,className:cls,subject,assignmentKey:cls+"::"+subject,startTime,endTime,venue:$("exVenue").value.trim(),term:$("exTerm").value,academicSession:$("exSession").value.trim(),invigilatorUid:teacher.teacherUid,invigilatorName:teacher.teacherName||teacher.teacherEmail||"Teacher",invigilatorEmail:teacher.teacherEmail||"",paper:$("exPaper").value.trim(),notes:$("exNotes").value.trim(),createdBy:user.uid,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};await addDoc(collection(db,"schools",profile.schoolId,"examTimetable"),payload);$("examTimetableForm").reset();$("exSession").value=$("session").value||"2026/2027";fillTimetableSelects();await loadConnectedTeachers();populateInvigilatorOptions();setTableStatus("examTimetableStatus","Examination timetable published and invigilator assigned.","success");await refreshTimetableCollection("exam");}catch(e){console.error(e);setTableStatus("examTimetableStatus",err(e),"error")}finally{btn.disabled=false}});
+$("refreshTimetable")?.addEventListener("click",()=>refreshTimetableCollection("lesson"));$("refreshExamTimetable")?.addEventListener("click",()=>refreshTimetableCollection("exam"));
+function parsePipeRows(text,fields){
+ return String(text||"").split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map(line=>{
+  const parts=line.split("|").map(x=>x.trim());const item={};
+  fields.forEach((field,index)=>{if(parts[index])item[field]=parts[index]});
+  return item;
+ });
+}
+function formatPipeRows(rows,fields){
+ return (Array.isArray(rows)?rows:[]).map(row=>fields.map(field=>row[field]||"").join(" | ").replace(/\s*\|\s*$/,"")).join("\n");
+}
+async function loadAcademicSessionForm(){
+ if(!profile?.schoolId)return;
+ try{
+  const snap=await getDoc(doc(db,"schools",profile.schoolId));if(!snap.exists())return;
+  const school=snap.data(),ac=school.academicCalendar||{},dates=school.termDates||ac.termDates||{};
+  $("academicSessionInput").value=school.academicSession||ac.session||$("session").value||"2026/2027";
+  $("academicCurrentTerm").value=school.currentTerm||ac.currentTerm||"First Term";
+  $("academicCurrentStatus").value=school.currentStatus||ac.currentStatus||"Teaching Period";
+  $("academicResumption").value=dates.resumption||dates.termStart||"";
+  $("academicExamination").value=dates.examination||dates.examStart||"";
+  $("academicTermEnd").value=dates.termEnd||dates.closing||"";
+  const defaultEvents=[
+   {title:"First Term Academic Activities",date:"27 Sep 2026 – 18 Dec 2026",description:"12 weeks",badge:"TERM",badgeLabel:"FIRST"},
+   {title:"Second Term Academic Activities",date:"10 Jan 2027 – 26 Feb 2027",description:"7 weeks",badge:"TERM",badgeLabel:"SECOND"},
+   {title:"Second Term Academic Activities Continue",date:"14 Mar 2027 – 30 Apr 2027",description:"7 weeks",badge:"TERM",badgeLabel:"SECOND"},
+   {title:"Third Term Academic Activities",date:"16 May 2027 – 20 Aug 2027",description:"14 weeks",badge:"TERM",badgeLabel:"THIRD"},
+   {title:"First Term Examinations",date:"30 Nov 2026 – 11 Dec 2026",description:"Examination period",badge:"EXAM",badgeLabel:"FIRST"},
+   {title:"Second Term Examinations",date:"12 Apr 2027 – 23 Apr 2027",description:"Examination period",badge:"EXAM",badgeLabel:"SECOND"},
+   {title:"Third Term Examinations",date:"2 Aug 2027 – 13 Aug 2027",description:"Examination period",badge:"EXAM",badgeLabel:"THIRD"},
+   {title:"Proposed 2027/2028 Session Begins",date:"26 Sep 2027",description:"Proposed date from the source calendar",badge:"SESSION",badgeLabel:"NEXT"}
+  ];
+  const savedEvents=Array.isArray(ac.events)?ac.events:[];
+  // Move any previously saved holiday-type events into the Holidays field rather than listing them as academic events.
+  const savedHolidayEvents=savedEvents.filter(ev=>String(ev.badge||"").toUpperCase()==="HOLIDAY");
+  const academicOnlyEvents=savedEvents.filter(ev=>String(ev.badge||"").toUpperCase()!=="HOLIDAY");
+  $("academicEventsText").value=formatPipeRows(academicOnlyEvents.length?academicOnlyEvents:defaultEvents,["title","date","description","badge","badgeLabel"]);
+  const holidays=Array.isArray(school.publicHolidays)?school.publicHolidays:(Array.isArray(ac.publicHolidays)?ac.publicHolidays:[]);
+  const defaultHolidays=[
+   {name:"First Term Holiday",date:"19 December 2026 – 9 January 2027 (3 weeks)"},
+   {name:"Ramadan/Sallah Break",date:"27 February – 13 March 2027 (2 weeks)"},
+   {name:"Third Term Holiday",date:"1–15 May 2027 (2 weeks)"},
+   {name:"Long Vacation",date:"21 August – 25 September 2027 (5 weeks)"},
+   {name:"Expected Ramadan fasting",date:"7–8 February 2027"},
+   {name:"Expected Eid-el-Fitr",date:"9–10 March 2027"},
+   {name:"Expected Eid-el-Adha",date:"16–17 May 2027"}
+  ];
+  const holidayRows=(holidays.length?holidays:defaultHolidays).map(h=>({name:h.name||h.title,date:h.date||h.dateText}));
+  for(const ev of savedHolidayEvents){if(!holidayRows.some(h=>h.name===(ev.title||ev.name)))holidayRows.push({name:ev.title||ev.name,date:ev.date||ev.dateText||""});}
+  $("academicHolidaysText").value=formatPipeRows(holidayRows,["name","date"]);
+  setTableStatus("academicSessionStatus","Loaded the school's currently published academic information.","info");
+ }catch(e){console.error(e);setTableStatus("academicSessionStatus","Could not load academic information: "+err(e),"error")}
+}
+$("academicSessionForm")?.addEventListener("submit",async e=>{
+ e.preventDefault();const btn=$("saveAcademicSession");
+ if(!user||!profile?.schoolId)return setTableStatus("academicSessionStatus","Registrar or school profile is not ready.","error");
+ btn.disabled=true;btn.textContent="Saving…";
+ try{
+  const events=parsePipeRows($("academicEventsText").value,["title","date","description","badge","badgeLabel"]);
+  const publicHolidays=parsePipeRows($("academicHolidaysText").value,["name","date"]);
+  const academicSession=$("academicSessionInput").value.trim(),currentTerm=$("academicCurrentTerm").value,currentStatus=$("academicCurrentStatus").value;
+  const termDates={resumption:$("academicResumption").value,examination:$("academicExamination").value.trim(),termEnd:$("academicTermEnd").value};
+  const academicCalendar={session:academicSession,currentTerm,currentStatus,termDates,events,updatedAt:serverTimestamp(),updatedBy:user.uid};
+  await updateDoc(doc(db,"schools",profile.schoolId),{academicSession,currentTerm,currentStatus,termDates,academicCalendar,publicHolidays,academicInfoUpdatedAt:serverTimestamp(),academicInfoUpdatedBy:user.uid,updatedAt:serverTimestamp()});
+  $("session").value=academicSession;
+  setTableStatus("academicSessionStatus","Academic session, calendar events, and public holidays saved. Connected teachers can now view these details.","success");
+  msg("Academic information published for connected teachers.","success");
+ }catch(e){console.error(e);setTableStatus("academicSessionStatus",err(e),"error")}
+ finally{btn.disabled=false;btn.textContent="Save Academic Information"}
+});
+function setPtaStatus(id,text,type="info"){const el=$(id);if(!el)return;el.textContent=text;el.style.color=type==="error"?"#a82929":type==="success"?"#176b45":"var(--muted)";}
+function ptaTermLabel(key){return ({firstTerm:"First Term",secondTerm:"Second Term",thirdTerm:"Third Term"})[key]||key;}
+function ptaMoneyFromTerms(student){return ptaPaidTermCount(student)*200;}
+function renderPtaSummary(){
+ const totalExpected=ptaStudentCache.length*600,received=ptaStudentCache.reduce((sum,st)=>sum+ptaMoneyFromTerms(st),0),fullyPaid=ptaStudentCache.filter(st=>ptaPaidTermCount(st)===3).length;
+ $("ptaSummaryPaid").textContent=String(fullyPaid);$("ptaSummaryUnpaid").textContent=String(Math.max(0,ptaStudentCache.length-fullyPaid));$("ptaSummaryReceived").textContent=formatNaira(received);$("ptaSummaryBalance").textContent=formatNaira(Math.max(0,totalExpected-received));
+}
+function renderPtaFilters(){
+ const classSelect=$("ptaClassFilter"),classes=[...new Set(ptaStudentCache.map(s=>s.className||s.class).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+ if(classSelect){const previous=classSelect.value||"all";classSelect.replaceChildren(new Option("All classes","all"));classes.forEach(c=>classSelect.add(new Option(c,c)));classSelect.value=classes.includes(previous)?previous:"all";}
+}
+function renderPtaClassAccountFilter(){
+ const select=$("ptaClassAccountFilter");if(!select)return;
+ const previous=select.value||"all";
+ const classes=[...new Set(ptaStudentCache.map(st=>st.className||st.class).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+ select.replaceChildren(new Option("All classes","all"));
+ classes.forEach(cls=>select.add(new Option(cls,cls)));
+ select.value=classes.includes(previous)?previous:"all";
+}
+function renderPtaClassAccountStats(){
+ const classFilter=$("ptaClassAccountFilter")?.value||"all";
+ const termFilter=$("ptaClassAccountTermFilter")?.value||"all";
+ const group=ptaStudentCache.filter(st=>classFilter==="all"||(st.className||st.class)===classFilter);
+ const terms=termFilter==="all"?PTA_TERM_KEYS:[termFilter];
+ const expected=group.length*200*terms.length;
+ const received=group.reduce((sum,st)=>sum+terms.filter(key=>ptaTermPaid(st,key)).length*200,0);
+ const paid=termFilter==="all"?group.filter(st=>ptaPaidTermCount(st)===3).length:group.filter(st=>ptaTermPaid(st,termFilter)).length;
+ const remaining=Math.max(0,group.length-paid);
+ $("ptaClassAmountReceived").textContent=formatNaira(received);
+ $("ptaClassAmountRemaining").textContent=formatNaira(Math.max(0,expected-received));
+ $("ptaClassStudentsPaid").textContent=String(paid);
+ $("ptaClassStudentsRemaining").textContent=String(remaining);
+ const classLabel=classFilter==="all"?"All classes":classFilter;
+ const termLabel=termFilter==="all"?"All terms":ptaTermLabel(termFilter);
+ $("ptaClassAmountReceivedHint").textContent=`${classLabel} · ${termLabel}`;
+ $("ptaClassStudentsPaidHint").textContent=`Out of ${group.length} students`;
+ $("ptaClassStudentsRemainingHint").textContent=`Out of ${group.length} students`;
+}
+function ptaBadge(student,key){const record=student?.ptaPayments?.[key]||{},paid=String(record.status||"").toLowerCase()==="paid",wrap=document.createElement("div"),span=document.createElement("span");span.textContent=paid?"PAID":"NOT PAID";span.style.cssText=`display:inline-block;padding:5px 8px;border-radius:20px;font-size:11px;font-weight:800;background:${paid?"#e6f6eb":"#fff0f0"};color:${paid?"#176b45":"#a82929"}`;wrap.append(span);if(paid){const detail=document.createElement("small");detail.style.cssText="display:block;margin-top:4px;color:#667085;font-size:10px;line-height:1.35";const when=record.markedAt?.toDate?record.markedAt.toDate().toLocaleDateString():record.markedAtText||"";detail.textContent=[record.markedByTeacherName||"Form Master",when].filter(Boolean).join(" · ");wrap.append(detail);}return wrap;}
+function renderPtaRegister(){
+ const body=$("ptaPaymentsBody"),message=$("ptaRegisterMessage");if(!body)return;body.replaceChildren();
+ const search=String($("ptaSearch")?.value||"").trim().toLowerCase(),classFilter=$("ptaClassFilter")?.value||"all";
+ const rows=ptaStudentCache.filter(st=>{const name=String(st.name||st.fullName||"").toLowerCase(),adm=String(st.admissionNumber||"").toLowerCase(),cls=st.className||st.class||"";return (!search||name.includes(search)||adm.includes(search))&&(classFilter==="all"||cls===classFilter)}).sort((a,b)=>String(a.className||a.class||"").localeCompare(String(b.className||b.class||""))||String(a.name||a.fullName||"").localeCompare(String(b.name||b.fullName||"")));
+ if(message)message.textContent="";
+ if(!rows.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=9;td.textContent=ptaStudentCache.length?"No pupils match the selected filters.":"No official pupils found. Register pupils in the Students section first.";td.style.padding="18px";tr.append(td);body.append(tr);}
+ rows.forEach(st=>{const tr=document.createElement("tr");[st.admissionNumber||"—",st.name||st.fullName||"Unnamed pupil",st.className||st.class||"—"].forEach(v=>{const td=document.createElement("td");td.textContent=String(v);tr.append(td)});PTA_TERM_KEYS.forEach(key=>{const td=document.createElement("td");td.append(ptaBadge(st,key));tr.append(td)});const paid=ptaMoneyFromTerms(st),balance=600-paid;[formatNaira(paid),formatNaira(balance),ptaPaidTermCount(st)===3?"FULLY PAID":"PAYMENT REMAINING"].forEach(v=>{const td=document.createElement("td");td.textContent=v;tr.append(td)});body.append(tr)});
+ renderPtaClassReport();
+}
+function renderPtaClassReport(){
+ const body=$("ptaClassReportBody");if(!body)return;body.replaceChildren();
+ const classes=[...new Set(ptaStudentCache.map(s=>s.className||s.class||"Class not set"))].sort((a,b)=>a.localeCompare(b));
+ if(!classes.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=7;td.textContent="No official pupils found.";tr.append(td);body.append(tr);return;}
+ const rows=classes.map(cls=>{const group=ptaStudentCache.filter(s=>(s.className||s.class||"Class not set")===cls);const counts=PTA_TERM_KEYS.map(k=>group.filter(s=>ptaTermPaid(s,k)).length);const received=group.reduce((sum,s)=>sum+ptaMoneyFromTerms(s),0);return {cls,group,counts,received,balance:group.length*600-received}});
+ rows.forEach(r=>{const tr=document.createElement("tr");[r.cls,String(r.group.length),...r.counts.map(n=>`${n} / ${r.group.length}`),formatNaira(r.received),formatNaira(r.balance)].forEach(v=>{const td=document.createElement("td");td.textContent=v;tr.append(td)});body.append(tr)});
+ const total=rows.reduce((sum,r)=>sum+r.received,0),balance=rows.reduce((sum,r)=>sum+r.balance,0),tr=document.createElement("tr");tr.style.fontWeight="800";["TOTAL",String(ptaStudentCache.length),...PTA_TERM_KEYS.map(k=>`${ptaStudentCache.filter(s=>ptaTermPaid(s,k)).length} / ${ptaStudentCache.length}`),formatNaira(total),formatNaira(balance)].forEach(v=>{const td=document.createElement("td");td.textContent=v;td.style.background="#f4f8f5";tr.append(td)});body.append(tr);
+}
+async function loadPtaPayments(){
+ if(!profile?.schoolId)return;const message=$("ptaRegisterMessage");if(message)message.textContent="Loading PTA payment report…";
+ try{
+  if(ptaStudentsUnsub){ptaStudentsUnsub();ptaStudentsUnsub=null;}
+  const ref=collection(db,"schools",profile.schoolId,"students");
+  ptaStudentsUnsub=onSnapshot(ref,snap=>{
+   ptaStudentCache=snap.docs.map(d=>({id:d.id,...d.data()}));renderPtaFilters();renderPtaClassAccountFilter();renderPtaClassAccountStats();renderPtaSummary();renderPtaRegister();
+   refreshDashboardStatistics(currentSchoolData).catch(e=>console.warn("Could not refresh live PTA statistics",e));
+  },e=>{console.error("PTA report listener failed",e);if(message)message.textContent="Could not load the PTA report: "+err(e);});
+ }catch(e){console.error("Could not load PTA report",e);if(message)message.textContent="Could not load the PTA report: "+err(e);}
+}
+["ptaSearch","ptaClassFilter"].forEach(id=>$(id)?.addEventListener(id==="ptaSearch"?"input":"change",renderPtaRegister));
+["ptaClassAccountFilter","ptaClassAccountTermFilter"].forEach(id=>$(id)?.addEventListener("change",renderPtaClassAccountStats));
+
+
+const REGISTRAR_PAGE_STORAGE_KEY="registrarActivePage";
+const VALID_REGISTRAR_PAGES=["dashboard","classes","teachers","students","payments","timetable","exams","academic","parents"];
+let activeRegistrarPage=(()=>{try{const saved=localStorage.getItem(REGISTRAR_PAGE_STORAGE_KEY);return VALID_REGISTRAR_PAGES.includes(saved)?saved:"dashboard";}catch(_){return "dashboard";}})();
+function showRegistrarPage(page){
+ if(!VALID_REGISTRAR_PAGES.includes(page))page="dashboard";
+ activeRegistrarPage=page;
+ try{localStorage.setItem(REGISTRAR_PAGE_STORAGE_KEY,page);}catch(_){}
+ document.querySelectorAll("#registrarNav button[data-page]").forEach(btn=>btn.classList.toggle("active",btn.dataset.page===page));
+ document.querySelectorAll("[data-page-panel]").forEach(panel=>panel.classList.toggle("page-hidden",panel.dataset.pagePanel!==page));
+ ["dashboardTop"].forEach(id=>$(id)?.classList.toggle("page-hidden",page!=="dashboard"));
+ document.querySelectorAll(".dashboard-heading,.dashboard-stats").forEach(el=>el.classList.toggle("page-hidden",page!=="dashboard"));
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll("#registrarNav button[data-page]").forEach(btn=>btn.addEventListener("click",()=>{showRegistrarPage(btn.dataset.page);if(btn.dataset.page==="parents")loadParentRequests();if(btn.dataset.page==="payments")loadPtaPayments();}));
+
+async function uploadSchoolPhoto(file,uid){if(!file)throw new Error("Please select a school photo.");if(!file.type.startsWith("image/"))throw new Error("Please select an image file.");if(file.size>10*1024*1024)throw new Error("School photo must be 10 MB or smaller.");const formData=new FormData();formData.append("file",file);formData.append("upload_preset","Obaestate");formData.append("folder","schools/"+uid);formData.append("public_id","school_profile_"+Date.now());const response=await fetch("https://api.cloudinary.com/v1_1/hjdnytcb/image/upload",{method:"POST",body:formData});const result=await response.json();if(!response.ok||!result.secure_url)throw new Error(result.error?.message||"Cloudinary upload failed.");return result.secure_url}
+$("schoolPhotoFile").addEventListener("change",()=>{const file=$("schoolPhotoFile").files?.[0];if(!file)return;const preview=$("schoolPhotoPreview");preview.src=URL.createObjectURL(file);preview.classList.remove("hidden")});
+$("schoolForm").addEventListener("submit",async e=>{e.preventDefault();if(busy||!user)return;hideMsg();setBusy(true);try{const ref=doc(db,"registrars",user.uid),rs=await getDoc(ref);if(!rs.exists())throw new Error("Registrar profile not found. Please sign out and register again.");const rd=rs.data(),editing=!!rd.schoolId;let photoUrl=$("schoolPhotoUrl").value.trim();const photoFile=$("schoolPhotoFile").files?.[0];if(photoFile){msg("Uploading school photo…","info");photoUrl=await uploadSchoolPhoto(photoFile,user.uid);$("schoolPhotoUrl").value=photoUrl}const payload={name:$("schoolName").value.trim(),type:$("schoolType").value.trim(),address:$("schoolAddress").value.trim(),phone:$("schoolPhone").value.trim(),academicSession:$("session").value.trim(),photo:photoUrl,updatedAt:serverTimestamp()};if(!payload.name||!payload.type||!payload.address||!payload.academicSession)throw new Error("Please complete all required fields.");let id=rd.schoolId;if(editing){await updateDoc(doc(db,"schools",id),payload)}else{const sr=await addDoc(collection(db,"schools"),{...payload,createdBy:user.uid,createdAt:serverTimestamp(),status:"active"});id=sr.id;await updateDoc(ref,{schoolId:id,updatedAt:serverTimestamp()})}profile={...rd,...payload,schoolId:id};render({id,...payload});msg(editing?"School profile updated.":"School profile created successfully.","success")}catch(e){msg(err(e),"error")}finally{setBusy(false)}});
+$("edit").addEventListener("click",async()=>{try{const s=await getDoc(doc(db,"schools",profile.schoolId));if(!s.exists())throw new Error("School record not found.");const d=s.data();$("schoolName").value=d.name||"";$("schoolType").value=d.type||"Primary School";$("schoolAddress").value=d.address||"";$("schoolPhone").value=d.phone||"";$("session").value=d.academicSession||"";$("schoolPhotoUrl").value=d.photo||"";if(d.photo){$("schoolPhotoPreview").src=d.photo;$("schoolPhotoPreview").classList.remove("hidden")}else{$("schoolPhotoPreview").classList.add("hidden")}$("schoolPhotoFile").value="";view("setup");hideMsg()}catch(e){msg(err(e),"error")}});
+$("signOut")?.addEventListener("click",async()=>{try{await signOut(auth);msg("You have signed out.","success")}catch(e){msg(err(e),"error")}});
+onAuthStateChanged(auth,async u=>{
+  user=u;
+  if(!u){profile=null;window.location.replace("index.html");return}
+  try{
+    const roleSnap=await getDoc(doc(db,"registrars",u.uid));
+    if(!roleSnap.exists() || roleSnap.data()?.role!=="registrar"){await signOut(auth);window.location.replace("index.html");return}
+    await load(u);
+  }catch(e){msg(err(e),"error");setTimeout(()=>window.location.replace("index.html"),1800)}
+});
+</script>
+</body></html>
