@@ -149,6 +149,40 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
  #publishedTimetablePrintArea button{display:none!important}
 }
 
+
+/* Class/subject cards: retain the compact four-column grid and add a small Delete control. */
+.class-management-item,.subject-management-item{display:flex;flex-direction:column;gap:8px;justify-content:space-between;align-items:center;padding:10px 7px}
+.management-item-name{display:block;width:100%;overflow-wrap:anywhere;line-height:1.25}
+.management-delete-button{border:1px solid #efcaca;background:#fff;color:#a82929;border-radius:6px;padding:4px 8px;font-size:11px;line-height:1.15;font-weight:700}
+.management-delete-button:disabled{opacity:.6;cursor:wait}
+
+/* Screen timetable: give Day, Class and time headings enough width to stay on one line.
+   The surrounding existing overflow container scrolls horizontally on narrow screens. */
+#publishedTimetableTable.fixed-period-timetable{width:max-content!important;min-width:1180px!important;max-width:none!important;table-layout:auto!important}
+#publishedTimetableTable.fixed-period-timetable thead th{white-space:nowrap!important;overflow-wrap:normal!important;word-break:keep-all!important;padding:8px 7px!important}
+#publishedTimetableTable.fixed-period-timetable thead th:first-child,
+#publishedTimetableTable.fixed-period-timetable tbody td:first-child{width:1%;min-width:105px;white-space:nowrap!important}
+#publishedTimetableTable.fixed-period-timetable thead th:nth-child(2),
+#publishedTimetableTable.fixed-period-timetable tbody td:nth-child(2){width:1%;min-width:125px;white-space:nowrap!important}
+#publishedTimetableTable.fixed-period-timetable .timetable-period-column{min-width:112px!important;width:auto!important}
+#publishedTimetableTable.fixed-period-timetable .timetable-break-column,
+#publishedTimetableTable.fixed-period-timetable .timetable-break-cell{min-width:112px!important;width:auto!important;white-space:nowrap!important}
+#publishedTimetableTable.fixed-period-timetable .timetable-subject-cell{min-width:112px!important;width:auto!important;white-space:normal!important;overflow-wrap:break-word!important;word-break:normal!important}
+#publishedTimetableTable.fixed-period-timetable .timetable-action-column,
+#publishedTimetableTable.fixed-period-timetable tbody td:last-child{min-width:100px!important;width:100px!important}
+@media print{
+ #publishedTimetableTable.fixed-period-timetable{width:100%!important;min-width:0!important;max-width:100%!important;table-layout:fixed!important}
+ #publishedTimetableTable.fixed-period-timetable thead th{white-space:nowrap!important;overflow-wrap:normal!important;word-break:keep-all!important;padding:2px 1px!important;font-size:5.5pt!important}
+ #publishedTimetableTable.fixed-period-timetable thead th:first-child,
+ #publishedTimetableTable.fixed-period-timetable tbody td:first-child{width:9%!important;min-width:0!important;white-space:nowrap!important}
+ #publishedTimetableTable.fixed-period-timetable thead th:nth-child(2),
+ #publishedTimetableTable.fixed-period-timetable tbody td:nth-child(2){width:10%!important;min-width:0!important;white-space:nowrap!important}
+ #publishedTimetableTable.fixed-period-timetable .timetable-period-column,
+ #publishedTimetableTable.fixed-period-timetable .timetable-break-column,
+ #publishedTimetableTable.fixed-period-timetable .timetable-break-cell,
+ #publishedTimetableTable.fixed-period-timetable .timetable-subject-cell{width:auto!important;min-width:0!important;padding:2px 1px!important}
+}
+
 </style>
 </head>
 <body>
@@ -448,13 +482,48 @@ async function load(userObj){const snap=await getDoc(doc(db,"registrars",userObj
 const DEFAULT_SCHOOL_CLASSES=["Primary 1","Primary 2","Primary 3","Primary 4","Primary 5","Primary 6"];
 const DEFAULT_SCHOOL_SUBJECTS=["English Studies","Mathematics","Basic Science and Technology","National Values Education","Pre-Vocational Studies","Religion and National Values","Physical and Health Education","Cultural and Creative Arts","Nigerian Languages","Computer Studies","Social Studies","Agricultural Science"];
 let activeSchoolSubjects=DEFAULT_SCHOOL_SUBJECTS.slice();
-function renderManagementCards(containerId,items,kind){const list=$(containerId);if(!list)return;list.replaceChildren();items.forEach(name=>{const card=document.createElement('div');card.className=kind==='class'?'class-management-item':'subject-management-item';card.textContent=name;list.append(card)});if(!items.length){const empty=document.createElement('p');empty.className='muted';empty.textContent='No '+(kind==='class'?'classes':'subjects')+' have been created yet.';list.append(empty)}}
+function renderManagementCards(containerId,items,kind){
+ const list=$(containerId);if(!list)return;list.replaceChildren();
+ items.forEach(name=>{
+  const card=document.createElement('div');card.className=kind==='class'?'class-management-item':'subject-management-item';
+  const title=document.createElement('span');title.className='management-item-name';title.textContent=name;
+  const del=document.createElement('button');del.type='button';del.className='management-delete-button';del.textContent='Delete';del.setAttribute('aria-label','Delete '+kind+' '+name);
+  del.addEventListener('click',()=>removeSchoolItem(kind,name,del));
+  card.append(title,del);list.append(card);
+ });
+ if(!items.length){const empty=document.createElement('p');empty.className='muted';empty.textContent='No '+(kind==='class'?'classes':'subjects')+' have been created yet.';list.append(empty)}
+}
+async function removeSchoolItem(kind,name,button){
+ const isClass=kind==='class',label=isClass?'class':'subject';
+ if(!profile?.schoolId||!user){alert('Save your school profile first.');return;}
+ if(!confirm('Delete '+label+' "'+name+'"? This removes it from the available '+label+' list and dropdowns. Existing timetable or historical records may still contain this name.'))return;
+ const list=isClass?activeSchoolClasses:activeSchoolSubjects;
+ const updated=list.filter(x=>x!==name);
+ button.disabled=true;button.textContent='Deleting…';
+ try{
+  const patch=isClass
+   ?{classNames:updated,enabledClasses:updated,classesUpdatedAt:serverTimestamp(),classesUpdatedBy:user.uid,updatedAt:serverTimestamp()}
+   :{subjects:updated,subjectsUpdatedAt:serverTimestamp(),subjectsUpdatedBy:user.uid,updatedAt:serverTimestamp()};
+  await updateDoc(doc(db,'schools',profile.schoolId),patch);
+  if(isClass){
+   activeSchoolClasses=updated;renderManagementCards('classManagementList',activeSchoolClasses,'class');
+   const count=$('statClasses');if(count)count.textContent=String(updated.length);populateOfficialStudentClasses();
+   if($('classManagementStatus')){$('classManagementStatus').textContent='Class deleted from the available class list.';$('classManagementStatus').style.color='#176b45';}
+  }else{
+   activeSchoolSubjects=updated;renderManagementCards('subjectManagementList',activeSchoolSubjects,'subject');
+   if($('subjectManagementStatus')){$('subjectManagementStatus').textContent='Subject deleted from the available subject list.';$('subjectManagementStatus').style.color='#176b45';}
+  }
+  fillTimetableSelects();await refreshTeacherConnections();
+ }catch(e){
+  console.error(e);alert(err(e));button.disabled=false;button.textContent='Delete';
+ }
+}
 function renderSchoolClasses(school){
  const status=$("classManagementStatus");
  const stored=Array.isArray(school?.classNames)?school.classNames.filter(x=>typeof x==='string'&&x.trim()):null;
  if(stored)activeSchoolClasses=[...new Set(stored.map(x=>x.trim()))];
  else {const saved=Array.isArray(school?.classManagement)?school.classManagement:null;activeSchoolClasses=saved?saved.filter(c=>c&&c.active!==false).map(c=>c.name).filter(Boolean):DEFAULT_SCHOOL_CLASSES.slice();}
- activeSchoolSubjects=Array.isArray(school?.subjects)&&school.subjects.length?[...new Set(school.subjects.filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim()))]:DEFAULT_SCHOOL_SUBJECTS.slice();
+ activeSchoolSubjects=Array.isArray(school?.subjects)?[...new Set(school.subjects.filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim()))]:DEFAULT_SCHOOL_SUBJECTS.slice();
  renderManagementCards('classManagementList',activeSchoolClasses,'class');renderManagementCards('subjectManagementList',activeSchoolSubjects,'subject');
  const count=$("statClasses");if(count)count.textContent=String(activeSchoolClasses.length);
  if(status)status.textContent=stored?'Saved school classes loaded.':'Default classes loaded. Add any extra classes below.';
