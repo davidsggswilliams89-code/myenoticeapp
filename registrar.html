@@ -84,7 +84,12 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 <p id="registrarSchoolDisplay" class="school-name">School name</p>
 <div class="registrar-profile-actions"><label for="registrarPhotoFile" class="secondary" style="display:inline-flex;align-items:center;justify-content:center;margin:0;cursor:pointer">Change profile photo</label><input id="registrarPhotoFile" type="file" accept="image/*" class="hidden"></div><p id="registrarPhotoStatus" class="muted" aria-live="polite" style="margin:10px 0 0"></p>
 </section>
-<div class="stats dashboard-stats" aria-label="School statistics">
+<h3 style="margin:0 0 14px">Total School Accounts</h3>
+<div class="stats dashboard-stats" aria-label="Total School Accounts and School Statistics">
+<div class="card stat" style="--stat-accent:#16805a"><div class="stat-icon">💰</div><span>Total Amount Received</span><strong id="statAmountReceived">₦0.00</strong><small>Total recorded student payments</small></div>
+<div class="card stat" style="--stat-accent:#c45b45"><div class="stat-icon">🧾</div><span>Total Amount Remaining</span><strong id="statAmountRemaining">₦0.00</strong><small>Outstanding balance from recorded fees</small></div>
+<div class="card stat" style="--stat-accent:#2877b9"><div class="stat-icon">✅</div><span>Students Paid</span><strong id="statStudentsPaid">0</strong><small id="statStudentsPaidHint">Students marked paid</small></div>
+<div class="card stat" style="--stat-accent:#bd5c91"><div class="stat-icon">⏳</div><span>Students Remaining</span><strong id="statStudentsRemaining">0</strong><small id="statStudentsRemainingHint">Students not yet marked paid</small></div>
 <div class="card stat" style="--stat-accent:#176b45"><div class="stat-icon">👩‍🏫</div><span>Total Teachers</span><strong id="statTeachers">—</strong><small>Connected to this school</small></div>
 <div class="card stat" style="--stat-accent:#2877b9"><div class="stat-icon">👥</div><span>Total Students</span><strong id="statStudents">—</strong><small>Official student records</small></div>
 <div class="card stat" style="--stat-accent:#2877b9"><div class="stat-icon">👦</div><span>Male Students</span><strong id="statMaleStudents">—</strong><small>Official student records</small></div>
@@ -93,10 +98,10 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 <div class="card stat" style="--stat-accent:#b9822e"><div class="stat-icon">📅</div><span>Timetable Entries</span><strong id="statTimetable">—</strong><small>Published school timetable</small></div>
 <div class="card stat" style="--stat-accent:#c45b45"><div class="stat-icon">📝</div><span>Exam Entries</span><strong id="statExams">—</strong><small>Published exam schedule</small></div>
 <div class="card stat" style="--stat-accent:#0a9695"><div class="stat-icon">🏷️</div><span>School Status</span><strong id="statSchoolStatus" style="font-size:18px">Active</strong><small>School profile status</small></div>
-<div class="card stat" style="--stat-accent:#16805a"><div class="stat-icon">💰</div><span>Total Amount Received</span><strong id="statAmountReceived">₦0.00</strong><small>Total recorded student payments</small></div>
-<div class="card stat" style="--stat-accent:#c45b45"><div class="stat-icon">🧾</div><span>Total Amount Remaining</span><strong id="statAmountRemaining">₦0.00</strong><small>Outstanding balance from recorded fees</small></div>
-<div class="card stat" style="--stat-accent:#2877b9"><div class="stat-icon">✅</div><span>Students Paid</span><strong id="statStudentsPaid">0</strong><small id="statStudentsPaidHint">Students marked paid</small></div>
-<div class="card stat" style="--stat-accent:#bd5c91"><div class="stat-icon">⏳</div><span>Students Remaining</span><strong id="statStudentsRemaining">0</strong><small id="statStudentsRemainingHint">Students not yet marked paid</small></div>
+
+
+
+
 </div>
 <section class="card registrar-page-panel school-id-panel" data-page-panel="dashboard" id="schoolIdPanel" aria-label="School ID" style="text-align:center;margin:0 0 22px;background:linear-gradient(135deg,#ffffff,#f2faf5);border:1px solid #d8e7de;border-radius:16px;padding:22px">
 <h3 style="margin-bottom:7px">Your School ID</h3><p class="muted" style="margin-bottom:14px">Share this ID with teachers so they can request to connect to your school.</p>
@@ -117,8 +122,6 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 <p class="muted">Read-only report of PTA payments confirmed by each Form Master. The PTA fee is fixed at ₦200 per student per term. The registrar can review totals by term, class, and student; payment marking is done by the assigned Form Master.</p>
 <div class="notice info">Only confirmed full payments are counted. There are no partial payments. Each pupil has a separate status for First Term, Second Term, and Third Term.</div>
 <div class="stats payment-stats" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
- <div class="stat item"><small>Fee per term</small><strong>₦200</strong></div>
- <div class="stat item"><small>Annual PTA fee per pupil</small><strong>₦600</strong></div>
  <div class="stat item"><small>Fully paid pupils (all terms)</small><strong id="ptaSummaryPaid">0</strong></div>
  <div class="stat item"><small>Pupils with payment remaining</small><strong id="ptaSummaryUnpaid">0</strong></div>
  <div class="stat item"><small>Total received (all terms)</small><strong id="ptaSummaryReceived">₦0.00</strong></div>
