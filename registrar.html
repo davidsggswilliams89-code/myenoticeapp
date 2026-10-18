@@ -93,6 +93,16 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 @media(max-width:520px){.connected-parent-row{grid-template-columns:26px minmax(0,1fr) auto;gap:8px}.connected-parent-phone{grid-column:2;grid-row:2;font-size:13px}.connected-parent-disconnect{grid-column:3;grid-row:1/ span 2;white-space:normal;padding:7px 9px;font-size:12px}}
 
 
+/* Fixed timetable grid: each period is a permanent column, with subjects beneath it. */
+#publishedTimetableTable.fixed-period-timetable{width:max-content!important;min-width:1500px!important;border-collapse:collapse;table-layout:fixed}
+#publishedTimetableTable.fixed-period-timetable th,#publishedTimetableTable.fixed-period-timetable td{border:1px solid var(--line);padding:10px 8px;text-align:center;vertical-align:middle}
+#publishedTimetableTable.fixed-period-timetable thead th{position:sticky;top:0;z-index:2;background:#eaf2ed;font-weight:750;white-space:pre-line;min-width:118px}
+#publishedTimetableTable.fixed-period-timetable thead th:first-child{min-width:105px}
+#publishedTimetableTable.fixed-period-timetable thead th:nth-child(2){min-width:120px}
+#publishedTimetableTable.fixed-period-timetable .timetable-subject-cell{min-width:118px;max-width:150px;white-space:normal;overflow-wrap:anywhere;font-weight:600}
+#publishedTimetableTable.fixed-period-timetable .timetable-break-column,#publishedTimetableTable.fixed-period-timetable .timetable-break-cell{background:#fff0d9;font-weight:800;color:#7b4b00;min-width:125px}
+#publishedTimetableTable.fixed-period-timetable .timetable-action-column{min-width:160px}
+#publishedTimetableTable.fixed-period-timetable .timetable-day-heading{text-align:left;background:#f2f7f4;font-size:1rem}
 /* Grouped live timetable: one row and one set of actions per class/day */
 .timetable-period-editor{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) auto;gap:10px;align-items:end;padding:12px;margin:10px 0;border:1px solid var(--line);border-radius:10px;background:#f8fbf9}
 .timetable-period-editor label{margin-top:0}.timetable-period-line{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;margin:8px 0;min-width:max-content}
@@ -228,7 +238,7 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 </div>
 </section>
 <section class="card section-anchor registrar-page-panel" data-page-panel="timetable" id="generalTimetableCard" style="margin-top:18px">
-<hr style="border:0;border-top:1px solid var(--line);margin:20px 0"><div id="publishedTimetablePrintArea"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h3 style="margin:0">Published Timetable</h3></div><div id="timetablePrintHeading" class="timetable-print-heading"><h2 id="printSchoolName"></h2><p><strong>Academic Session:</strong> <span id="printAcademicSession"></span></p><p><strong>Date Printed:</strong> <span id="printDate"></span></p><h3>School Timetable</h3></div><div style="overflow-x:auto;margin-top:10px"><table id="publishedTimetableTable" style="width:100%;border-collapse:collapse;min-width:800px"><thead><tr><th>Day</th><th>Subject</th><th>Time</th><th>Class</th><th>Teacher</th><th>Term</th><th>Session</th><th class="timetable-action-column">Action</th></tr></thead><tbody id="timetableRows"><tr><td colspan="8">Loading timetable…</td></tr></tbody></table></div></div><button class="primary" type="button" id="printPublishedTimetable" style="margin-top:14px">🖨️ Print Timetable (A4)</button>
+<hr style="border:0;border-top:1px solid var(--line);margin:20px 0"><div id="publishedTimetablePrintArea"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h3 style="margin:0">Published Timetable</h3></div><div id="timetablePrintHeading" class="timetable-print-heading"><h2 id="printSchoolName"></h2><p><strong>Academic Session:</strong> <span id="printAcademicSession"></span></p><p><strong>Date Printed:</strong> <span id="printDate"></span></p><h3>School Timetable</h3></div><div style="overflow-x:auto;margin-top:10px"><table id="publishedTimetableTable" style="width:max-content;border-collapse:collapse;min-width:1500px"><thead><tr><th>Day</th><th>Subject</th><th>Time</th><th>Class</th><th>Teacher</th><th>Term</th><th>Session</th><th class="timetable-action-column">Action</th></tr></thead><tbody id="timetableRows"><tr><td colspan="8">Loading timetable…</td></tr></tbody></table></div></div><button class="primary" type="button" id="printPublishedTimetable" style="margin-top:14px">🖨️ Print Timetable (A4)</button>
 <hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
 <h3 style="margin:0 0 12px">Create Timetable</h3>
 <form id="generalTimetableForm">
@@ -572,9 +582,16 @@ async function refreshTimetableCollection(kind){
  try{
   const snap=await getDocs(collection(db,"schools",profile.schoolId,sub));
   const rows=snap.docs.map(d=>({id:d.id,...d.data()}));
-  if(!rows.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=kind==="lesson"?4:8;td.textContent=kind==="lesson"?"No timetable entries have been published yet.":"No examination entries have been published yet.";tr.append(td);body.append(tr);return;}
+  if(!rows.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=kind==="lesson"?12:8;td.textContent=kind==="lesson"?"No timetable entries have been published yet.":"No examination entries have been published yet.";tr.append(td);body.append(tr);return;}
   if(kind==="lesson"){
-   const table=$("publishedTimetableTable"),head=table.querySelector("thead");head.innerHTML="<tr><th>Day</th><th>Class</th><th>Subjects and periods</th><th class=\"timetable-action-column\">Actions</th></tr>";body.replaceChildren();
+   const table=$("publishedTimetableTable"),head=table.querySelector("thead");
+   table.classList.add("fixed-period-timetable");
+   head.replaceChildren();
+   const headerRow=document.createElement("tr");
+   const dayHead=document.createElement("th");dayHead.textContent="Day";headerRow.append(dayHead);
+   const classHead=document.createElement("th");classHead.textContent="Class";headerRow.append(classHead);
+   TIMETABLE_PERIODS.forEach(([start,end,label])=>{const th=document.createElement("th");th.className=start==="09:30"?"timetable-break-column":"timetable-period-column";th.textContent=start==="09:30"?"BREAK\n9:30–10:30 AM":formatPeriod(start,end);headerRow.append(th)});
+   const actionHead=document.createElement("th");actionHead.className="timetable-action-column";actionHead.textContent="Actions";headerRow.append(actionHead);head.append(headerRow);body.replaceChildren();
    const days=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
    const groups=new Map();
    rows.forEach(r=>{const key=(r.day||"")+"::"+(r.className||"");if(!groups.has(key))groups.set(key,[]);groups.get(key).push(r)});
@@ -582,10 +599,14 @@ async function refreshTimetableCollection(kind){
    let lastDay="";
    for(const group of ordered){
     group.sort((a,b)=>String(a.startTime||"").localeCompare(String(b.startTime||"")));
-    if(group[0].day!==lastDay){lastDay=group[0].day;const daytr=document.createElement("tr"),daytd=document.createElement("th");daytd.colSpan=4;daytd.textContent=lastDay||"Unspecified day";daytd.className="timetable-day-heading";daytr.append(daytd);body.append(daytr)}
+    if(group[0].day!==lastDay){lastDay=group[0].day;const daytr=document.createElement("tr"),daytd=document.createElement("th");daytd.colSpan=12;daytd.textContent=lastDay||"Unspecified day";daytd.className="timetable-day-heading";daytr.append(daytd);body.append(daytr)}
     const tr=document.createElement("tr");tr.className="timetable-class-row";appendCell(tr,group[0].day||"—");appendCell(tr,group[0].className||"—");
-    const periods=document.createElement("td"),line=document.createElement("div");line.className="timetable-period-line";
-    group.forEach(r=>{const chip=document.createElement("span");chip.className="timetable-period-chip";chip.textContent=formatPeriod(r.startTime,r.endTime)+" · "+(r.subject||"");line.append(chip)});periods.append(line);tr.append(periods);
+    TIMETABLE_PERIODS.forEach(([start,end])=>{
+     const td=document.createElement("td");td.className=start==="09:30"?"timetable-break-cell":"timetable-subject-cell";
+     if(start==="09:30"){td.textContent="BREAK";td.classList.add("timetable-break-cell");}
+     else {const match=group.find(r=>r.startTime===start&&r.endTime===end);td.textContent=match?(match.subject||"—"):"—";}
+     tr.append(td);
+    });
     const actions=document.createElement("td"),wrap=document.createElement("div");wrap.className="table-actions";
     const edit=document.createElement("button");edit.type="button";edit.className="small-action";edit.textContent="Edit class timetable";edit.onclick=()=>beginTimetableEdit(group);
     const del=document.createElement("button");del.type="button";del.className="small-action danger-action";del.textContent="Delete class timetable";del.onclick=async()=>{if(!confirm("Delete all periods for "+group[0].className+" on "+group[0].day+"?"))return;try{for(const r of group)await deleteDoc(doc(db,"schools",profile.schoolId,sub,r.id));setTableStatus("timetableStatus","Complete class timetable deleted.","success");await refreshTimetableCollection("lesson")}catch(e){setTableStatus("timetableStatus",err(e),"error")}};
@@ -594,7 +615,7 @@ async function refreshTimetableCollection(kind){
   }
   rows.sort((a,b)=>String(a.date||"").localeCompare(String(b.date||""))||String(a.startTime||"").localeCompare(String(b.startTime||"")));
   rows.forEach(r=>{const tr=document.createElement("tr");[r.date,(r.startTime||"")+" – "+(r.endTime||""),r.className,r.subject,r.venue,r.invigilatorName,[r.term,r.academicSession].filter(Boolean).join(" · ")].forEach(v=>appendCell(tr,v||""));const action=appendCell(tr,"");const del=document.createElement("button");del.type="button";del.className="small-action danger-action timetable-row-action";del.textContent="Delete";del.onclick=async()=>{if(!confirm("Delete this examination timetable entry?"))return;await deleteDoc(doc(db,"schools",profile.schoolId,sub,r.id));await refreshTimetableCollection(kind)};action.append(del);body.append(tr)});
- }catch(e){console.error(e);const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=kind==="lesson"?4:8;td.textContent="Could not load entries: "+err(e);tr.append(td);body.append(tr)}
+ }catch(e){console.error(e);const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=kind==="lesson"?12:8;td.textContent="Could not load entries: "+err(e);tr.append(td);body.append(tr)}
 }
 function formatPeriod(a,b){const f=t=>{if(!t)return "";let [h,m]=t.split(":").map(Number);return `${h%12||12}:${String(m).padStart(2,"0")}${h<12?"AM":"PM"}`};return f(a)+"–"+f(b)}
 async function initializeTimetableModule(){if(!profile?.schoolId)return;fillTimetableSelects();renderTimetablePeriodBuilder();await loadConnectedTeachers();populateInvigilatorOptions();await Promise.all([refreshTimetableCollection("lesson"),refreshTimetableCollection("exam")]);}
