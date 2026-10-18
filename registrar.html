@@ -116,13 +116,12 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 <h2 style="margin:0 0 8px">💳 PTA Payment Report</h2>
 <p class="muted">Read-only report of PTA payments confirmed by each Form Master. The PTA fee is fixed at ₦200 per student per term. The registrar can review totals by term, class, and student; payment marking is done by the assigned Form Master.</p>
 <div class="notice info">Only confirmed full payments are counted. There are no partial payments. Each pupil has a separate status for First Term, Second Term, and Third Term.</div>
-<div class="stats payment-stats" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
- <div class="stat item"><small>Fee per term</small><strong>₦200</strong></div>
- <div class="stat item"><small>Annual PTA fee per pupil</small><strong>₦600</strong></div>
- <div class="stat item"><small>Fully paid pupils (all terms)</small><strong id="ptaSummaryPaid">0</strong></div>
- <div class="stat item"><small>Pupils with payment remaining</small><strong id="ptaSummaryUnpaid">0</strong></div>
- <div class="stat item"><small>Total received (all terms)</small><strong id="ptaSummaryReceived">₦0.00</strong></div>
- <div class="stat item"><small>Total remaining (all terms)</small><strong id="ptaSummaryBalance">₦0.00</strong></div>
+<!-- Legacy summary values are kept hidden to preserve compatibility with existing JavaScript. -->
+<div class="hidden" aria-hidden="true">
+ <span id="ptaSummaryPaid">0</span>
+ <span id="ptaSummaryUnpaid">0</span>
+ <span id="ptaSummaryReceived">₦0.00</span>
+ <span id="ptaSummaryBalance">₦0.00</span>
 </div>
 <div class="card" style="margin:0 0 18px">
  <h3>📚 Class-by-Class PTA Report</h3><p class="muted">Shows how many pupils have paid in each term and the money collected for that class.</p>
