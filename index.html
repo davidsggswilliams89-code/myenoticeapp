@@ -2714,7 +2714,28 @@ function viewStudentResult(i){
 }
 function grade(score){return score>=75?"A":score>=65?"B":score>=55?"C":score>=45?"D":score>=40?"E":"F"}
 function renderResults(){
- document.querySelector("#resultsBody").innerHTML=students.map(s=>{let ca=s[3]+s[4]+s[5], fin=ca+s[6];return `<tr><td>${s[1]}</td><td>${s[3]}</td><td>${s[4]}</td><td>${s[5]}</td><td>${ca}/30</td><td>${s[6]}/70</td><td>${fin}/100</td><td><b>${grade(fin)}</b></td></tr>`}).join("");
+  // This legacy results table is not present on every dashboard view.
+  // Never let a missing table turn a successful Firebase write into a save error.
+  const resultsBody = document.querySelector("#resultsBody");
+  if (!resultsBody) {
+    console.warn("Results table #resultsBody is not present; skipping legacy results-table refresh.");
+    return false;
+  }
+
+  const records = Array.isArray(students) ? students : [];
+  resultsBody.innerHTML = records.map(s => {
+    const ca1 = Number(s[3]) || 0;
+    const ca2 = Number(s[4]) || 0;
+    const ca3 = Number(s[5]) || 0;
+    const exam = Number(s[6]) || 0;
+    const ca = ca1 + ca2 + ca3;
+    const finalScore = ca + exam;
+    const escapeCell = value => String(value ?? "").replace(/[&<>"']/g, ch => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
+    }[ch]));
+    return `<tr><td>${escapeCell(s[1])}</td><td>${ca1}</td><td>${ca2}</td><td>${ca3}</td><td>${ca}/30</td><td>${exam}/70</td><td>${finalScore}/100</td><td><b>${grade(finalScore)}</b></td></tr>`;
+  }).join("");
+  return true;
 }
 let currentLessonType = null;
 let currentLessonIndex = 0;
