@@ -36,7 +36,35 @@ const membershipSnap=await getDocs(query(collection(db,'schoolTeachers'),where('
 for(const d of membershipSnap.docs){const x=d.data()||{};if(['connected','approved','active'].includes(norm(x.status))){found={...x,id:d.id};break}}
 if(!found){const reqSnap=await getDocs(query(collection(db,'teacherConnectionRequests'),where('teacherUid','==',user.uid)));for(const d of reqSnap.docs){const x=d.data()||{};if(['connected','approved','active'].includes(norm(x.status))){found={...x,id:d.id};break}}}
 if(!found)throw Error('No active school connection was found for this signed-in teacher. Check that Firestore rules allow the signed-in teacher to read records where teacherUid matches their UID.');if(!isMaster(found))throw Error('You are connected to a school, but the registrar has not assigned you as Form Master.');const assignedClass=String(found.ptaFormMasterClass||found.assignedClass||'').trim();if(!found.schoolId||!assignedClass)throw Error('Your Form Master assignment is missing the school or class. Ask the registrar to assign your class again.');connection={...found,ptaFormMasterClass:assignedClass};$('schoolLine').textContent=(found.schoolName||'School')+' · '+(user.displayName||user.email||'Teacher');$('classLine').textContent='Assigned class: '+assignedClass+' · PTA payment ₦200 per term';$('notice').hidden=true;$('dashboard').hidden=false;await loadStudents();}catch(e){console.error(e);$('dashboard').hidden=true;showNotice(e.message||'Unable to load PTA payment dashboard.',true)}}
-async function loadStudents(){showNotice('Loading students for '+connection.ptaFormMasterClass+'…');const snap=await getDocs(collection(db,'schools',connection.schoolId,'students'));students=snap.docs.map(d=>{const x=d.data()||{};return{id:d.id,name:x.name||x.studentName||x.fullName||'Unnamed student',admission:x.admissionNumber||x.admissionNo||'',className:x.className||x.class||x.classLevel||'',phone:x.parentPhone||x.parentGuardianPhone||x.phone||'',photo:x.photo||x.studentPhoto||'',ptaPayments:x.ptaPayments||{}}}).filter(s=>norm(s.className)===norm(connection.ptaFormMasterClass));$('notice').hidden=true;render()}
-$('term').addEventListener('change',render);$('search').addEventListener('input',render);$('refreshBtn').addEventListener('click',async()=>{if(connection)try{await loadStudents()}catch(e){showNotice(e.message,true)}});$('backBtn').addEventListener('click',()=>location.href='school-connected-teacher.html');onAuthStateChanged(auth,user=>{if(!user){location.href='school-connected-teacher.html';return}loadDashboard(user)});
+async function loadStudents(){
+  showNotice('Loading students for '+connection.ptaFormMasterClass+'…');
+  try {
+    const assignedClass=String(connection.ptaFormMasterClass||connection.assignedClass||'').trim();
+    if(!connection.schoolId || !assignedClass) throw new Error('Your school ID or assigned class is missing. Ask the registrar to check the Form Master assignment.');
+    // Firestore rules restrict Form Masters to their assigned class. Query that class directly;
+    // do not request the entire school student collection and filter it in the browser.
+    const studentsRef=collection(db,'schools',connection.schoolId,'students');
+    const snap=await getDocs(query(studentsRef,where('className','==',assignedClass)));
+    students=snap.docs.map(d=>{
+      const x=d.data()||{};
+      return {
+        id:d.id,
+        name:x.name||x.studentName||x.fullName||'Unnamed student',
+        admission:x.admissionNumber||x.admissionNo||'',
+        className:x.className||'',
+        phone:x.parentPhone||x.parentGuardianPhone||x.phone||'',
+        photo:x.photo||x.studentPhoto||'',
+        ptaPayments:x.ptaPayments||{}
+      };
+    });
+    $('notice').hidden=true;
+    $('dashboard').hidden=false;
+    render();
+  } catch(e) {
+    console.error('PTA loadStudents failed:',e);
+    showNotice('Could not load students ('+(e.code||'error')+'): '+(e.message||'Check Firestore rules and the assigned class.'),true);
+  }
+}
+$('term').addEventListener('change',render);$('search').addEventListener('input',render);$('refreshBtn').addEventListener('click',async()=>{if(connection)await loadStudents()});$('backBtn').addEventListener('click',()=>location.href='school-connected-teacher.html');onAuthStateChanged(auth,user=>{if(!user){location.href='school-connected-teacher.html';return}loadDashboard(user)});
 </script>
 </body></html>
