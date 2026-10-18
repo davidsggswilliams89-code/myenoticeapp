@@ -573,15 +573,17 @@ function populatePtaFormMasterClasses(){
  const sel=$("ptaFormMasterClass");if(!sel)return;const keep=sel.value;sel.replaceChildren(new Option("Select class",""));
  (activeSchoolClasses||[]).forEach(cls=>sel.add(new Option(cls,cls)));if([...sel.options].some(o=>o.value===keep))sel.value=keep;
 }
+const ptaFormMasterTeacherRecords=new Map();
 async function loadPtaFormMasterAssignments(){
  const teacherSel=$("ptaFormMasterTeacher"),list=$("ptaFormMasterAssignmentsList");if(!profile?.schoolId||!teacherSel||!list)return;
  populatePtaFormMasterClasses();teacherSel.replaceChildren(new Option("Select connected teacher",""));list.replaceChildren();
  try{
   const snap=await getDocs(query(collection(db,"teacherConnectionRequests"),where("schoolId","==",profile.schoolId)));
   const rows=snap.docs.map(d=>({id:d.id,...d.data()}));
+  ptaFormMasterTeacherRecords.clear();
   const connected=rows.filter(x=>["connected","approved","active"].includes(String(x.status||"").toLowerCase())&&x.teacherUid);
   connected.sort((a,b)=>String(a.teacherName||a.teacherEmail||"").localeCompare(String(b.teacherName||b.teacherEmail||"")));
-  connected.forEach(x=>teacherSel.add(new Option((x.teacherName||x.teacherEmail||"Teacher")+(x.teacherEmail?" · "+x.teacherEmail:""),x.id)));
+  connected.forEach(x=>{ptaFormMasterTeacherRecords.set(x.id,x);teacherSel.add(new Option((x.teacherName||x.teacherEmail||"Teacher")+(x.teacherEmail?" · "+x.teacherEmail:""),x.id));});
   const assigned=connected.filter(x=>x.ptaFormMaster===true||String(x.assignedRole||"").trim().toLowerCase()==="form master");
   if(!assigned.length){list.innerHTML='<p class="muted">No active Form Master assignments yet.</p>';return;}
   assigned.forEach(x=>{
@@ -617,26 +619,11 @@ async function updatePtaFormMaster(record,className,remove=false,button=null){
    status:"connected",
    ...patch
   };
-  // Write separately and identify the exact document rejected by Firestore rules.
-  try {
-   await setDoc(memberRef,memberPatch,{merge:true});
-  } catch (membershipError) {
-   console.error("Form Master membership write failed", {
-    code: membershipError?.code, message: membershipError?.message,
-    schoolId: profile.schoolId, registrarUid: user.uid, teacherUid: record.teacherUid,
-    membershipDocumentId: profile.schoolId + "_" + record.teacherUid
-   });
-   throw new Error("Permission denied while saving schoolTeachers/" + profile.schoolId + "_" + record.teacherUid + ". Check the school's ownership fields and the schoolTeachers rule. Firebase: " + (membershipError?.code || membershipError?.message || "unknown error"));
-  }
-  try {
-   await updateDoc(doc(db,"teacherConnectionRequests",record.id),patch);
-  } catch (requestError) {
-   console.error("Form Master connection-request write failed", {
-    code: requestError?.code, message: requestError?.message,
-    requestId: record.id, schoolId: profile.schoolId, registrarUid: user.uid
-   });
-   throw new Error("Membership was saved, but permission was denied while updating teacherConnectionRequests/" + record.id + ". Check the teacherConnectionRequests update rule. Firebase: " + (requestError?.code || requestError?.message || "unknown error"));
-  }
+  // Write the membership first so it contains the latest Form Master fields.
+  try{await setDoc(memberRef,memberPatch,{merge:true});}
+  catch(writeError){writeError.message="Failed writing schoolTeachers/"+profile.schoolId+"_"+record.teacherUid+": "+(writeError.message||"Permission denied");throw writeError;}
+  try{await updateDoc(doc(db,"teacherConnectionRequests",record.id),patch);}
+  catch(writeError){writeError.message="Membership saved, but failed updating teacherConnectionRequests/"+record.id+": "+(writeError.message||"Permission denied");throw writeError;}
   ptaFormMasterStatus(remove?"Form Master access removed. Their ordinary teacher dashboard remains active.":label+" assigned as Form Master for "+className+".","success");
   await loadPtaFormMasterAssignments();
  }catch(e){
@@ -653,7 +640,7 @@ async function updatePtaFormMaster(record,className,remove=false,button=null){
 $("assignPtaFormMaster")?.addEventListener("click",async()=>{
  const id=$("ptaFormMasterTeacher")?.value,cls=$("ptaFormMasterClass")?.value;if(!id){ptaFormMasterStatus("Select a connected teacher.","error");return}if(!cls){ptaFormMasterStatus("Select the class this teacher will manage.","error");return}
  const btn=$("assignPtaFormMaster");btn.disabled=true;btn.textContent="Assigning…";
- try{const snap=await getDoc(doc(db,"teacherConnectionRequests",id));if(!snap.exists())throw new Error("Teacher connection record was not found.");const rec={id:snap.id,...snap.data()};if(!["connected","approved","active"].includes(String(rec.status||"").toLowerCase()))throw new Error("This teacher is not currently connected to the school.");await updatePtaFormMaster(rec,cls,false,btn)}catch(e){ptaFormMasterStatus(e.message||"Could not assign Form Master.","error")}finally{btn.disabled=false;btn.textContent="Assign Form Master";}
+ try{const rec=ptaFormMasterTeacherRecords.get(id);if(!rec)throw new Error("The selected teacher record is no longer loaded. Refresh the connected-teacher list and try again.");if(rec.schoolId!==profile.schoolId)throw new Error("The selected teacher connection does not belong to this school. Refresh the list and try again.");if(!["connected","approved","active"].includes(String(rec.status||"").toLowerCase()))throw new Error("This teacher is not currently connected to the school.");await updatePtaFormMaster(rec,cls,false,btn)}catch(e){ptaFormMasterStatus(e.message||"Could not assign Form Master.","error")}finally{btn.disabled=false;btn.textContent="Assign Form Master";}
 });
 $("refreshPtaFormMasters")?.addEventListener("click",loadPtaFormMasterAssignments);
 
