@@ -106,7 +106,7 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 #timetableRows td:nth-child(3), #examTimetableRows td:nth-child(3) { min-width: 105px; }
 
 
-.timetable-print-heading{display:none}
+.timetable-day-heading{background:#e8f1eb!important;text-align:center!important;font-weight:bold!important}\n.timetable-print-heading{display:none}
 @media print{
  @page{size:A4 landscape;margin:12mm}
  body{background:#fff!important;color:#000!important;font-size:10pt}
@@ -120,7 +120,7 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
  #timetablePrintHeading h3{font-size:14pt;margin:8px 0 0!important}
  #publishedTimetablePrintArea div[style*="overflow-x:auto"]{overflow:visible!important;margin-top:0!important}
  #publishedTimetableTable{width:100%!important;min-width:0!important;border-collapse:collapse!important;table-layout:auto!important}
- #publishedTimetableTable th,#publishedTimetableTable td{visibility:visible!important;border:1px solid #555!important;padding:6px 5px!important;font-size:8.5pt!important;color:#000!important;background:#fff!important;white-space:normal!important}
+ #publishedTimetableTable th,#publishedTimetableTable td{visibility:visible!important;border:1px solid #555!important;padding:5px 4px!important;font-size:8pt!important;color:#000!important;background:#fff!important;white-space:pre-line!important}
  #publishedTimetableTable th{font-weight:bold!important;background:#eee!important}
  #publishedTimetableTable .timetable-action-column,#publishedTimetableTable td:last-child{display:none!important}
  #publishedTimetablePrintArea button{display:none!important}
@@ -547,7 +547,40 @@ function beginTimetableEdit(r){
  $("generalTimetableForm").scrollIntoView({behavior:"smooth",block:"start"});
  setTableStatus("timetableStatus","Editing published timetable entry. Make corrections, then save.","info");
 }
-async function refreshTimetableCollection(kind){const body=$(kind==="lesson"?"timetableRows":"examTimetableRows"),sub=kind==="lesson"?"timetable":"examTimetable";if(!body||!profile?.schoolId)return;body.replaceChildren();const cols=kind==="lesson"?8:8;try{const snap=await getDocs(collection(db,"schools",profile.schoolId,sub));const rows=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(a.date||a.day||"").localeCompare(String(b.date||b.day||""))||String(a.startTime||"").localeCompare(String(b.startTime||"")));if(!rows.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=cols;td.textContent=kind==="lesson"?"No timetable entries have been published yet.":"No examination entries have been published yet.";tr.append(td);body.append(tr);return;}rows.forEach(r=>{const tr=document.createElement("tr");if(kind==="lesson"){appendCell(tr,r.day||"");appendCell(tr,r.subject);appendCell(tr,(r.startTime||"")+" – "+(r.endTime||""));appendCell(tr,r.className);appendCell(tr,r.teacherName||"Auto-match by class/subject");appendCell(tr,r.term);appendCell(tr,r.academicSession);}else{appendCell(tr,r.date);appendCell(tr,(r.startTime||"")+" – "+(r.endTime||""));appendCell(tr,r.className);appendCell(tr,r.subject);appendCell(tr,r.venue);appendCell(tr,r.invigilatorName);appendCell(tr,[r.term,r.academicSession].filter(Boolean).join(" · "));}const action=appendCell(tr,"");action.textContent="";action.style.whiteSpace="nowrap";if(kind==="lesson"){const edit=document.createElement("button");edit.type="button";edit.className="small-action timetable-row-action";edit.textContent="Edit";edit.style.marginRight="6px";edit.onclick=()=>beginTimetableEdit(r);action.append(edit);}const del=document.createElement("button");del.type="button";del.className="small-action danger-action timetable-row-action";del.textContent="Delete";del.onclick=async()=>{if(!confirm("Delete this timetable entry?"))return;try{await deleteDoc(doc(db,"schools",profile.schoolId,sub,r.id));setTableStatus(kind==="lesson"?"timetableStatus":"examTimetableStatus","Entry deleted.","success");await refreshTimetableCollection(kind)}catch(e){setTableStatus(kind==="lesson"?"timetableStatus":"examTimetableStatus",err(e),"error")}};action.append(del);body.append(tr)});}catch(e){console.error(e);const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=cols;td.textContent="Could not load entries: "+err(e)+". Check Firestore rules for schools/{schoolId}/"+sub+".";tr.append(td);body.append(tr);}}
+async function refreshTimetableCollection(kind){
+ const body=$(kind==="lesson"?"timetableRows":"examTimetableRows"),sub=kind==="lesson"?"timetable":"examTimetable";
+ if(!body||!profile?.schoolId)return;body.replaceChildren();
+ try{
+  const snap=await getDocs(collection(db,"schools",profile.schoolId,sub));
+  const rows=snap.docs.map(d=>({id:d.id,...d.data()}));
+  if(!rows.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=8;td.textContent=kind==="lesson"?"No timetable entries have been published yet.":"No examination entries have been published yet.";tr.append(td);body.append(tr);return;}
+  if(kind==="lesson"){
+   const table=$("publishedTimetableTable"),head=table.querySelector("thead");
+   head.innerHTML="<tr><th>Class</th><th>Period</th><th>Subject / Teacher</th><th class=\"timetable-action-column\">Action</th></tr>";
+   body.replaceChildren();
+   const days=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+   const byDay=days.map(day=>({day,items:rows.filter(r=>r.day===day)})).filter(g=>g.items.length);
+   for(const group of byDay){
+    const periods=[...new Set(group.items.map(r=>(r.startTime||"")+"|"+(r.endTime||"")))].sort((a,b)=>a.split("|")[0].localeCompare(b.split("|")[0]));
+    const daytr=document.createElement("tr"),daytd=document.createElement("th");daytd.colSpan=4;daytd.textContent=group.day;daytd.className="timetable-day-heading";daytr.append(daytd);body.append(daytr);
+    const phead=document.createElement("tr");["Class",...periods.map(p=>{let [a,b]=p.split("|");return formatPeriod(a,b)}),"Actions"].forEach(t=>{const th=document.createElement("th");th.textContent=t;phead.append(th)});body.append(phead);
+    const classes=[...new Set(group.items.map(r=>r.className||""))].sort((a,b)=>a.localeCompare(b));
+    classes.forEach(cls=>{const tr=document.createElement("tr"),c=document.createElement("td");c.textContent=cls;tr.append(c);
+      periods.forEach(p=>{const td=document.createElement("td"),[a,b]=p.split("|"),entry=group.items.find(r=>r.className===cls&&(r.startTime||"")+"|"+(r.endTime||"")===p);
+       if(entry){td.textContent=(entry.subject||"")+(entry.teacherName?"\\n"+entry.teacherName:"");td.style.whiteSpace="pre-line";}
+       else td.textContent="—";tr.append(td);
+      });
+      const act=document.createElement("td");act.className="timetable-action-column";
+      group.items.filter(r=>r.className===cls).forEach(r=>{const edit=document.createElement("button");edit.type="button";edit.className="small-action timetable-row-action";edit.textContent="Edit";edit.onclick=()=>beginTimetableEdit(r);const del=document.createElement("button");del.type="button";del.className="small-action danger-action timetable-row-action";del.textContent="Delete";del.onclick=async()=>{if(!confirm("Delete this timetable entry?"))return;try{await deleteDoc(doc(db,"schools",profile.schoolId,sub,r.id));setTableStatus("timetableStatus","Entry deleted.","success");await refreshTimetableCollection(kind)}catch(e){setTableStatus("timetableStatus",err(e),"error")}};act.append(edit,del);});tr.append(act);body.append(tr);
+    });
+   }
+   return;
+  }
+  rows.sort((a,b)=>String(a.date||"").localeCompare(String(b.date||""))||String(a.startTime||"").localeCompare(String(b.startTime||"")));
+  rows.forEach(r=>{const tr=document.createElement("tr");[r.date,(r.startTime||"")+" – "+(r.endTime||""),r.className,r.subject,r.venue,r.invigilatorName,[r.term,r.academicSession].filter(Boolean).join(" · ")].forEach(v=>appendCell(tr,v||""));const action=appendCell(tr,"");const del=document.createElement("button");del.type="button";del.className="small-action danger-action timetable-row-action";del.textContent="Delete";del.onclick=async()=>{if(!confirm("Delete this timetable entry?"))return;await deleteDoc(doc(db,"schools",profile.schoolId,sub,r.id));await refreshTimetableCollection(kind)};action.append(del);body.append(tr)});
+ }catch(e){console.error(e);const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=8;td.textContent="Could not load entries: "+err(e);tr.append(td);body.append(tr)}
+}
+function formatPeriod(a,b){const f=t=>{if(!t)return "";let [h,m]=t.split(":").map(Number);return `${h%12||12}:${String(m).padStart(2,"0")}${h<12?"AM":"PM"}`};return f(a)+"–"+f(b)}
 async function initializeTimetableModule(){if(!profile?.schoolId)return;fillTimetableSelects();await loadConnectedTeachers();populateInvigilatorOptions();await Promise.all([refreshTimetableCollection("lesson"),refreshTimetableCollection("exam")]);}
 $("ttClass")?.addEventListener("change",()=>{});$("exClass")?.addEventListener("change",populateInvigilatorOptions);$("exSubject")?.addEventListener("change",populateInvigilatorOptions);
 $("printPublishedTimetable")?.addEventListener("click",()=>{const schoolName=$("dashboardSchoolName")?.textContent?.trim()||profile?.schoolName||profile?.name||"School";const session=$("ttSession")?.value?.trim()||profile?.academicSession||$("session")?.value?.trim()||"Not specified";const now=new Date();const printed=now.toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"});$("printSchoolName").textContent=schoolName;$("printAcademicSession").textContent=session;$("printDate").textContent=printed;window.print()});
