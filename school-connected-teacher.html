@@ -1566,6 +1566,10 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
     <span class="navicon">🗓️</span>
     <span>Academic Session</span>
   </button>
+  <button class="topnav-item" id="formMasterPtaNav" style="display:none" onclick="openFormMasterPta(this)">
+    <span class="navicon">💳</span>
+    <span>PTA Payments</span>
+  </button>
 
   <button class="topnav-item holiday-nav" onclick="showExtraSection('holidayView',this)">
     <span class="navicon holiday-icon">🎉</span>
@@ -1841,7 +1845,6 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
   <section id="formMasterPtaSection" class="student-card" style="margin-top:20px;padding:16px;border:1px solid #cfe4dd;border-radius:14px;background:#fff;display:none">
     <div style="display:flex;gap:12px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap">
       <div><h3 style="margin:0 0 6px">💳 PTA Payment — My Class</h3><p id="ptaTeacherSummary" style="margin:0;color:#667085;font-size:13px;line-height:1.5">Form Master payment register.</p></div>
-      <a href="pta-payment.html" style="display:inline-block;padding:10px 14px;border-radius:9px;background:#087f5b;color:#fff;text-decoration:none;font-weight:800;font-size:13px">Open Full PTA Payment Dashboard ↗</a>
       <label style="min-width:150px;margin:0">Term<select id="teacherPtaTerm" style="display:block;width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:9px;margin-top:5px"><option value="firstTerm">First Term</option><option value="secondTerm">Second Term</option><option value="thirdTerm">Third Term</option></select></label>
     </div>
     <p style="background:#effaf4;border:1px solid #ccebd8;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.5;color:#166534;margin:12px 0">PTA fee: <strong>₦200 per student per term</strong>. After you have received the full payment, mark the student as paid. A paid status cannot be marked again for the same term.</p>
@@ -2781,11 +2784,22 @@ function renderStudents(){
 
 function ptaTeacherEscape(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;", "'":"&#39;"}[c]));}
 function ptaTeacherTermLabel(){const sel=document.getElementById("teacherPtaTerm");return sel?.selectedOptions?.[0]?.textContent||"First Term";}
-function ptaTeacherIsFormMaster(){const c=window.activeTeacherConnection||{};return (window.TEACHER_DASHBOARD_MODE||"")==="school-connected"&&["connected","approved","active"].includes(String(c.status||"").toLowerCase())&&(c.ptaFormMaster===true||String(c.assignedRole||"").trim().toLowerCase()==="form master");}
+function ptaTeacherIsFormMaster(){const c=window.activeTeacherConnection||{},signedInUid=window.firebaseTeacherUID||auth.currentUser?.uid||"";return (window.TEACHER_DASHBOARD_MODE||"")==="school-connected"&&!!signedInUid&&c.teacherUid===signedInUid&&["connected","approved","active"].includes(String(c.status||"").toLowerCase())&&(c.ptaFormMaster===true||String(c.assignedRole||"").trim().toLowerCase()==="form master")&&!!String(c.ptaFormMasterClass||"").trim();}
+window.openFormMasterPta=function(button){
+ if(!ptaTeacherIsFormMaster()){alert("PTA Payments is available only to the teacher UID currently assigned as Form Master.");if(button)button.style.display="none";return;}
+ showSection("dashboardView",button);
+ const section=document.getElementById("formMasterPtaSection");
+ if(section){section.style.display="block";setTimeout(()=>section.scrollIntoView({behavior:"smooth",block:"start"}),80);}
+ if(typeof window.renderFormMasterPtaPayments==="function")window.renderFormMasterPtaPayments();
+};
 window.renderFormMasterPtaPayments=function(){
  const section=document.getElementById("formMasterPtaSection"),body=document.getElementById("teacherPtaPaymentsBody"),message=document.getElementById("teacherPtaMessage");if(!section||!body)return;
- const isMaster=ptaTeacherIsFormMaster();section.style.display=isMaster?"block":"none";if(!isMaster)return;
- const c=window.activeTeacherConnection||{},ptaClass=String(c.ptaFormMasterClass||c.assignedClass||"").trim(),classes=ptaClass?[ptaClass]:(typeof teacherAssignedClasses==="function"?teacherAssignedClasses():[]),termKey=document.getElementById("teacherPtaTerm")?.value||"firstTerm";
+ const isMaster=ptaTeacherIsFormMaster(),nav=document.getElementById("formMasterPtaNav");
+ if(nav)nav.style.display=isMaster?"flex":"none";
+ section.style.display=isMaster?"block":"none";
+ if(!isMaster)return;
+ const c=window.activeTeacherConnection||{},ptaClass=String(c.ptaFormMasterClass||"").trim(),classes=ptaClass?[ptaClass]:(typeof teacherAssignedClasses==="function"?teacherAssignedClasses():[]),termKey=document.getElementById("teacherPtaTerm")?.value||"firstTerm";
+ const summary=document.getElementById("ptaTeacherSummary");if(summary)summary.textContent=`${c.schoolName||"Connected school"} · Form Master for ${ptaClass}`;
  const allowed=new Set(classes);const records=students.map((s,index)=>({s,index,info:studentInfo(s)})).filter(x=>allowed.has(x.info.className||""));
  const paid=records.filter(x=>String(x.s[8]?.ptaPayments?.[termKey]?.status||"").toLowerCase()==="paid").length;
  if(message)message.textContent=`${c.assignedClass||classes.join(", ")||"Assigned class"} · ${records.length} student(s) · ${paid} paid · ${records.length-paid} not paid · ${ptaTeacherTermLabel()}.`;
