@@ -284,6 +284,19 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
  <div class="grid" style="gap:0 12px;margin:12px 0"><div><label for="ptaSearch">Search by pupil name or admission number</label><input id="ptaSearch" type="search" placeholder="Search pupils…"></div><div><label for="ptaClassFilter">Class</label><select id="ptaClassFilter"><option value="all">All classes</option></select></div></div>
  <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:900px"><thead><tr><th>Admission No.</th><th>Pupil Name</th><th>Class</th><th>First Term</th><th>Second Term</th><th>Third Term</th><th>Amount Received</th><th>Balance</th><th>Overall Status</th></tr></thead><tbody id="ptaPaymentsBody"><tr><td colspan="9">Loading…</td></tr></tbody></table></div>
 </div>
+<div class="card" id="formMasterManagementCard" style="margin:18px 0 0;padding:16px;border:1px solid #cfe4dd;border-radius:14px;background:#fff">
+ <h3 style="margin:0 0 6px;color:#176b45">👩‍🏫 Form Master Management</h3>
+ <p class="muted" style="margin:0 0 14px">Assign a connected teacher to manage PTA payments for one class. Their school-connected teacher dashboard will show PTA Payments while the assignment is active.</p>
+ <div class="grid" style="gap:0 12px">
+  <div><label for="ptaFormMasterTeacher">Connected teacher</label><select id="ptaFormMasterTeacher"><option value="">Loading connected teachers…</option></select></div>
+  <div><label for="ptaFormMasterClass">Class to manage</label><select id="ptaFormMasterClass"><option value="">Select class</option></select></div>
+ </div>
+ <button id="assignPtaFormMaster" class="primary" type="button" style="margin-top:12px">Assign Form Master</button>
+ <p id="ptaFormMasterStatus" class="muted" role="status" style="margin:10px 0 0"></p>
+ <h4 style="margin:18px 0 8px">Current Form Master Assignments</h4>
+ <div id="ptaFormMasterAssignmentsList"><p class="muted">Loading assignments…</p></div>
+ <button id="refreshPtaFormMasters" class="secondary" type="button" style="margin-top:10px">Refresh Form Masters</button>
+</div>
 </section>
 <section class="card section-anchor registrar-page-panel" data-page-panel="timetable" id="generalTimetableCard" style="margin-top:18px">
 <hr style="border:0;border-top:1px solid var(--line);margin:20px 0"><div id="publishedTimetablePrintArea"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h3 style="margin:0">Published Timetable</h3></div><div id="timetablePrintHeading" class="timetable-print-heading"><h2 id="printSchoolName"></h2><p><strong>Academic Session:</strong> <span id="printAcademicSession"></span></p><p><strong>Date Printed:</strong> <span id="printDate"></span></p><h3>School Timetable</h3></div><div style="overflow-x:auto;margin-top:10px"><table id="publishedTimetableTable" style="width:max-content;border-collapse:collapse;min-width:1500px"><thead><tr><th>Day</th><th>Subject</th><th>Time</th><th>Class</th><th>Teacher</th><th>Term</th><th>Session</th><th class="timetable-action-column">Action</th></tr></thead><tbody id="timetableRows"><tr><td colspan="8">Loading timetable…</td></tr></tbody></table></div></div><button class="primary" type="button" id="printPublishedTimetable" style="margin-top:14px">🖨️ Print Timetable (A4)</button>
@@ -445,7 +458,7 @@ async function refreshDashboardStatistics(school){
   $("statStudentsRemainingHint").textContent=`Out of ${students.length} registered students`;
  }catch(e){console.warn("Dashboard statistics could not be refreshed",e);["statTeachers","statStudents","statMaleStudents","statFemaleStudents","statTimetable","statExams"].forEach(id=>{const el=$(id);if(el&&el.textContent==="—")el.textContent="—"})}
 }
-function render(school){currentSchoolData=school||currentSchoolData;const headerLogo=$("headerSchoolLogo");if(headerLogo){if(school.photo){const img=document.createElement("img");img.src=school.photo;img.alt=(school.name||"School")+" logo";headerLogo.replaceChildren(img);headerLogo.setAttribute("aria-label",img.alt)}else{headerLogo.textContent="eN";headerLogo.setAttribute("aria-label","School logo")}}const welcome=$("welcome");if(welcome)welcome.textContent="Welcome, "+(user.displayName||profile?.fullName||"Registrar");const registrarName=profile?.fullName||profile?.name||user.displayName||"Registrar";const registrarDisplayName=$("registrarDisplayName");if(registrarDisplayName)registrarDisplayName.textContent=registrarName;const registrarSchoolDisplay=$("registrarSchoolDisplay");if(registrarSchoolDisplay)registrarSchoolDisplay.textContent=school.name||"School name";const avatar=$("registrarAvatar");const registrarPhoto=profile?.photoURL||profile?.photoUrl||profile?.photo||user.photoURL||"";if(avatar)avatar.replaceChildren();if(registrarPhoto&&avatar){const avatarImg=document.createElement("img");avatarImg.src=registrarPhoto;avatarImg.alt=registrarName+" profile photo";avatar.append(avatarImg)}else{avatar.textContent=registrarName.split(/\\s+/).filter(Boolean).slice(0,2).map(part=>part[0].toUpperCase()).join("")||"R"}$("statSchoolStatus").textContent=school.status||"Active";$("dashboardSchoolName").textContent=school.name||"School Profile";const schoolIdEl=$("schoolId");if(schoolIdEl)schoolIdEl.textContent=school.id||"School ID unavailable";view("dashboard");showRegistrarPage(activeRegistrarPage||"dashboard");loadAcademicSessionForm().catch(e=>console.error(e));renderSchoolClasses(school);populateOfficialStudentClasses();refreshOfficialStudents().catch(e=>console.error(e));refreshTeacherConnections().catch(e=>console.error(e));refreshDashboardStatistics(school);loadPtaPayments().catch(e=>console.error(e));initializeTimetableModule().catch(e=>console.error(e))}
+function render(school){currentSchoolData=school||currentSchoolData;const headerLogo=$("headerSchoolLogo");if(headerLogo){if(school.photo){const img=document.createElement("img");img.src=school.photo;img.alt=(school.name||"School")+" logo";headerLogo.replaceChildren(img);headerLogo.setAttribute("aria-label",img.alt)}else{headerLogo.textContent="eN";headerLogo.setAttribute("aria-label","School logo")}}const welcome=$("welcome");if(welcome)welcome.textContent="Welcome, "+(user.displayName||profile?.fullName||"Registrar");const registrarName=profile?.fullName||profile?.name||user.displayName||"Registrar";const registrarDisplayName=$("registrarDisplayName");if(registrarDisplayName)registrarDisplayName.textContent=registrarName;const registrarSchoolDisplay=$("registrarSchoolDisplay");if(registrarSchoolDisplay)registrarSchoolDisplay.textContent=school.name||"School name";const avatar=$("registrarAvatar");const registrarPhoto=profile?.photoURL||profile?.photoUrl||profile?.photo||user.photoURL||"";if(avatar)avatar.replaceChildren();if(registrarPhoto&&avatar){const avatarImg=document.createElement("img");avatarImg.src=registrarPhoto;avatarImg.alt=registrarName+" profile photo";avatar.append(avatarImg)}else{avatar.textContent=registrarName.split(/\\s+/).filter(Boolean).slice(0,2).map(part=>part[0].toUpperCase()).join("")||"R"}$("statSchoolStatus").textContent=school.status||"Active";$("dashboardSchoolName").textContent=school.name||"School Profile";const schoolIdEl=$("schoolId");if(schoolIdEl)schoolIdEl.textContent=school.id||"School ID unavailable";view("dashboard");showRegistrarPage(activeRegistrarPage||"dashboard");loadAcademicSessionForm().catch(e=>console.error(e));renderSchoolClasses(school);populateOfficialStudentClasses();refreshOfficialStudents().catch(e=>console.error(e));refreshTeacherConnections().catch(e=>console.error(e));loadPtaFormMasterAssignments().catch(e=>console.error(e));refreshDashboardStatistics(school);loadPtaPayments().catch(e=>console.error(e));initializeTimetableModule().catch(e=>console.error(e))}
 async function copySchoolId(){
  const id=profile?.schoolId;
  const feedback=$("copySchoolIdMessage");
@@ -553,6 +566,57 @@ function createAssignmentEditor(initial=[]){
  const add=document.createElement("button");add.type="button";add.className="secondary";add.textContent="+ Add class and subject";add.style.justifySelf="start";add.onclick=()=>addRow();wrap.append(add);
  return {element:wrap,read(){const result=[];for(const row of rows.children){const selects=row.querySelectorAll('select');const className=selects[0].value,subject=selects[1].value;if(!className&&!subject)continue;if(!className||!subject)throw new Error('For every assignment row, select both a class and a subject.');if(!activeSchoolClasses.includes(className))throw new Error(className+' is disabled in Class Management. Enable it before assigning it to a teacher.');if(result.some(x=>x.className===className&&x.subject===subject))continue;result.push({className,subject})}if(!result.length)throw new Error('Add at least one class and subject assignment.');return result}};
 }
+function ptaFormMasterStatus(text,type="info"){
+ const el=$("ptaFormMasterStatus");if(!el)return;el.textContent=text;el.style.color=type==="error"?"#b42318":type==="success"?"#067647":"#667085";
+}
+function populatePtaFormMasterClasses(){
+ const sel=$("ptaFormMasterClass");if(!sel)return;const keep=sel.value;sel.replaceChildren(new Option("Select class",""));
+ (activeSchoolClasses||[]).forEach(cls=>sel.add(new Option(cls,cls)));if([...sel.options].some(o=>o.value===keep))sel.value=keep;
+}
+async function loadPtaFormMasterAssignments(){
+ const teacherSel=$("ptaFormMasterTeacher"),list=$("ptaFormMasterAssignmentsList");if(!profile?.schoolId||!teacherSel||!list)return;
+ populatePtaFormMasterClasses();teacherSel.replaceChildren(new Option("Select connected teacher",""));list.replaceChildren();
+ try{
+  const snap=await getDocs(query(collection(db,"teacherConnectionRequests"),where("schoolId","==",profile.schoolId)));
+  const rows=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const connected=rows.filter(x=>["connected","approved","active"].includes(String(x.status||"").toLowerCase())&&x.teacherUid);
+  connected.sort((a,b)=>String(a.teacherName||a.teacherEmail||"").localeCompare(String(b.teacherName||b.teacherEmail||"")));
+  connected.forEach(x=>teacherSel.add(new Option((x.teacherName||x.teacherEmail||"Teacher")+(x.teacherEmail?" · "+x.teacherEmail:""),x.id)));
+  const assigned=connected.filter(x=>x.ptaFormMaster===true||String(x.assignedRole||"").trim().toLowerCase()==="form master");
+  if(!assigned.length){list.innerHTML='<p class="muted">No active Form Master assignments yet.</p>';return;}
+  assigned.forEach(x=>{
+   const row=document.createElement("div");row.style.cssText="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px;border:1px solid #e2e8f0;border-radius:10px;margin:8px 0";
+   const info=document.createElement("div");info.style.cssText="flex:1;min-width:180px";
+   const name=document.createElement("strong");name.textContent=x.teacherName||x.teacherEmail||"Teacher";
+   const detail=document.createElement("div");detail.className="muted";detail.style.cssText="font-size:13px;margin-top:4px";detail.textContent=(x.teacherEmail?x.teacherEmail+" · ":"")+(x.ptaFormMasterClass||x.assignedClass||"Class not set");info.append(name,detail);
+   const remove=document.createElement("button");remove.type="button";remove.className="secondary";remove.textContent="Remove Form Master";remove.addEventListener("click",()=>updatePtaFormMaster(x,"",true,remove));row.append(info,remove);list.append(row);
+  });
+ }catch(e){console.error("Form Master assignments failed to load",e);list.innerHTML='<p class="muted">Could not load connected teachers. Check Firestore permissions.</p>';ptaFormMasterStatus("Could not load connected teachers: "+(e.message||"Firebase error"),"error");}
+}
+async function updatePtaFormMaster(record,className,remove=false,button=null){
+ if(!profile?.schoolId||!user)throw new Error("Registrar or school profile is not ready.");
+ if(!record?.teacherUid||!record.id)throw new Error("Select a connected teacher first.");
+ if(!remove&&!className)throw new Error("Select the class to assign.");
+ const label=record.teacherName||record.teacherEmail||"this teacher";
+ if(remove&&!confirm("Remove PTA Form Master access from "+label+"? Their previous payment records will be preserved."))return;
+ if(button){button.disabled=true;button.textContent=remove?"Removing…":"Saving…";}
+ try{
+  const isLegacyMaster=String(record.assignedRole||"").trim().toLowerCase()==="form master";
+  const restoreRole=record.ptaPreviousAssignedRole||(isLegacyMaster?"Class Teacher":record.assignedRole||"Class Teacher");
+  const patch=remove?{ptaFormMaster:false,ptaFormMasterClass:"",...(isLegacyMaster?{assignedRole:restoreRole}:{}),ptaFormMasterRemovedAt:serverTimestamp(),ptaFormMasterUpdatedAt:serverTimestamp(),updatedAt:serverTimestamp()}:{ptaFormMaster:true,ptaFormMasterClass:className,ptaPreviousAssignedRole:isLegacyMaster?(record.ptaPreviousAssignedRole||"Class Teacher"):(record.assignedRole||"Class Teacher"),ptaFormMasterAssignedBy:user.uid,ptaFormMasterAssignedAt:record.ptaFormMaster? (record.ptaFormMasterAssignedAt||serverTimestamp()):serverTimestamp(),ptaFormMasterUpdatedAt:serverTimestamp(),updatedAt:serverTimestamp()};
+  await updateDoc(doc(db,"teacherConnectionRequests",record.id),patch);
+  await setDoc(doc(db,"schoolTeachers",profile.schoolId+"_"+record.teacherUid),{schoolId:profile.schoolId,teacherUid:record.teacherUid,teacherName:record.teacherName||"Teacher",teacherEmail:record.teacherEmail||"",status:"connected",...patch},{merge:true});
+  ptaFormMasterStatus(remove?"Form Master access removed. Their ordinary teacher dashboard remains active.":label+" assigned as Form Master for "+className+".","success");
+  await loadPtaFormMasterAssignments();
+ }catch(e){console.error("Could not update Form Master assignment",e);ptaFormMasterStatus("Could not update assignment: "+(e.message||"Check Firestore permissions."),"error");if(button){button.disabled=false;button.textContent=remove?"Remove Form Master":"Assign Form Master";}throw e;}
+}
+$("assignPtaFormMaster")?.addEventListener("click",async()=>{
+ const id=$("ptaFormMasterTeacher")?.value,cls=$("ptaFormMasterClass")?.value;if(!id){ptaFormMasterStatus("Select a connected teacher.","error");return}if(!cls){ptaFormMasterStatus("Select the class this teacher will manage.","error");return}
+ const btn=$("assignPtaFormMaster");btn.disabled=true;btn.textContent="Assigning…";
+ try{const snap=await getDoc(doc(db,"teacherConnectionRequests",id));if(!snap.exists())throw new Error("Teacher connection record was not found.");const rec={id:snap.id,...snap.data()};if(!["connected","approved","active"].includes(String(rec.status||"").toLowerCase()))throw new Error("This teacher is not currently connected to the school.");await updatePtaFormMaster(rec,cls,false,btn)}catch(e){ptaFormMasterStatus(e.message||"Could not assign Form Master.","error")}finally{btn.disabled=false;btn.textContent="Assign Form Master";}
+});
+$("refreshPtaFormMasters")?.addEventListener("click",loadPtaFormMasterAssignments);
+
 async function refreshTeacherConnections(){
  const box=$("teacherConnectionList"),status=$("teacherConnectionsMessage");if(!box||!profile?.schoolId)return;
  status.textContent="Loading connection requests…";box.replaceChildren();
@@ -601,7 +665,7 @@ async function decideTeacherConnection(r,status,assignedRole,assignments=[]){
   const memberId=profile.schoolId+"_"+r.teacherUid;const memberRef=doc(db,"schoolTeachers",memberId);
   if(status==="connected")await setDoc(memberRef,{schoolId:profile.schoolId,schoolName:r.schoolName||$("dashboardSchoolName").textContent,registrarUid:user.uid,teacherUid:r.teacherUid,teacherName:r.teacherName||"Teacher",teacherEmail:r.teacherEmail||"",teacherPhoto:r.teacherPhoto||"",status:"connected",assignedRole,assignedClass,assignedClasses,assignedSubjects,assignedPairKeys,assignedTeachingAssignments:assignments,connectedAt:r.status==="pending"?serverTimestamp():(r.connectedAt||serverTimestamp()),updatedAt:serverTimestamp()},{merge:true});
   else if(status==="deactivated")await setDoc(memberRef,{schoolId:profile.schoolId,teacherUid:r.teacherUid,status:"deactivated",updatedAt:serverTimestamp(),deactivatedAt:serverTimestamp()},{merge:true});
-  msg(status==="connected"?(r.status==="pending"?"Teacher connection approved and assignments saved.":"Teacher assignments updated successfully."):status==="rejected"?"Teacher request rejected.":"Teacher connection deactivated.","success");await refreshTeacherConnections();
+  msg(status==="connected"?(r.status==="pending"?"Teacher connection approved and assignments saved.":"Teacher assignments updated successfully."):status==="rejected"?"Teacher request rejected.":"Teacher connection deactivated.","success");await refreshTeacherConnections();await loadPtaFormMasterAssignments();
  }catch(e){console.error(e);msg(err(e),"error")}
 }
 $("refreshTeacherConnections")?.addEventListener("click",refreshTeacherConnections);
