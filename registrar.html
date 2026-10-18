@@ -94,15 +94,17 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 
 
 /* Fixed timetable grid: each period is a permanent column, with subjects beneath it. */
-#publishedTimetableTable.fixed-period-timetable{width:max-content!important;min-width:1500px!important;border-collapse:collapse;table-layout:fixed}
-#publishedTimetableTable.fixed-period-timetable th,#publishedTimetableTable.fixed-period-timetable td{border:1px solid var(--line);padding:10px 8px;text-align:center;vertical-align:middle}
-#publishedTimetableTable.fixed-period-timetable thead th{position:sticky;top:0;z-index:2;background:#eaf2ed;font-weight:750;white-space:pre-line;min-width:118px}
-#publishedTimetableTable.fixed-period-timetable thead th:first-child{min-width:105px}
-#publishedTimetableTable.fixed-period-timetable thead th:nth-child(2){min-width:120px}
-#publishedTimetableTable.fixed-period-timetable .timetable-subject-cell{min-width:118px;max-width:150px;white-space:normal;overflow-wrap:anywhere;font-weight:600}
-#publishedTimetableTable.fixed-period-timetable .timetable-break-column,#publishedTimetableTable.fixed-period-timetable .timetable-break-cell{background:#fff0d9;font-weight:800;color:#7b4b00;min-width:125px}
-#publishedTimetableTable.fixed-period-timetable .timetable-action-column{min-width:160px}
-#publishedTimetableTable.fixed-period-timetable .timetable-day-heading{text-align:left;background:#f2f7f4;font-size:1rem}
+#publishedTimetableTable.fixed-period-timetable{width:100%!important;min-width:0!important;border-collapse:collapse;table-layout:fixed}
+#publishedTimetableTable.fixed-period-timetable th,#publishedTimetableTable.fixed-period-timetable td{border:1px solid var(--line);padding:4px 3px;text-align:center;vertical-align:middle;font-size:11px}
+#publishedTimetableTable.fixed-period-timetable thead th{position:sticky;top:0;z-index:2;background:#eaf2ed;font-weight:750;white-space:pre-line;min-width:0;overflow-wrap:anywhere;line-height:1.2}
+#publishedTimetableTable.fixed-period-timetable thead th:first-child{width:7%}
+#publishedTimetableTable.fixed-period-timetable thead th:nth-child(2){width:8.2%}
+#publishedTimetableTable.fixed-period-timetable .timetable-period-column{width:8.2%}
+#publishedTimetableTable.fixed-period-timetable .timetable-subject-cell{width:8.2%;min-width:0;max-width:none;white-space:normal;overflow-wrap:anywhere;word-break:normal;font-weight:600;line-height:1.2}
+#publishedTimetableTable.fixed-period-timetable .timetable-break-column,#publishedTimetableTable.fixed-period-timetable .timetable-break-cell{background:#fff0d9;font-weight:800;color:#7b4b00;width:8.2%;min-width:0;padding:3px 1px}
+#publishedTimetableTable.fixed-period-timetable .timetable-action-column{width:8.2%;min-width:0}
+#publishedTimetableTable.fixed-period-timetable .table-actions{display:flex;gap:3px;justify-content:center;flex-wrap:wrap;min-width:0}
+#publishedTimetableTable.fixed-period-timetable .small-action{padding:3px 5px;font-size:10px;line-height:1.1;border-radius:4px}
 /* Grouped live timetable: one row and one set of actions per class/day */
 .timetable-period-editor{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) auto;gap:10px;align-items:end;padding:12px;margin:10px 0;border:1px solid var(--line);border-radius:10px;background:#f8fbf9}
 .timetable-period-editor label{margin-top:0}.timetable-period-line{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;margin:8px 0;min-width:max-content}
@@ -124,7 +126,7 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 
 .timetable-day-heading{background:#e8f1eb!important;text-align:center!important;font-weight:bold!important}\n.timetable-print-heading{display:none}
 @media print{
- @page{size:A4 landscape;margin:12mm}
+ @page{size:A4 landscape;margin:5mm}
  body{background:#fff!important;color:#000!important;font-size:10pt}
  body *{visibility:hidden!important}
  #publishedTimetablePrintArea,#publishedTimetablePrintArea *{visibility:visible!important}
@@ -135,8 +137,12 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
  #timetablePrintHeading p{font-size:10pt;margin:3px 0!important}
  #timetablePrintHeading h3{font-size:14pt;margin:8px 0 0!important}
  #publishedTimetablePrintArea div[style*="overflow-x:auto"]{overflow:visible!important;margin-top:0!important}
- #publishedTimetableTable{width:100%!important;min-width:0!important;border-collapse:collapse!important;table-layout:auto!important}
- #publishedTimetableTable th,#publishedTimetableTable td{visibility:visible!important;border:1px solid #555!important;padding:5px 4px!important;font-size:8pt!important;color:#000!important;background:#fff!important;white-space:pre-line!important}
+ #publishedTimetableTable{width:100%!important;min-width:0!important;max-width:100%!important;border-collapse:collapse!important;table-layout:fixed!important}
+ #publishedTimetableTable th,#publishedTimetableTable td{visibility:visible!important;border:1px solid #555!important;padding:2px 1px!important;font-size:6.5pt!important;line-height:1.12!important;color:#000!important;background:#fff!important;white-space:normal!important;overflow-wrap:anywhere!important;word-break:normal!important}
+ #publishedTimetableTable thead th:first-child{width:7%!important}
+ #publishedTimetableTable thead th:nth-child(2){width:8.2%!important}
+ #publishedTimetableTable thead th.timetable-period-column,#publishedTimetableTable thead th.timetable-break-column{width:8.2%!important}
+ #publishedTimetableTable thead th.timetable-action-column{width:8.2%!important}
  #publishedTimetableTable th{font-weight:bold!important;background:#eee!important}
  #publishedTimetableTable .timetable-action-column,#publishedTimetableTable td:last-child{display:none!important}
  #publishedTimetablePrintArea button{display:none!important}
@@ -596,10 +602,8 @@ async function refreshTimetableCollection(kind){
    const groups=new Map();
    rows.forEach(r=>{const key=(r.day||"")+"::"+(r.className||"");if(!groups.has(key))groups.set(key,[]);groups.get(key).push(r)});
    const ordered=[...groups.values()].sort((a,b)=>days.indexOf(a[0].day)-days.indexOf(b[0].day)||String(a[0].className||"").localeCompare(String(b[0].className||"")));
-   let lastDay="";
    for(const group of ordered){
     group.sort((a,b)=>String(a.startTime||"").localeCompare(String(b.startTime||"")));
-    if(group[0].day!==lastDay){lastDay=group[0].day;const daytr=document.createElement("tr"),daytd=document.createElement("th");daytd.colSpan=12;daytd.textContent=lastDay||"Unspecified day";daytd.className="timetable-day-heading";daytr.append(daytd);body.append(daytr)}
     const tr=document.createElement("tr");tr.className="timetable-class-row";appendCell(tr,group[0].day||"—");appendCell(tr,group[0].className||"—");
     TIMETABLE_PERIODS.forEach(([start,end])=>{
      const td=document.createElement("td");td.className=start==="09:30"?"timetable-break-cell":"timetable-subject-cell";
@@ -608,8 +612,8 @@ async function refreshTimetableCollection(kind){
      tr.append(td);
     });
     const actions=document.createElement("td"),wrap=document.createElement("div");wrap.className="table-actions";
-    const edit=document.createElement("button");edit.type="button";edit.className="small-action";edit.textContent="Edit class timetable";edit.onclick=()=>beginTimetableEdit(group);
-    const del=document.createElement("button");del.type="button";del.className="small-action danger-action";del.textContent="Delete class timetable";del.onclick=async()=>{if(!confirm("Delete all periods for "+group[0].className+" on "+group[0].day+"?"))return;try{for(const r of group)await deleteDoc(doc(db,"schools",profile.schoolId,sub,r.id));setTableStatus("timetableStatus","Complete class timetable deleted.","success");await refreshTimetableCollection("lesson")}catch(e){setTableStatus("timetableStatus",err(e),"error")}};
+    const edit=document.createElement("button");edit.type="button";edit.className="small-action";edit.textContent="Edit";edit.onclick=()=>beginTimetableEdit(group);
+    const del=document.createElement("button");del.type="button";del.className="small-action danger-action";del.textContent="Delete";del.onclick=async()=>{if(!confirm("Delete all periods for "+group[0].className+" on "+group[0].day+"?"))return;try{for(const r of group)await deleteDoc(doc(db,"schools",profile.schoolId,sub,r.id));setTableStatus("timetableStatus","Complete class timetable deleted.","success");await refreshTimetableCollection("lesson")}catch(e){setTableStatus("timetableStatus",err(e),"error")}};
     wrap.append(edit,del);actions.append(wrap);tr.append(actions);body.append(tr);
    }return;
   }
