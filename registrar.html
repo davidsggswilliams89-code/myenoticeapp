@@ -74,7 +74,20 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 .registrar-nav::-webkit-scrollbar{display:none}.registrar-nav button{flex:0 0 auto;min-width:116px;border:1px solid rgba(255,255,255,.18);border-radius:11px;background:rgba(255,255,255,.12);color:#fff;padding:10px 13px;font-size:13px;font-weight:800}.registrar-nav button span{display:block;font-size:18px;margin-bottom:3px}.registrar-nav button:hover,.registrar-nav button.active{background:#fff;color:#075c51}
 .section-anchor{scroll-margin-top:78px}.registrar-page-panel.page-hidden{display:none!important}#dashboardTop.page-hidden,.dashboard-heading.page-hidden,.dashboard-stats.page-hidden{display:none!important}.timetable-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}.timetable-form .wide{grid-column:1/-1}.table-actions{display:flex;gap:7px;flex-wrap:wrap}.small-action{padding:7px 10px;font-size:12px;border:1px solid var(--line);background:#fff;border-radius:7px}.danger-action{color:#a82929;border-color:#f0c9c9}.table-message{margin:10px 0 0;font-size:13px;line-height:1.5}.invigilator-field{min-width:0}
 @media(max-width:600px){.registrar-nav{padding:6px}.registrar-nav button{min-width:95px;padding:8px;font-size:11px}.timetable-form{grid-template-columns:1fr}.timetable-form .wide{grid-column:auto}.section-anchor{scroll-margin-top:72px}}
-@media(max-width:560px){#ptaClassAccountStats{grid-template-columns:repeat(2,minmax(0,1fr))!important}}\n</style>
+@media(max-width:560px){#ptaClassAccountStats{grid-template-columns:repeat(2,minmax(0,1fr))!important}}\n
+/* PTA only: keep the Class-by-Class report heading on one line */
+.pta-class-report-title {
+  white-space: nowrap;
+  font-size: clamp(11px, 3.6vw, 16px);
+  line-height: 1.2;
+}
+@media (min-width: 600px) {
+  .pta-class-report-title {
+    font-size: 16px;
+  }
+}
+
+</style>
 </head>
 <body>
 
@@ -160,7 +173,7 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
  <span id="ptaSummaryBalance">₦0.00</span>
 </div>
 <div class="card" style="margin:0 0 18px">
- <h3>📚 Class-by-Class PTA Report</h3>
+ <h3 class="pta-class-report-title">📚 Class-by-Class PTA Report</h3>
  <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:820px"><thead><tr><th>Class</th><th>Pupils</th><th>First Term Paid</th><th>Second Term Paid</th><th>Third Term Paid</th><th>Total Received</th><th>Remaining</th></tr></thead><tbody id="ptaClassReportBody"><tr><td colspan="7">Loading class report…</td></tr></tbody></table></div>
 </div>
 <div class="card" style="margin:0">
