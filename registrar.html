@@ -185,7 +185,10 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 
 
 /* Compact teacher directory: horizontal teacher identity, compact assignment controls underneath */
-.teacher-compact-card{border:1px solid #dce6df;border-radius:12px;padding:10px 12px;margin:9px 0;background:#fff;box-shadow:0 2px 7px rgba(16,75,50,.035);min-width:0}
+/* Connected teachers are displayed as a horizontal swipe/scroll strip. */
+#teacherConnectionList{display:flex;flex-direction:row;align-items:stretch;gap:12px;overflow-x:auto;overflow-y:hidden;padding:8px 2px 14px;max-width:100%;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;}
+#teacherConnectionList:focus{outline:2px solid var(--accent,#16856b);outline-offset:2px}
+.teacher-compact-card{box-sizing:border-box;border:1px solid #dce6df;border-radius:12px;padding:10px 12px;margin:0;background:#fff;box-shadow:0 2px 7px rgba(16,75,50,.035);min-width:280px;max-width:360px;flex:0 0 clamp(280px,38vw,360px);scroll-snap-align:start;align-self:stretch}
 .teacher-compact-head{display:flex;align-items:center;gap:9px;min-width:0;padding-bottom:8px;border-bottom:1px solid #edf2ee}
 .teacher-compact-avatar{width:42px;height:42px;flex:0 0 42px;object-fit:cover;border-radius:50%;border:1px solid var(--line)}
 .teacher-compact-info{flex:1;min-width:0}
@@ -199,7 +202,7 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 .teacher-compact-controls button{padding:8px 11px;font-size:12px}
 .teacher-compact-controls .primary,.teacher-compact-controls .secondary{justify-self:start}
 .teacher-compact-controls>div{min-width:0}
-@media(max-width:560px){.teacher-compact-card{padding:9px}.teacher-compact-controls{grid-template-columns:minmax(0,1fr);gap:7px}.teacher-compact-controls .assignment-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}.teacher-compact-controls .assignment-remove{grid-column:1/-1}.teacher-compact-controls .primary,.teacher-compact-controls .secondary{margin-right:4px}}
+@media(max-width:560px){#teacherConnectionList{gap:10px;padding-bottom:12px}.teacher-compact-card{padding:9px;flex-basis:86%;min-width:260px;max-width:320px}.teacher-compact-controls{grid-template-columns:minmax(0,1fr);gap:7px}.teacher-compact-controls .assignment-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}.teacher-compact-controls .assignment-remove{grid-column:1/-1}.teacher-compact-controls .primary,.teacher-compact-controls .secondary{margin-right:4px}}
 
 </style>
 </head>
