@@ -219,6 +219,12 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 .teacher-compact-controls .assignment-add-card{flex:0 0 112px!important;width:112px!important;min-width:112px!important;min-height:112px!important;aspect-ratio:1/1;padding:8px!important;display:flex!important;align-items:center;justify-content:center;text-align:center;white-space:normal}
 .teacher-compact-controls .assignment-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;grid-template-rows:auto auto!important}
 .teacher-compact-controls .assignment-row select{min-width:0!important;width:100%!important}
+
+.teacher-compact-controls.teacher-card-actions{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;grid-template-areas:"assignments assignments" "delete save" "deactivate activate";gap:8px!important;align-items:stretch;width:100%}
+.teacher-compact-controls.teacher-card-actions>:first-child{grid-area:assignments;min-width:0}
+.teacher-compact-controls.teacher-card-actions>button{width:100%!important;min-width:0!important;min-height:42px;margin:0!important;padding:8px 6px!important;font-size:13px!important;white-space:normal}
+.teacher-compact-controls.teacher-card-actions>button:disabled{cursor:not-allowed;opacity:.45!important}
+.teacher-compact-info{min-width:0}.teacher-compact-name{display:block}.teacher-compact-meta{margin:3px 0 0!important}
 </style>
 </head>
 <body>
@@ -240,11 +246,11 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 <section id="dashboard" class="hidden">
 <div id="dashboardTop" class="section-anchor"></div>
 <section class="registrar-profile-hero dashboard-heading" aria-label="Registrar and school profile">
-<p class="profile-kicker">School Dashboard</p>
+<p class="profile-kicker">Registrar Dashboard</p>
 <div id="registrarAvatar" class="registrar-avatar" aria-label="Registrar profile photo">R</div>
 <h2 id="registrarDisplayName">Registrar</h2>
 <p id="registrarSchoolDisplay" class="school-name">School name</p>
-
+<div class="registrar-profile-actions"><label for="registrarPhotoFile" class="secondary" style="display:inline-flex;align-items:center;justify-content:center;margin:0;cursor:pointer">Change profile photo</label><input id="registrarPhotoFile" type="file" accept="image/*" class="hidden"></div><p id="registrarPhotoStatus" class="muted" aria-live="polite" style="margin:10px 0 0"></p>
 </section>
 <div class="stats dashboard-stats" aria-label="School statistics">
 <div class="card stat" style="--stat-accent:#176b45"><div class="stat-icon">👩‍🏫</div><span>Total Teachers</span><strong id="statTeachers">—</strong><small>Connected to this school</small></div>
@@ -590,7 +596,7 @@ $("createClassForm")?.addEventListener('submit',async e=>{e.preventDefault();con
 $("createSubjectForm")?.addEventListener('submit',async e=>{e.preventDefault();const input=$("newSubjectName"),status=$("subjectManagementStatus"),btn=$("createSubjectButton");btn.disabled=true;btn.textContent='Adding…';try{await addSchoolItem('subject',input.value);input.value='';status.textContent='Subject added successfully. It is now available in subject dropdowns.';status.style.color='#176b45';}catch(e){console.error(e);status.textContent=err(e);status.style.color='#a82929';}finally{btn.disabled=false;btn.textContent='＋ Add Subject';}});
 const SUBJECT_OPTIONS=["English Studies","Mathematics","Basic Science and Technology","National Values Education","Pre-Vocational Studies","Religion and National Values","Physical and Health Education","Cultural and Creative Arts","Nigerian Languages","Computer Studies","Social Studies","Agricultural Science"];
 function createAssignmentEditor(initial=[]){
- const wrap=document.createElement("div");wrap.className="assignment-editor";wrap.style.cssText="width:100%;min-width:0;display:flex;flex-direction:column;gap:7px;margin:0;box-sizing:border-box";
+ const wrap=document.createElement("div");wrap.className="assignment-editor";wrap.style.overflowX="auto";wrap.style.maxWidth="100%";wrap.style.cssText="width:100%;min-width:0;display:flex;flex-direction:column;gap:7px;margin:0;box-sizing:border-box";
  const rows=document.createElement("div");rows.className="assignment-scroll";rows.setAttribute("aria-label","Scroll horizontally to view or add class and subject assignments");wrap.append(rows);
  function addRow(value={},focusNew=false){
   const row=document.createElement("div");row.className="assignment-row";row.style.cssText="box-sizing:border-box;display:grid;grid-template-columns:minmax(115px,1fr) minmax(135px,1fr);grid-template-rows:auto auto;gap:6px;align-content:start;padding:8px;flex:0 0 245px;width:245px;min-width:245px;background:#f5faf6;border:1px solid var(--line);border-radius:10px;scroll-snap-align:start";
@@ -705,7 +711,7 @@ async function refreshTeacherConnections(){
    const card=document.createElement("div");card.className="teacher-compact-card";
    const head=document.createElement("div");head.className="teacher-compact-head";
    if(r.teacherPhoto){const img=document.createElement("img");img.src=r.teacherPhoto;img.alt="Teacher photo";img.className="teacher-compact-avatar";head.append(img)}
-   const info=document.createElement("div");info.className="teacher-compact-info";const name=document.createElement("strong");name.className="teacher-compact-name";name.textContent=r.teacherName||"Teacher";const meta=document.createElement("p");meta.className="teacher-compact-meta";meta.textContent=[r.teacherEmail,r.teacherPhone,"Status: "+(r.status||"unknown")].filter(Boolean).join(" · ");info.append(name,meta);head.append(info);card.append(head);
+   const info=document.createElement("div");info.className="teacher-compact-info";const name=document.createElement("strong");name.className="teacher-compact-name";name.textContent=r.teacherName||"Teacher";const meta=document.createElement("p");meta.className="teacher-compact-meta";meta.textContent="Status: "+(r.status||"unknown");info.append(name,meta);head.append(info);card.append(head);
    const controls=document.createElement("div");controls.className="teacher-compact-controls teacher-card-actions";
    if(["pending","connected","deactivated","disconnected"].includes(r.status)){
     const assignedRole=r.assignedRole||"Subject Teacher";
@@ -717,10 +723,10 @@ async function refreshTeacherConnections(){
      const approve=document.createElement("button");approve.className="primary";approve.textContent="Approve & Save";approve.onclick=()=>{try{decideTeacherConnection(r,"connected",assignedRole,editor.read())}catch(e){msg(e.message,"error")}};controls.append(approve);
      const reject=document.createElement("button");reject.className="secondary danger";reject.textContent="Reject";reject.onclick=()=>{if(confirm("Reject this teacher connection request?"))decideTeacherConnection(r,"rejected",assignedRole,[])};controls.append(reject);
     }else{
-     const save=document.createElement("button");save.className="primary";save.textContent="Save Changes";save.onclick=()=>{try{const assignments=editor.read();decideTeacherConnection(r,r.status,assignedRole,assignments)}catch(e){msg(e.message,"error")}};controls.append(save);
-     const del=document.createElement("button");del.className="secondary danger";del.textContent="Delete";del.onclick=()=>deleteTeacherConnection(r);controls.append(del);
-     const activate=document.createElement("button");activate.className="primary";activate.textContent=r.status==="disconnected"?"Reconnect":"Activate";activate.disabled=r.status==="connected";activate.onclick=()=>{try{const assignments=editor.read();if(confirm("Activate "+(r.teacherName||r.teacherEmail||"this teacher")+" for this school?"))decideTeacherConnection(r,"connected",assignedRole,assignments)}catch(e){msg(e.message,"error")}};controls.append(activate);
-     const deactivate=document.createElement("button");deactivate.className="secondary";deactivate.textContent="Deactivate";deactivate.disabled=r.status!=="connected";deactivate.onclick=()=>{try{const assignments=editor.read();if(confirm("Temporarily deactivate "+(r.teacherName||r.teacherEmail||"this teacher")+"? You can activate them again later."))decideTeacherConnection(r,"deactivated",assignedRole,assignments)}catch(e){msg(e.message,"error")}};controls.append(deactivate);
+     const del=document.createElement("button");del.className="secondary danger";del.textContent="Delete";del.style.gridArea="delete";del.onclick=()=>deleteTeacherConnection(r);controls.append(del);
+     const save=document.createElement("button");save.className="primary";save.textContent="Save Changes";save.style.gridArea="save";save.onclick=()=>{try{decideTeacherConnection(r,r.status,assignedRole,editor.read())}catch(e){msg(e.message,"error")}};controls.append(save);
+     const deactivate=document.createElement("button");deactivate.className="secondary";deactivate.textContent="Deactivate";deactivate.style.gridArea="deactivate";deactivate.disabled=r.status!=="connected";deactivate.onclick=()=>{try{if(confirm("Temporarily deactivate "+(r.teacherName||"this teacher")+"?"))decideTeacherConnection(r,"deactivated",assignedRole,editor.read())}catch(e){msg(e.message,"error")}};controls.append(deactivate);
+     const activate=document.createElement("button");activate.className="primary";activate.textContent=r.status==="disconnected"?"Reconnect":"Activate";activate.style.gridArea="activate";activate.disabled=r.status==="connected";activate.onclick=()=>{try{if(confirm("Activate "+(r.teacherName||"this teacher")+" for this school?"))decideTeacherConnection(r,"connected",assignedRole,editor.read())}catch(e){msg(e.message,"error")}};controls.append(activate);
     }
    }
    card.append(controls);box.append(card);
