@@ -210,6 +210,15 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 .teacher-card-actions button{box-sizing:border-box;width:100%;min-width:0;min-height:38px;padding:8px 6px!important;font-size:12px!important;line-height:1.2;white-space:normal;margin:0!important}
 .teacher-card-actions .danger{border-color:#d9534f!important;color:#b42318!important}
 .teacher-card-actions small{grid-column:1/-1}
+
+/* Compact teacher actions and square Add class/subject card */
+.teacher-compact-controls .teacher-card-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important;align-items:stretch;width:100%}
+.teacher-compact-controls .teacher-card-actions button{width:100%!important;min-width:0!important;min-height:40px;margin:0!important;padding:8px 6px!important;font-size:12px!important;white-space:normal}
+.teacher-compact-controls .teacher-card-actions button:nth-child(3),.teacher-compact-controls .teacher-card-actions button:nth-child(4){grid-column:1/-1}
+.teacher-compact-controls .teacher-card-actions button:disabled{cursor:not-allowed;opacity:.45!important}
+.teacher-compact-controls .assignment-add-card{flex:0 0 112px!important;width:112px!important;min-width:112px!important;min-height:112px!important;aspect-ratio:1/1;padding:8px!important;display:flex!important;align-items:center;justify-content:center;text-align:center;white-space:normal}
+.teacher-compact-controls .assignment-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;grid-template-rows:auto auto!important}
+.teacher-compact-controls .assignment-row select{min-width:0!important;width:100%!important}
 </style>
 </head>
 <body>
@@ -699,23 +708,20 @@ async function refreshTeacherConnections(){
    const info=document.createElement("div");info.className="teacher-compact-info";const name=document.createElement("strong");name.className="teacher-compact-name";name.textContent=r.teacherName||"Teacher";const meta=document.createElement("p");meta.className="teacher-compact-meta";meta.textContent=[r.teacherEmail,r.teacherPhone,"Status: "+(r.status||"unknown")].filter(Boolean).join(" · ");info.append(name,meta);head.append(info);card.append(head);
    const controls=document.createElement("div");controls.className="teacher-compact-controls teacher-card-actions";
    if(["pending","connected","deactivated","disconnected"].includes(r.status)){
-    const role=document.createElement("select");role.setAttribute("aria-label","Teaching role");role.style.cssText="padding:8px 10px;border:1px solid #cbd8cf;border-radius:8px;font:inherit;max-width:100%;width:100%";role.innerHTML='<option value="Form Master">Form Master</option><option value="Class Teacher">Class Teacher</option><option value="Subject Teacher">Subject Teacher</option><option value="Primary Teacher">Primary Teacher</option>';role.value=r.assignedRole||"Class Teacher";
+    const assignedRole=r.assignedRole||"Subject Teacher";
     const existing=r.assignedTeachingAssignments||[];
     const legacy=existing.length?existing:((r.assignedClasses|| (r.assignedClass?[r.assignedClass]:[])).flatMap(c=>(r.assignedSubjects||[]).map(subject=>({className:c,subject}))));
-    const editor=createAssignmentEditor(["connected","deactivated","disconnected"].includes(r.status)?legacy:[]);controls.append(role,editor.element);
+    const editor=createAssignmentEditor(["connected","deactivated","disconnected"].includes(r.status)?legacy:[]);controls.append(editor.element);
+    controls.classList.add("teacher-card-actions");
     if(r.status==="pending"){
-     const approve=document.createElement("button");approve.className="primary";approve.textContent="Approve & Save";approve.onclick=()=>{try{decideTeacherConnection(r,"connected",role.value,editor.read())}catch(e){msg(e.message,"error")}};controls.append(approve);
-     const reject=document.createElement("button");reject.className="secondary";reject.textContent="Reject";reject.onclick=()=>{if(confirm("Reject this teacher connection request?"))decideTeacherConnection(r,"rejected",role.value,[])};controls.append(reject);
-    }else if(r.status==="connected"){
-     const save=document.createElement("button");save.className="primary";save.textContent="Save Changes";save.onclick=()=>{try{decideTeacherConnection(r,"connected",role.value,editor.read())}catch(e){msg(e.message,"error")}};controls.append(save);
-     const deactivate=document.createElement("button");deactivate.className="secondary";deactivate.textContent="Deactivate";deactivate.onclick=()=>{if(confirm("Temporarily deactivate "+(r.teacherName||r.teacherEmail||"this teacher")+"? You can reactivate them later."))decideTeacherConnection(r,"deactivated",role.value,[])};controls.append(deactivate);
-     const disconnect=document.createElement("button");disconnect.className="secondary";disconnect.textContent="Disconnect";disconnect.onclick=()=>{if(confirm("Disconnect "+(r.teacherName||r.teacherEmail||"this teacher")+" from this school? Their record will be retained and can be reconnected later."))decideTeacherConnection(r,"disconnected",role.value,[])};controls.append(disconnect);
+     const approve=document.createElement("button");approve.className="primary";approve.textContent="Approve & Save";approve.onclick=()=>{try{decideTeacherConnection(r,"connected",assignedRole,editor.read())}catch(e){msg(e.message,"error")}};controls.append(approve);
+     const reject=document.createElement("button");reject.className="secondary danger";reject.textContent="Reject";reject.onclick=()=>{if(confirm("Reject this teacher connection request?"))decideTeacherConnection(r,"rejected",assignedRole,[])};controls.append(reject);
     }else{
-     const label=document.createElement("small");label.className="muted";label.textContent=r.status==="deactivated"?"This teacher is deactivated.":"This teacher is disconnected from the school.";controls.append(label);
-     const reactivate=document.createElement("button");reactivate.className="primary";reactivate.textContent=r.status==="deactivated"?"Reactivate":"Reconnect";reactivate.onclick=()=>{try{decideTeacherConnection(r,"connected",role.value||r.assignedRole||"Class Teacher",editor.read())}catch(e){msg(e.message,"error")}};controls.append(reactivate);
-     const disconnect=document.createElement("button");disconnect.className="secondary";disconnect.textContent="Disconnect";disconnect.onclick=()=>{if(confirm("Keep this teacher disconnected from the school?"))decideTeacherConnection(r,"disconnected",role.value,[])};controls.append(disconnect);
+     const save=document.createElement("button");save.className="primary";save.textContent="Save Changes";save.onclick=()=>{try{const assignments=editor.read();decideTeacherConnection(r,r.status,assignedRole,assignments)}catch(e){msg(e.message,"error")}};controls.append(save);
+     const del=document.createElement("button");del.className="secondary danger";del.textContent="Delete";del.onclick=()=>deleteTeacherConnection(r);controls.append(del);
+     const activate=document.createElement("button");activate.className="primary";activate.textContent=r.status==="disconnected"?"Reconnect":"Activate";activate.disabled=r.status==="connected";activate.onclick=()=>{try{const assignments=editor.read();if(confirm("Activate "+(r.teacherName||r.teacherEmail||"this teacher")+" for this school?"))decideTeacherConnection(r,"connected",assignedRole,assignments)}catch(e){msg(e.message,"error")}};controls.append(activate);
+     const deactivate=document.createElement("button");deactivate.className="secondary";deactivate.textContent="Deactivate";deactivate.disabled=r.status!=="connected";deactivate.onclick=()=>{try{const assignments=editor.read();if(confirm("Temporarily deactivate "+(r.teacherName||r.teacherEmail||"this teacher")+"? You can activate them again later."))decideTeacherConnection(r,"deactivated",assignedRole,assignments)}catch(e){msg(e.message,"error")}};controls.append(deactivate);
     }
-    const del=document.createElement("button");del.className="secondary danger";del.textContent="Delete";del.onclick=()=>deleteTeacherConnection(r);controls.append(del);
    }
    card.append(controls);box.append(card);
   });
@@ -737,10 +743,10 @@ async function decideTeacherConnection(r,status,assignedRole,assignments=[]){
  try{
   if(!profile?.schoolId||!user)throw new Error("Registrar or school profile is not ready.");
   const requestRef=doc(db,"teacherConnectionRequests",r.id);
-  await updateDoc(requestRef,{status,assignedRole:status==="connected"?assignedRole:"",assignedClass:status==="connected"?assignedClass:"",assignedClasses:status==="connected"?assignedClasses:[],assignedSubjects:status==="connected"?assignedSubjects:[],assignedPairKeys:status==="connected"?assignedPairKeys:[],assignedTeachingAssignments:status==="connected"?assignments:[],reviewedBy:user.uid,updatedAt:serverTimestamp(),...(status==="connected"?{approvedAt:r.status==="pending"?serverTimestamp():(r.approvedAt||serverTimestamp())}:status==="deactivated"?{deactivatedAt:serverTimestamp(),deactivatedBy:user.uid}:status==="disconnected"?{disconnectedAt:serverTimestamp(),disconnectedBy:user.uid}:{reviewedAt:serverTimestamp()})});
+  await updateDoc(requestRef,{status,assignedRole,assignedClass,assignedClasses,assignedSubjects,assignedPairKeys,assignedTeachingAssignments:assignments,reviewedBy:user.uid,updatedAt:serverTimestamp(),...(status==="connected"?{approvedAt:r.status==="pending"?serverTimestamp():(r.approvedAt||serverTimestamp())}:status==="deactivated"?{deactivatedAt:serverTimestamp(),deactivatedBy:user.uid}:status==="disconnected"?{disconnectedAt:serverTimestamp(),disconnectedBy:user.uid}:{reviewedAt:serverTimestamp()})});
   const memberId=profile.schoolId+"_"+r.teacherUid;const memberRef=doc(db,"schoolTeachers",memberId);
   if(status==="connected")await setDoc(memberRef,{schoolId:profile.schoolId,schoolName:r.schoolName||$("dashboardSchoolName").textContent,registrarUid:user.uid,teacherUid:r.teacherUid,teacherName:r.teacherName||"Teacher",teacherEmail:r.teacherEmail||"",teacherPhoto:r.teacherPhoto||"",status:"connected",assignedRole,assignedClass,assignedClasses,assignedSubjects,assignedPairKeys,assignedTeachingAssignments:assignments,connectedAt:r.status==="pending"?serverTimestamp():(r.connectedAt||serverTimestamp()),updatedAt:serverTimestamp()},{merge:true});
-  else if(status==="deactivated"||status==="disconnected")await setDoc(memberRef,{schoolId:profile.schoolId,teacherUid:r.teacherUid,status,updatedAt:serverTimestamp(),...(status==="deactivated"?{deactivatedAt:serverTimestamp()}:{disconnectedAt:serverTimestamp()})},{merge:true});
+  else if(status==="deactivated"||status==="disconnected")await setDoc(memberRef,{schoolId:profile.schoolId,teacherUid:r.teacherUid,status,assignedRole,assignedClass,assignedClasses,assignedSubjects,assignedPairKeys,assignedTeachingAssignments:assignments,updatedAt:serverTimestamp(),...(status==="deactivated"?{deactivatedAt:serverTimestamp()}:{disconnectedAt:serverTimestamp()})},{merge:true});
   msg(status==="connected"?(r.status==="pending"?"Teacher connection approved and assignments saved.":"Teacher assignments updated successfully."):status==="rejected"?"Teacher request rejected.":status==="disconnected"?"Teacher disconnected from this school. The record was retained.":status==="deactivated"?"Teacher connection deactivated.":"Teacher status updated.","success");await refreshTeacherConnections();await loadPtaFormMasterAssignments();
  }catch(e){console.error(e);msg(err(e),"error")}
 }
