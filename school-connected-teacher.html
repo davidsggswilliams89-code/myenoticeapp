@@ -1479,7 +1479,66 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
 @media(max-width:650px){.pta-hero{padding:18px;gap:12px}.pta-hero-icon{width:48px;height:48px;flex-basis:48px;border-radius:14px;font-size:24px}.pta-term-control{width:100%;margin-top:2px}.pta-stat-grid{grid-template-columns:1fr;gap:9px;padding:13px}.pta-stat{padding:12px}.pta-stat strong{font-size:23px}.pta-fee-note{margin:13px 13px 0;padding:12px}.pta-register-card{margin:0 13px 13px}.pta-register-head{align-items:stretch;padding:14px}.pta-search-wrap{width:100%;min-width:0}.pta-table th,.pta-table td{padding:11px 10px}.pta-register-foot{font-size:10px}}
 </style>
 
-</head>
+<script>
+/* Unified Subject System — stable subjectId + exact display name.
+   New subjects added to curriculum.html are discovered automatically. */
+(function(){
+  const aliases={
+    'english language':'english_studies',
+    'english studies':'english_studies',
+    'basic science & technology':'basic_science_and_technology',
+    'basic science and technology':'basic_science_and_technology',
+    'basic science':'basic_science',
+    'physical & health education':'physical_and_health_education',
+    'physical and health education':'physical_and_health_education',
+    'christian religious studies':'christian_religious_studies',
+    'islamic religious studies':'islamic_studies',
+    'islamic studies':'islamic_studies',
+    'nigerian history':'nigerian_history',
+    'social and citizenship studies':'social_and_citizenship_studies',
+    'cultural & creative arts':'cultural_and_creative_arts',
+    'cultural and creative arts':'cultural_and_creative_arts',
+    'cultural and creative arts (cca)':'cultural_and_creative_arts',
+    'basic digital literacy':'basic_digital_literacy',
+    'pre vocational studies':'pre_vocational_studies',
+    'prevocational studies':'pre_vocational_studies',
+    'pre-vocational studies':'pre_vocational_studies',
+    'french language':'french',
+    'french':'french',
+    'hausa':'hausa',
+    'mathematics':'mathematics'
+  };
+  function clean(v){return String(v||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()}
+  function slug(v){const c=clean(v);if(aliases[c])return aliases[c];return c.replace(/\s+/g,'_')||''}
+  let records=[]; let loaded=false; let promise=null;
+  function normalizeRecords(list){return (Array.isArray(list)?list:[]).map(r=>{const subject=String(r.subject||r.subjectName||'').trim();return {...r,subject,subjectId:String(r.subjectId||'').trim()||slug(subject)};})}
+  async function load(){
+    if(loaded)return records;
+    if(promise)return promise;
+    promise=(async()=>{
+      try{
+        const local=document.getElementById('curriculum-data');
+        if(local){const parsed=JSON.parse(local.textContent||'{}');records=normalizeRecords(parsed.records);loaded=true;return records;}
+        const response=await fetch('curriculum.html?source='+Date.now(),{cache:'no-store'});
+        if(!response.ok)throw new Error('Curriculum source could not be loaded.');
+        const html=await response.text(),doc=new DOMParser().parseFromString(html,'text/html'),source=doc.getElementById('curriculum-data');
+        if(!source)throw new Error('Curriculum data block was not found.');
+        const parsed=JSON.parse(source.textContent||'{}');records=normalizeRecords(parsed.records);loaded=true;return records;
+      }catch(e){console.warn('Subject catalogue load failed:',e);records=[];return records;}
+    })();
+    return promise;
+  }
+  function id(name){const c=clean(name);return aliases[c]||slug(name)}
+  function name(subjectId,fallback=''){const hit=records.find(r=>String(r.subjectId)===String(subjectId));return hit?.subject||fallback||''}
+  function subjectsFor(cls='',term=''){
+    const seen=new Map(); records.filter(r=>(!cls||r.className===cls)&&(!term||r.term===term)).forEach(r=>{if(r.subjectId&&!seen.has(r.subjectId))seen.set(r.subjectId,r.subject)});
+    return [...seen].map(([subjectId,subject])=>({subjectId,subject})).sort((a,b)=>a.subject.localeCompare(b.subject,undefined,{sensitivity:'base'}));
+  }
+  window.SubjectSystem={clean,id,slug,name,normalizeRecords,subjectsFor,load,get records(){return records.slice()}};
+  window.getSubjectId=id; window.getSubjectName=(sid,fallback='')=>name(sid,fallback);
+})();
+</script>
+<style id="subject-system-marker">/* SUBJECT_SYSTEM */</style></head>
 <body>
 <div id="teacherDashboardModeBadge" role="status" style="position:fixed;right:10px;bottom:10px;z-index:9998;padding:7px 10px;border-radius:999px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font:700 10px/1.2 Arial,sans-serif;box-shadow:0 2px 8px #00000012;pointer-events:none" aria-live="polite"></div>
 <script>
@@ -1723,28 +1782,7 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
   <div class="lesson-library-toolbar">
     <div class="library-filter library-subject-filter">
       <label>SUBJECT</label>
-      <select id="lessonLibrarySubject" onchange="refreshCurriculumFromSource()">
-        <option value="">Select Subject</option>
-        <option>English Studies</option>
-        <option>Mathematics</option>
-        <option>Basic Science &amp; Technology</option>
-        <option>Social Studies</option>
-        <option>Civic Education</option>
-        <option>Computer Studies</option>
-        <option>Agricultural Science</option>
-        <option>Physical &amp; Health Education</option>
-        <option>Religious Studies</option>
-        <option>Home Economics</option>
-        <option>Cultural &amp; Creative Arts</option>
-        <option>Basic Technology</option>
-        <option>French</option>
-        <option>Hausa</option>
-        <option>Yoruba</option>
-        <option>Igbo</option>
-        <option>Security Education</option>
-        <option>Christian Religious Studies</option>
-        <option>Islamic Religious Studies</option>
-      </select>
+      <select id="lessonLibrarySubject" onchange="refreshCurriculumFromSource()"><option value="">Select Subject</option></select>
     </div>
 
     <div class="library-filter">
@@ -2332,7 +2370,7 @@ async function loadCurriculumSource(){
   const source=doc.getElementById('curriculum-data');
   if(!source) throw new Error('Curriculum data block was not found.');
   const parsed=JSON.parse(source.textContent||'{}');
-  curriculumCatalog=Array.isArray(parsed.records)?parsed.records:[];
+  curriculumCatalog=window.SubjectSystem.normalizeRecords(parsed.records);
   curriculumSourceLoaded=true;
   return true;
 }
@@ -2340,9 +2378,9 @@ async function loadCurriculumSource(){
 function applyCurriculumSelection(){
   const selectedClass=document.getElementById('lessonLibraryClass')?.value || 'Primary 5';
   const selectedTerm=document.getElementById('lessonLibraryTerm')?.value || 'First Term';
-  const selectedSubject=document.getElementById('lessonLibrarySubject')?.value || '';
+  const selectedSubjectId=document.getElementById('lessonLibrarySubject')?.value || '';
   const record=curriculumCatalog.find(function(item){
-    return item.className===selectedClass && item.term===selectedTerm && (!selectedSubject || String(item.subject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()===String(selectedSubject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim());
+    return item.className===selectedClass && item.term===selectedTerm && (!selectedSubjectId || String(item.subjectId||window.getSubjectId(item.subject||''))===String(selectedSubjectId));
   });
   curriculum=record && Array.isArray(record.curriculum) ? record.curriculum : [];
   if(curriculum.length){
@@ -2549,7 +2587,7 @@ function teacherLessonAssignmentPairs(){
  const r=window.activeTeacherConnection||{};
  let pairs=Array.isArray(r.assignedTeachingAssignments)?r.assignedTeachingAssignments.slice():[];
  if(!pairs.length&&Array.isArray(r.assignedPairKeys))pairs=r.assignedPairKeys.map(key=>{const parts=String(key).split('::');return parts.length>=2?{className:parts[0],subject:parts.slice(1).join('::')}:null;}).filter(Boolean);
- return pairs.map(a=>({...a,className:String(a.className||a.class||a.classLevel||'').trim(),subject:String(a.subject||a.subjectName||a.courseName||'').trim(),subjectId:String(a.subjectUuid||a.subjectUUID||a.subjectUID||a.subjectUid||a.subjectId||a.subjectID||'').trim()})).filter(a=>a.className&&a.subject);
+ return pairs.map(a=>({...a,className:String(a.className||a.class||a.classLevel||'').trim(),subject:String(a.subject||a.subjectName||a.courseName||'').trim(),subjectId:String(a.subjectUuid||a.subjectUUID||a.subjectUID||a.subjectUid||a.subjectId||a.subjectID||window.getSubjectId(a.subject||a.subjectName||a.courseName||'')).trim()})).filter(a=>a.className&&a.subject);
 }
 function teacherLessonAssignedSubjects(){
  const pairs=teacherLessonAssignmentPairs(),out=[];
@@ -2557,7 +2595,7 @@ function teacherLessonAssignedSubjects(){
  if(!out.length){const r=window.activeTeacherConnection||{};(Array.isArray(r.assignedSubjects)?r.assignedSubjects:[]).forEach(x=>{const name=String(typeof x==='string'?x:(x.subject||x.name||x.subjectName||'')).trim();const id=typeof x==='object'?String(x.subjectUuid||x.subjectUUID||x.subjectUid||x.subjectId||x.uuid||x.id||''):'';if(name&&!out.some(y=>y.name.toLowerCase()===name.toLowerCase()))out.push({name,id});});}
  return out;
 }
-function teacherLessonClassesForSubject(subject){return [...new Set(teacherLessonAssignmentPairs().filter(a=>a.subject.toLowerCase()===String(subject||'').trim().toLowerCase()).map(a=>a.className))];}
+function teacherLessonClassesForSubject(subject){const sid=String(subject||'').trim();return [...new Set(teacherLessonAssignmentPairs().filter(a=>String(a.subjectId||window.getSubjectId(a.subject))===sid || a.subject.toLowerCase()===sid.toLowerCase()).map(a=>a.className))];}
 function refreshLessonAssignedFilters(){
  if(!teacherIsSchoolConnected())return;
  const subjectEl=document.getElementById('lessonLibrarySubject'),classEl=document.getElementById('lessonLibraryClass');
@@ -2566,8 +2604,8 @@ function refreshLessonAssignedFilters(){
  const subjects=teacherLessonAssignedSubjects().slice().sort((a,b)=>a.name.localeCompare(b.name,undefined,{sensitivity:'base'}));
  // Show only Registrar-assigned subjects in alphabetical order, without a placeholder.
  subjectEl.replaceChildren();
- subjects.forEach(x=>{const o=new Option(x.name,x.name);o.dataset.subjectId=x.id||'';subjectEl.add(o);});
- subjectEl.value=subjects.some(x=>x.name===oldSubject)?oldSubject:(subjects.length?subjects[0].name:'');
+ subjects.forEach(x=>{const sid=x.id||window.getSubjectId(x.name);const o=new Option(x.name,sid);o.dataset.subjectId=sid;o.dataset.subjectName=x.name;subjectEl.add(o);});
+ subjectEl.value=subjects.some(x=>(x.id||window.getSubjectId(x.name))===oldSubject)?oldSubject:(subjects.length?(subjects[0].id||window.getSubjectId(subjects[0].name)):'');
  subjectEl.disabled=subjects.length===0;
  const allowed=teacherLessonClassesForSubject(subjectEl.value);
  classEl.replaceChildren(new Option('Select Assigned Class',''));
@@ -3043,7 +3081,7 @@ function lessonForm(type,index=0){
   if(!isNote){
     return `<div class="formgrid">
       <div class="field"><label>Class</label><input value="${document.getElementById('lessonLibraryClass')?.value||''}"></div>
-      <div class="field"><label>Subject</label><input value="${document.getElementById('lessonLibrarySubject')?.value||''}"></div>
+      <div class="field"><label>Subject</label><input value="${document.getElementById('lessonLibrarySubject')?.selectedOptions?.[0]?.dataset?.subjectName||window.getSubjectName(document.getElementById('lessonLibrarySubject')?.value||'')||''}"></div>
       <div class="field"><label>Term</label><input value="${document.getElementById('lessonLibraryTerm')?.value||''}"></div>
       <div class="field"><label>Week</label><input value="${weekLabel}"></div>
       <div class="field"><label>Topic</label><input value="${c.topic}"></div>
@@ -3074,7 +3112,7 @@ function lessonForm(type,index=0){
       <div class="field"><label>School Name</label><input value="${teacherSchoolName()}"></div>
       <div class="field"><label>Teacher's Name</label><input value="${teacherFullName()}"></div>
       <div class="field"><label>Class</label><input value="${document.getElementById('lessonLibraryClass')?.value||''}"></div>
-      <div class="field"><label>Subject</label><input value="${document.getElementById('lessonLibrarySubject')?.value||''}"></div>
+      <div class="field"><label>Subject</label><input value="${document.getElementById('lessonLibrarySubject')?.selectedOptions?.[0]?.dataset?.subjectName||window.getSubjectName(document.getElementById('lessonLibrarySubject')?.value||'')||''}"></div>
       <div class="field"><label>Term</label><input value="${document.getElementById('lessonLibraryTerm')?.value||''}"></div>
       <div class="field"><label>Week</label><input value="${weekLabel}"></div>
       <div class="field"><label>Date</label><input type="date" value="${new Date().toISOString().slice(0,10)}"></div>
@@ -3389,7 +3427,8 @@ function printCurrentLesson(){
   const type=currentLessonType;
   // Always print the same class/subject/term/period data currently shown in the lesson popup.
   const selectedClass=document.getElementById('lessonLibraryClass')?.value || 'Primary 5';
-  const selectedSubject=document.getElementById('lessonLibrarySubject')?.value || 'Basic Science & Technology';
+  const selectedSubjectId=document.getElementById('lessonLibrarySubject')?.value || '';
+  const selectedSubject=window.getSubjectName(selectedSubjectId)||document.getElementById('lessonLibrarySubject')?.selectedOptions?.[0]?.textContent?.trim()||'';
   const selectedTerm=document.getElementById('lessonLibraryTerm')?.value || 'First Term';
   const weekNumber=(Number(selectedLesson.topicIndex)||0)+1;
   const periodNumber=(Number(selectedLesson.periodIndex)||0)+1;
@@ -3545,7 +3584,7 @@ renderCurriculum();renderStudents();renderResults();
       const pairs=window.activeTeacherConnection?.assignedTeachingAssignments||[];
       const matching=pairs.filter(a=>(a.className||a.class)===cls);
       const subjects=[...new Set(matching.map(a=>a.subject).filter(Boolean))];
-      return {classes:matching.map(a=>({className:a.className||a.class,subject:a.subject})),subjects};
+      return {classes:matching.map(a=>({className:a.className||a.class,subject:a.subject,subjectId:a.subjectId||window.getSubjectId(a.subject)})),subjects};
     }
     let data=[];
     try{data=JSON.parse(localStorage.getItem(teacherScopedKey('teacherTeachingAssignments'))||'[]')}catch(e){data=[]}
@@ -3558,7 +3597,9 @@ renderCurriculum();renderStudents();renderResults();
     const info=assignmentInfo();
     const cls=libraryClass?.value||'Primary 5';
     const term=libraryTerm?.value||'First Term';
-    const selectedSubject=librarySubject?.value||'';
+    const selectedSubjectId=librarySubject?.value||'';
+    const selectedSubjectName=librarySubject?.selectedOptions?.[0]?.dataset?.subjectName||window.getSubjectName(selectedSubjectId)||librarySubject?.selectedOptions?.[0]?.textContent?.trim()||'';
+    const selectedSubject=selectedSubjectName;
     const subject=selectedSubject || (info.subjects.length?info.subjects.join(', '):'Basic Science & Technology');
     const cv=document.getElementById('libraryClassValue'),sv=document.getElementById('librarySubjectValue'),tv=document.getElementById('libraryTermValue'),av=document.getElementById('libraryAccessValue');
     if(cv)cv.textContent=cls;if(sv)sv.textContent=subject;if(tv)tv.textContent=term;
@@ -3569,7 +3610,9 @@ renderCurriculum();renderStudents();renderResults();
     }
   }
   window.openSubscriptionForLessonSelection=function(){
-    const selectedSubject=librarySubject?.value||'';
+    const selectedSubjectId=librarySubject?.value||'';
+    const selectedSubjectName=librarySubject?.selectedOptions?.[0]?.dataset?.subjectName||window.getSubjectName(selectedSubjectId)||librarySubject?.selectedOptions?.[0]?.textContent?.trim()||'';
+    const selectedSubject=selectedSubjectName;
     const selectedClass=libraryClass?.value||'';
     const panel=document.getElementById('subscriptionView');
     const toggle=document.getElementById('lessonSubscriptionToggle');
@@ -3596,7 +3639,9 @@ renderCurriculum();renderStudents();renderResults();
     const q=(search?.value||'').trim().toLowerCase();
     const selectedClass=libraryClass?.value||'';
     const selectedTerm=libraryTerm?.value||'';
-    const selectedSubject=librarySubject?.value||'';
+    const selectedSubjectId=librarySubject?.value||'';
+    const selectedSubjectName=librarySubject?.selectedOptions?.[0]?.dataset?.subjectName||window.getSubjectName(selectedSubjectId)||librarySubject?.selectedOptions?.[0]?.textContent?.trim()||'';
+    const selectedSubject=selectedSubjectName;
 
     // Lesson access is granted only when this teacher has an active yearly
     // subscription for both the selected subject and the selected class.
@@ -3621,7 +3666,7 @@ renderCurriculum();renderStudents();renderResults();
       });
     }
     const selectedRecord=curriculumCatalog.find(function(item){
-      return item.className===selectedClass && item.term===selectedTerm && String(item.subject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()===String(selectedSubject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();
+      return item.className===selectedClass && item.term===selectedTerm && String(item.subjectId||window.getSubjectId(item.subject||''))===String(selectedSubjectId);
     });
 
     if(!hasSubjectClassSubscription(selectedSubject, selectedClass)){
@@ -3634,7 +3679,7 @@ renderCurriculum();renderStudents();renderResults();
     }
     const classMatches=curriculumCatalog.some(function(item){return item.className===selectedClass;});
     const termMatches=curriculumCatalog.some(function(item){return item.className===selectedClass && item.term===selectedTerm;});
-    const subjectMatches=curriculumCatalog.some(function(item){return item.className===selectedClass && item.term===selectedTerm && String(item.subject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()===String(selectedSubject||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();});
+    const subjectMatches=curriculumCatalog.some(function(item){return item.className===selectedClass && item.term===selectedTerm && String(item.subjectId||window.getSubjectId(item.subject||''))===String(selectedSubjectId);});
     // Always render the curriculum belonging to the exact selected subject, class and term.
     // This prevents topics or periods from a previously selected subject being reused.
     const selectedCurriculum = selectedRecord && Array.isArray(selectedRecord.curriculum)
@@ -3644,7 +3689,7 @@ renderCurriculum();renderStudents();renderResults();
     let visible=0;
     box.innerHTML=curriculumMatches ? selectedCurriculum.map(function(c,i){
       const periods=(c.periods||[]).map(function(p,j){
-        const text=(c.topic+' '+p.title+' '+(p.subcontents||[]).join(' ')).toLowerCase();
+        const text=[selectedSubjectName||'',selectedClass||'',selectedTerm||'',c.topic||'',p.title||'',...(p.subcontents||[])].join(' ').toLowerCase();
         return {p,j,match:!q||text.includes(q)};
       }).filter(x=>x.match);
       if(!periods.length)return '';
@@ -3674,12 +3719,17 @@ renderCurriculum();renderStudents();renderResults();
       }
       const current=librarySubject.value;
       const info=assignmentInfo();
-      const assigned=info.subjects||[];
-      const all=[...new Set(assigned.concat(Array.from(librarySubject.options).map(o=>o.value).filter(Boolean)))];
-      librarySubject.innerHTML='<option value="">All Assigned Subjects</option>'+all.map(function(subject){return '<option value="'+esc(subject)+'">'+esc(subject)+'</option>';}).join('');
-      if(all.includes(current) && current) librarySubject.value=current;
-      else if(assigned.length===1) librarySubject.value=assigned[0];
-      else if(all.includes('Basic Science & Technology')) librarySubject.value='Basic Science & Technology';
+      const assigned=(info.subjects||[]).map(function(subject){return {subject,subjectId:window.getSubjectId(subject)}});
+      const catalogue=window.SubjectSystem.subjectsFor(libraryClass?.value||'',libraryTerm?.value||'');
+      const allMap=new Map();
+      catalogue.forEach(x=>allMap.set(x.subjectId,x));
+      assigned.forEach(x=>{if(!allMap.has(x.subjectId))allMap.set(x.subjectId,{subjectId:x.subjectId,subject:x.subject})});
+      const all=[...allMap.values()];
+      librarySubject.replaceChildren(new Option('All Assigned Subjects',''));
+      all.forEach(function(x){const o=new Option(x.subject,x.subjectId);o.dataset.subjectName=x.subject;o.dataset.subjectId=x.subjectId;librarySubject.add(o);});
+      if(all.some(x=>x.subjectId===current) && current) librarySubject.value=current;
+      else if(assigned.length===1) librarySubject.value=assigned[0].subjectId;
+      else if(all.length) librarySubject.value=all[0].subjectId;
     }
     syncSubjectOptions();
     if(cls && libraryClass){cls.addEventListener('change',function(){if(Array.from(libraryClass.options).some(o=>o.value===cls.value))libraryClass.value=cls.value;if(!(typeof window.teacherIsSchoolConnected==='function'&&window.teacherIsSchoolConnected()))syncSubjectOptions();refreshCurriculumFromSource()})}
@@ -4443,7 +4493,7 @@ window.viewStudentResult=function(index){
 </script>
 <script>
 (function(){
-  const subjects=['English Studies','Mathematics','Basic Science & Technology','Social Studies','Civic Education','Computer Studies','Agricultural Science','Physical & Health Education','Religious Studies','Home Economics','Cultural & Creative Arts','Basic Technology','French','Hausa','Yoruba','Igbo','Security Education','Christian Religious Studies','Islamic Religious Studies'];
+  let subjects=[];
   const classesAll=['Primary 1','Primary 2','Primary 3','Primary 4','Primary 5','Primary 6'];
   const fee=1000, SUB_KEY='teacherSubscriptions', ASSIGN_KEY='teacherTeachingAssignments';
   function scopedKey(base){return base+'_'+(window.firebaseTeacherUID||'unauthenticated')}
@@ -4467,7 +4517,7 @@ window.viewStudentResult=function(index){
       ...a,
       className:String(a.className||a.class||a.classLevel||'').trim(),
       subject:String(a.subject||a.subjectName||a.courseName||'').trim(),
-      subjectId:String(a.subjectUuid||a.subjectUUID||a.subjectUID||a.subjectUid||a.subjectId||a.subjectID||'').trim()
+      subjectId:String(a.subjectUuid||a.subjectUUID||a.subjectUID||a.subjectUid||a.subjectId||a.subjectID||window.getSubjectId(a.subject||a.subjectName||a.courseName||'')).trim()
     })).filter(a=>a.className&&a.subject);
   }
   function assignedSubjectOptions(){
@@ -4517,11 +4567,11 @@ window.viewStudentResult=function(index){
     return window.firestoreSubscriptionCache;
   };
 
-  function renderSubscriptionSubjectOptions(){
+  window.renderSubscriptionSubjectOptions=function(){
     const el=document.getElementById('subscriptionSubjectSelect');if(!el)return;
     const old=selectedSubjectInfo();
     const connected=isRegistrarConnected();
-    const options=connected?assignedSubjectOptions():subjects.map(name=>({key:name,name,id:''}));
+    const catalogueOptions=window.SubjectSystem.subjectsFor('','').map(x=>({key:x.subjectId,name:x.subject,id:x.subjectId})); const options=connected?assignedSubjectOptions():(subjects.length?subjects.map(name=>({key:window.getSubjectId(name),name,id:window.getSubjectId(name)})):catalogueOptions);
     el.replaceChildren();el.add(new Option('Select a subject',''));
     options.forEach(x=>{const o=new Option(x.name,x.key);o.dataset.subjectName=x.name;o.dataset.subjectId=x.id||'';el.add(o)});
     const match=options.find(x=>x.key===old.key||x.name.toLowerCase()===old.name.toLowerCase());
@@ -4554,7 +4604,7 @@ window.viewStudentResult=function(index){
       return;
     }
     const data=[];
-    activeSubs().forEach(s=>(s.classes||[]).forEach(c=>data.push({subject:s.subject,className:c,createdAt:s.createdAt||new Date().toISOString()})));
+    activeSubs().forEach(s=>(s.classes||[]).forEach(c=>data.push({subject:s.subject,subjectId:s.subjectId||window.getSubjectId(s.subject),className:c,createdAt:s.createdAt||new Date().toISOString()})));
     localStorage.setItem(scopedKey(ASSIGN_KEY),JSON.stringify(data));
     window.dispatchEvent(new Event('teacherAssignmentsUpdated'));
   }
@@ -5575,6 +5625,58 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
 })();
 </script>
 
+<script>
+/* Subject-system bootstrap: curriculum.html is the single source of truth. */
+(async function(){
+  try{
+    await window.SubjectSystem.load();
+    const byClassTerm=(cls,term)=>window.SubjectSystem.subjectsFor(cls,term);
+    window.getAvailableCurriculumSubjects=byClassTerm;
+    const library=document.getElementById('lessonLibrarySubject');
+    if(library){
+      const cls=document.getElementById('lessonLibraryClass')?.value||'';
+      const term=document.getElementById('lessonLibraryTerm')?.value||'';
+      const current=library.value;
+      const opts=byClassTerm(cls,term);
+      if(opts.length){
+        library.replaceChildren(new Option('Select Subject',''));
+        opts.forEach(x=>{const o=new Option(x.subject,x.subjectId);o.dataset.subjectName=x.subject;o.dataset.subjectId=x.subjectId;library.add(o)});
+        if(opts.some(x=>x.subjectId===current))library.value=current;
+      }
+    }
+    if(typeof window.refreshLessonAssignedFilters==='function')window.refreshLessonAssignedFilters();
+    if(typeof window.renderSubscriptionSubjectOptions==='function')window.renderSubscriptionSubjectOptions();
+    if(typeof window.applyIndependentAssignmentFilters==='function')window.applyIndependentAssignmentFilters();
+    if(typeof window.updateLessonLibrary==='function')window.updateLessonLibrary();
+  }catch(e){console.warn('Unified subject bootstrap failed:',e)}
+})();
+</script>
+<script>
+/* Subject-system bootstrap: curriculum.html is the single source of truth. */
+(async function(){
+  try{
+    await window.SubjectSystem.load();
+    const byClassTerm=(cls,term)=>window.SubjectSystem.subjectsFor(cls,term);
+    window.getAvailableCurriculumSubjects=byClassTerm;
+    const library=document.getElementById('lessonLibrarySubject');
+    if(library){
+      const cls=document.getElementById('lessonLibraryClass')?.value||'';
+      const term=document.getElementById('lessonLibraryTerm')?.value||'';
+      const current=library.value;
+      const opts=byClassTerm(cls,term);
+      if(opts.length){
+        library.replaceChildren(new Option('Select Subject',''));
+        opts.forEach(x=>{const o=new Option(x.subject,x.subjectId);o.dataset.subjectName=x.subject;o.dataset.subjectId=x.subjectId;library.add(o)});
+        if(opts.some(x=>x.subjectId===current))library.value=current;
+      }
+    }
+    if(typeof window.refreshLessonAssignedFilters==='function')window.refreshLessonAssignedFilters();
+    if(typeof window.renderSubscriptionSubjectOptions==='function')window.renderSubscriptionSubjectOptions();
+    if(typeof window.applyIndependentAssignmentFilters==='function')window.applyIndependentAssignmentFilters();
+    if(typeof window.updateLessonLibrary==='function')window.updateLessonLibrary();
+  }catch(e){console.warn('Unified subject bootstrap failed:',e)}
+})();
+</script>
 </body>
 </html>
 <style>
