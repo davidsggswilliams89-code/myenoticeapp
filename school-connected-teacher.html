@@ -1538,7 +1538,39 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
   window.getSubjectId=id; window.getSubjectName=(sid,fallback='')=>name(sid,fallback);
 })();
 </script>
-<style id="subject-system-marker">/* SUBJECT_SYSTEM */</style></head>
+<style id="subject-system-marker">/* SUBJECT_SYSTEM */</style>
+<style id="teacher-gps-attendance-styles">
+#gpsAttendanceView{padding-top:6px}
+#gpsAttendanceView .gps-hero{background:linear-gradient(120deg,#eaf7f2,#eef7ff);border:1px solid #cfe4dd;border-radius:16px;padding:20px;margin-bottom:14px}
+#gpsAttendanceView .gps-hero h2{margin:0 0 6px;color:#075c51;font-size:28px}
+#gpsAttendanceView .gps-hero p{margin:0;color:#526575;line-height:1.5}
+#gpsAttendanceView .gps-card{background:#fff;border:1px solid #dce8e4;border-radius:15px;padding:16px;margin-bottom:14px;box-shadow:0 3px 12px rgba(16,35,63,.04)}
+#gpsAttendanceView .gps-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#gpsAttendanceView .gps-field label{display:block;font-size:12px;font-weight:900;color:#526171;margin:0 0 7px}
+#gpsAttendanceView .gps-field select{width:100%;min-height:50px;padding:11px;border:1px solid #cbd6e2;border-radius:10px;background:#fff;color:#17324d}
+#gpsAttendanceView .gps-metric{border:1px solid #dce8e4;background:#f8fcfa;border-radius:12px;padding:13px;min-height:78px}
+#gpsAttendanceView .gps-metric small{display:block;font-size:10px;font-weight:900;letter-spacing:.35px;color:#64748b;margin-bottom:6px}
+#gpsAttendanceView .gps-metric strong{display:block;font-size:21px;color:#075c51;overflow-wrap:anywhere}
+#gpsAttendanceView .gps-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+#gpsAttendanceView .gps-actions button{min-height:44px;border:0;border-radius:10px;padding:11px 14px;font-size:13px;font-weight:900;background:#078c55;color:#fff}
+#gpsAttendanceView .gps-actions button.secondary{background:#e8f7f1;color:#087c60}
+#gpsAttendanceView .gps-actions button.danger{background:#fff0f2;color:#c62839}
+#gpsAttendanceView .gps-actions button:disabled{opacity:.45;cursor:not-allowed}
+#gpsAttendanceView .gps-status{padding:12px;border-radius:10px;background:#f2f6f8;color:#475569;font-size:13px;line-height:1.5;overflow-wrap:anywhere;margin-top:12px}
+#gpsAttendanceView .gps-status.ok{background:#e7f7eb;color:#166534}
+#gpsAttendanceView .gps-status.warn{background:#fff6df;color:#795000}
+#gpsAttendanceView .gps-status.bad{background:#fff0ee;color:#9f2118}
+#gpsAttendanceView .gps-note{background:#fff7e3;border:1px solid #f0d89a;color:#735b20;border-radius:11px;padding:12px;margin-top:12px;font-size:12px;line-height:1.55}
+#gpsAttendanceView .gps-table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+#gpsAttendanceView .gps-table{width:100%;min-width:680px;border-collapse:collapse}
+#gpsAttendanceView .gps-table th,#gpsAttendanceView .gps-table td{padding:10px 9px;border-bottom:1px solid #e8eef0;text-align:left;font-size:12px;vertical-align:top}
+#gpsAttendanceView .gps-table th{background:#f5f8fb;color:#526171;font-size:10px;text-transform:uppercase;white-space:nowrap}
+#gpsAttendanceView .gps-pill{display:inline-block;padding:5px 9px;border-radius:30px;background:#e8f7f1;color:#087c60;font-size:10px;font-weight:900}
+@media(max-width:600px){#gpsAttendanceView .gps-hero{padding:16px}#gpsAttendanceView .gps-hero h2{font-size:23px}#gpsAttendanceView .gps-card{padding:13px}#gpsAttendanceView .gps-grid{grid-template-columns:1fr 1fr;gap:8px}#gpsAttendanceView .gps-metric{padding:10px;min-height:72px}#gpsAttendanceView .gps-metric strong{font-size:17px}#gpsAttendanceView .gps-actions{display:grid;grid-template-columns:1fr 1fr}#gpsAttendanceView .gps-actions button{min-width:0;padding:10px 7px;font-size:12px}}
+@media(max-width:360px){#gpsAttendanceView .gps-grid{grid-template-columns:1fr}#gpsAttendanceView .gps-actions{grid-template-columns:1fr}}
+</style>
+
+</head>
 <body>
 <div id="teacherDashboardModeBadge" role="status" style="position:fixed;right:10px;bottom:10px;z-index:9998;padding:7px 10px;border-radius:999px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font:700 10px/1.2 Arial,sans-serif;box-shadow:0 2px 8px #00000012;pointer-events:none" aria-live="polite"></div>
 <script>
@@ -1651,6 +1683,10 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
   <button class="topnav-item settings-nav" onclick="showSection('settingsView',this)">
     <span class="navicon">⚙️</span>
     <span>Settings</span>
+  </button>
+  <button class="topnav-item" onclick="showSection('gpsAttendanceView',this)">
+    <span class="navicon">📍</span>
+    <span>GPS Attendance</span>
   </button>
 </header>
 
@@ -2008,6 +2044,49 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
 
 
 
+<div id="gpsAttendanceView" class="section-view" style="display:none">
+  <div class="gps-hero">
+    <span class="gps-pill">SCHOOL-CONNECTED TEACHER</span>
+    <h2>📍 GPS Attendance</h2>
+    <p>Check in at a location configured by your Registrar. This screen uses the same school, Firebase account and GPS location records as the Registrar's GPS Attendance module.</p>
+  </div>
+  <div class="gps-card">
+    <h3 style="margin:0 0 5px;color:#17324d">School connection</h3>
+    <p id="teacherGpsSchoolInfo" style="margin:0;color:#667085;font-size:13px">Checking your registrar-approved school connection…</p>
+    <div id="teacherGpsGlobalStatus" class="gps-status" role="status" aria-live="polite">GPS attendance is waiting for your school connection.</div>
+  </div>
+  <div class="gps-card">
+    <h3 style="margin:0 0 6px;color:#17324d">Teacher GPS Check-In</h3>
+    <p style="margin:0 0 14px;color:#667085;font-size:13px;line-height:1.5">Choose an active school location, check your current position, and check in only when your GPS position is inside the Registrar's permitted radius.</p>
+    <div class="gps-grid">
+      <div class="gps-field" style="grid-column:1/-1">
+        <label for="teacherGpsLocation">SCHOOL LOCATION</label>
+        <select id="teacherGpsLocation"><option value="">Loading school locations…</option></select>
+      </div>
+      <div class="gps-metric"><small>CURRENT DISTANCE</small><strong id="teacherGpsDistance">—</strong></div>
+      <div class="gps-metric"><small>GPS ACCURACY</small><strong id="teacherGpsAccuracy">—</strong></div>
+      <div class="gps-metric"><small>MONITORING STATUS</small><strong id="teacherGpsMonitorStatus">Not started</strong></div>
+      <div class="gps-metric"><small>TODAY'S DATE</small><strong id="teacherGpsDate">—</strong></div>
+    </div>
+    <div class="gps-actions">
+      <button type="button" class="secondary" id="teacherGpsGetLocation">Check My Location</button>
+      <button type="button" id="teacherGpsCheckIn" disabled>Check In</button>
+      <button type="button" class="secondary" id="teacherGpsStartMonitor" disabled>Start Monitoring</button>
+      <button type="button" class="danger" id="teacherGpsStopMonitor" disabled>Stop Monitoring</button>
+    </div>
+    <div id="teacherGpsStatus" class="gps-status" role="status" aria-live="polite">Select a location, then tap “Check My Location”.</div>
+    <div class="gps-note">Location access requires HTTPS and your browser's permission. Keep this page open during a monitoring session; a mobile browser may pause location updates when the phone locks or the page moves to the background. Browser GPS is best-effort and should not be treated as tamper-proof proof of physical presence.</div>
+  </div>
+  <div class="gps-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+      <div><h3 style="margin:0 0 4px;color:#17324d">My GPS Attendance History</h3><p style="margin:0;color:#667085;font-size:12px">Your check-ins and lesson monitoring events.</p></div>
+      <button type="button" class="secondary" id="teacherGpsRefreshRecords" style="border:0;border-radius:9px;padding:10px 12px;background:#e8f7f1;color:#087c60;font-weight:800">Refresh History</button>
+    </div>
+    <div id="teacherGpsHistoryStatus" class="gps-status" role="status">Attendance records have not been loaded yet.</div>
+    <div class="gps-table-wrap"><table class="gps-table"><thead><tr><th>Date</th><th>Time</th><th>Location</th><th>Event</th><th>Distance</th><th>GPS Accuracy</th><th>Result</th></tr></thead><tbody id="teacherGpsHistoryRows"><tr><td colspan="7">Sign in with an approved school connection to view your records.</td></tr></tbody></table></div>
+  </div>
+</div>
+
 <div id="holidayView" class="section-view" style="display:none">
   <div class="settings-page">
     <div class="settings-hero">
@@ -2303,7 +2382,7 @@ function connectAllPages(){
   // Verify all primary sections exist so navigation remains stable.
   const requiredSections=[
     "dashboardView","lessonsView","caExamView","studentsView",
-    "attendanceView","profileView","subscriptionView","settingsView",
+    "attendanceView","gpsAttendanceView","profileView","subscriptionView","settingsView",
     "myClassesView","myTimetableView","examTimetableView",
     "academicSessionView","holidayView"
   ];
@@ -2311,7 +2390,8 @@ function connectAllPages(){
 }
 
 function showSection(id,el){
-  document.querySelectorAll("#dashboardView,#lessonsView,#caExamView,#studentsView,#attendanceView,#profileView,#assignmentView,#myClassesView,#myTimetableView,#examTimetableView,#academicSessionView,#settingsView,#subscriptionView,#holidayView").forEach(v=>v.style.display="none");
+  if(id!=="gpsAttendanceView"&&typeof window.stopTeacherGpsMonitoring==="function")window.stopTeacherGpsMonitoring(true);
+  document.querySelectorAll("#dashboardView,#lessonsView,#caExamView,#studentsView,#attendanceView,#gpsAttendanceView,#profileView,#assignmentView,#myClassesView,#myTimetableView,#examTimetableView,#academicSessionView,#settingsView,#subscriptionView,#holidayView").forEach(v=>v.style.display="none");
   const target=document.getElementById(id);
   if(target) target.style.display="block";
   document.body.classList.toggle("lessons-active", id==="lessonsView");
@@ -2319,6 +2399,7 @@ function showSection(id,el){
   try{ sessionStorage.setItem("teacherActiveSection",id); }catch(e){}
   setTopNav(el,id);
   closeMoreMenu();
+  if(id==="gpsAttendanceView"&&typeof window.initTeacherGpsAttendance==="function")window.initTeacherGpsAttendance();
   window.scrollTo({top:0,behavior:(id==="lessonsView"||window.__restoringTeacherSection) ? "auto" : "smooth"});
 }
 function toggleMoreMenu(el){
@@ -2330,8 +2411,9 @@ function closeMoreMenu(){
   if(menu) menu.classList.remove("show");
 }
 function showExtraSection(id,menuButton){
+  if(typeof window.stopTeacherGpsMonitoring==="function")window.stopTeacherGpsMonitoring(true);
   if((id==='myTimetableView'||id==='examTimetableView')&&typeof window.loadTeacherTimetables==='function')window.loadTeacherTimetables();
-  document.querySelectorAll("#dashboardView,#lessonsView,#caExamView,#studentsView,#attendanceView,#profileView,#assignmentView,#myClassesView,#myTimetableView,#examTimetableView,#academicSessionView,#settingsView,#subscriptionView,#holidayView").forEach(v=>v.style.display="none");
+  document.querySelectorAll("#dashboardView,#lessonsView,#caExamView,#studentsView,#attendanceView,#gpsAttendanceView,#profileView,#assignmentView,#myClassesView,#myTimetableView,#examTimetableView,#academicSessionView,#settingsView,#subscriptionView,#holidayView").forEach(v=>v.style.display="none");
   const target=document.getElementById(id);
   if(target) target.style.display="block";
   document.body.classList.remove("lessons-active");
@@ -5321,7 +5403,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
       gate?.classList.add('auth-hidden');gate?.classList.add('auth-ready');
       let activeSection='dashboardView';try{activeSection=sessionStorage.getItem('teacherActiveSection')||'dashboardView';}catch(_e){}
-      const validSections=['dashboardView','lessonsView','caExamView','studentsView','attendanceView','profileView','assignmentView','myClassesView','myTimetableView','examTimetableView','academicSessionView','settingsView','subscriptionView','holidayView'];
+      const validSections=['dashboardView','lessonsView','caExamView','studentsView','attendanceView','gpsAttendanceView','profileView','assignmentView','myClassesView','myTimetableView','examTimetableView','academicSessionView','settingsView','subscriptionView','holidayView'];
       if(!validSections.includes(activeSection))activeSection='dashboardView';
       window.__restoringTeacherSection=true;if(typeof window.showSection==='function')window.showSection(activeSection,null);
       if(activeSection==='profileView'&&typeof window.loadTeacherProfile==='function')window.loadTeacherProfile();
@@ -5677,8 +5759,6 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   }catch(e){console.warn('Unified subject bootstrap failed:',e)}
 })();
 </script>
-</body>
-</html>
 <style>
 .more-wrap,.more-menu{display:none !important;}
 </style>
@@ -5783,3 +5863,172 @@ body.lessons-active #lessonSubscriptionToggle{
   window.applyTeacherModeControls = applyTeacherModeControls;
 })();
 </script>
+
+
+<script id="school-connected-teacher-gps-module">
+(function(){
+  "use strict";
+  const $ = id => document.getElementById(id);
+  let gpsSchoolId = "", gpsUid = "", gpsLocations = [], gpsPosition = null;
+  let gpsInside = false, gpsWatchId = null, gpsRefreshTimer = null, gpsSessionId = "";
+  let gpsInitializedFor = "";
+
+  function gpsStatus(id, message, type="") {
+    const el=$(id); if(!el) return;
+    el.textContent=String(message||"");
+    el.className="gps-status"+(type?" "+type:"");
+  }
+  function gpsEscape(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+  function gpsDateKey(){return new Intl.DateTimeFormat("en-CA",{timeZone:"Africa/Lagos",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());}
+  function gpsDistance(lat1,lon1,lat2,lon2){
+    const R=6371000,rad=Math.PI/180,dLat=(lat2-lat1)*rad,dLon=(lon2-lon1)*rad;
+    const a=Math.sin(dLat/2)**2+Math.cos(lat1*rad)*Math.cos(lat2*rad)*Math.sin(dLon/2)**2;
+    return 2*R*Math.asin(Math.sqrt(Math.min(1,a)));
+  }
+  function gpsGetPosition(){
+    return new Promise((resolve,reject)=>{
+      if(!navigator.geolocation){reject(new Error("This browser does not support GPS location."));return;}
+      navigator.geolocation.getCurrentPosition(
+        p=>resolve({lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy}),
+        e=>reject(new Error(e.code===1?"Location permission was denied. Enable location permission in your browser.":e.code===2?"Your current location is unavailable. Move to an area with a clearer GPS signal.":e.code===3?"GPS request timed out. Please try again.":e.message||"Could not read your current location.")),
+        {enableHighAccuracy:true,timeout:20000,maximumAge:5000}
+      );
+    });
+  }
+  function gpsSelectedLocation(){const id=$("teacherGpsLocation")?.value||"";return gpsLocations.find(l=>l.id===id&&l.active!==false)||null;}
+  function gpsSetButtons(){
+    const connected=!!(window.TEACHER_DASHBOARD_MODE==="school-connected"&&window.activeTeacherConnection&&["connected","approved","active"].includes(String(window.activeTeacherConnection.status||"").toLowerCase())&&window.activeTeacherConnection.schoolId);
+    const loc= gpsSelectedLocation();
+    if($("teacherGpsGetLocation"))$("teacherGpsGetLocation").disabled=!connected||!loc;
+    if($("teacherGpsCheckIn"))$("teacherGpsCheckIn").disabled=!connected||!loc||!gpsInside||!!gpsSessionId;
+    if($("teacherGpsStartMonitor"))$("teacherGpsStartMonitor").disabled=!connected||!loc||!gpsInside||!!gpsSessionId;
+    if($("teacherGpsStopMonitor"))$("teacherGpsStopMonitor").disabled=!gpsSessionId;
+  }
+  function gpsApplyPosition(pos){
+    gpsPosition=pos;gpsInside=false;
+    const loc=gpsSelectedLocation();
+    const distanceEl=$("teacherGpsDistance"),accuracyEl=$("teacherGpsAccuracy");
+    if(accuracyEl)accuracyEl.textContent=Number.isFinite(pos.accuracy)?Math.round(pos.accuracy*10)/10+" m":"—";
+    if(!loc){if(distanceEl)distanceEl.textContent="—";gpsSetButtons();return false;}
+    const meters=gpsDistance(pos.lat,pos.lng,Number(loc.latitude),Number(loc.longitude));
+    if(distanceEl)distanceEl.textContent=Math.round(meters)+" m";
+    gpsInside=meters<=Number(loc.allowedRadiusMeters||10)&&pos.accuracy<=Number(loc.maxAccuracyMeters||15);
+    if(gpsInside)gpsStatus("teacherGpsStatus",`You are within the permitted radius (${meters.toFixed(1)} m). GPS accuracy: ${pos.accuracy.toFixed(1)} m. You may check in.`,"ok");
+    else if(meters>Number(loc.allowedRadiusMeters||10))gpsStatus("teacherGpsStatus",`You are outside the permitted radius (${meters.toFixed(1)} m; limit ${loc.allowedRadiusMeters||10} m). Check-in is disabled.`,"warn");
+    else gpsStatus("teacherGpsStatus",`GPS accuracy is too low (${pos.accuracy.toFixed(1)} m; limit ${loc.maxAccuracyMeters||15} m). Wait for a clearer reading.`,"warn");
+    gpsSetButtons();return gpsInside;
+  }
+  async function gpsWriteEvent(eventType,pos=gpsPosition,loc=gpsSelectedLocation()){
+    const db=window.teacherFirestore,f=window.firebaseFirestoreFns,uid=window.firebaseTeacherUID,conn=window.activeTeacherConnection;
+    if(!db||!f||!uid||!conn?.schoolId||!loc)throw new Error("Your active teacher, school connection, or selected location is missing.");
+    if(!pos)throw new Error("Check your current GPS location first.");
+    const meters=gpsDistance(pos.lat,pos.lng,Number(loc.latitude),Number(loc.longitude));
+    const isWithin=meters<=Number(loc.allowedRadiusMeters||10)&&pos.accuracy<=Number(loc.maxAccuracyMeters||15);
+    if(eventType==="check-in"&&!isWithin)throw new Error("You are not inside the permitted location or GPS accuracy limit. Check-in was not saved.");
+    const date=gpsDateKey();
+    const payload={
+      schoolId:conn.schoolId,teacherUid:uid,
+      teacherName:window.__teacherIdentity?.fullName||window.firebaseTeacherUser?.displayName||window.firebaseTeacherUser?.email||"Teacher",
+      teacherEmail:window.firebaseTeacherUser?.email||"",locationId:loc.id,locationName:loc.name||"",
+      attendanceDate:date,eventType,sessionId:gpsSessionId||"",latitude:Number(pos.lat),longitude:Number(pos.lng),
+      distanceMeters:Number(meters.toFixed(2)),accuracyMeters:Number(pos.accuracy.toFixed(2)),
+      verificationMethod:"browser-geolocation",createdAt:f.serverTimestamp(),clientTimeIso:new Date().toISOString(),validLocation:isWithin
+    };
+    if(eventType==="check-in"){
+      const id=`${conn.schoolId}_${uid}_${date}_${loc.id}`;
+      const ref=f.doc(db,"teacherGpsAttendance",id),existing=await f.getDoc(ref);
+      if(existing.exists())throw new Error("A check-in record already exists for this location today.");
+      await f.setDoc(ref,payload);
+    }else{
+      await f.addDoc(f.collection(db,"teacherGpsAttendanceEvents"),payload);
+    }
+    return payload;
+  }
+  async function gpsLoadLocations(){
+    const db=window.teacherFirestore,f=window.firebaseFirestoreFns,conn=window.activeTeacherConnection;
+    if(!db||!f||!conn?.schoolId)throw new Error("No registrar-approved school connection is available.");
+    const previous=$("teacherGpsLocation")?.value||"";
+    const snap=await f.getDocs(f.query(f.collection(db,"schoolGpsLocations"),f.where("schoolId","==",conn.schoolId)));
+    gpsLocations=snap.docs.map(d=>({id:d.id,...(d.data()||{})})).filter(l=>l.schoolId===conn.schoolId&&l.active!==false);
+    const select=$("teacherGpsLocation");
+    if(select){select.innerHTML='<option value="">Choose an active school location</option>'+gpsLocations.map(l=>`<option value="${gpsEscape(l.id)}">${gpsEscape(l.name||l.id)}</option>`).join("");if(previous&&gpsLocations.some(l=>l.id===previous))select.value=previous;}
+    gpsPosition=null;gpsInside=false;
+    if($("teacherGpsDistance"))$("teacherGpsDistance").textContent="—";
+    if($("teacherGpsAccuracy"))$("teacherGpsAccuracy").textContent="—";
+    gpsSetButtons();
+    if(!gpsLocations.length)gpsStatus("teacherGpsStatus","No active GPS locations are registered for your connected school. Ask the Registrar to add or activate the school's location in the Registrar GPS Attendance module.","warn");
+    else gpsStatus("teacherGpsStatus",`${gpsLocations.length} active school location(s) loaded. Select one and check your location.`);
+  }
+  function gpsRenderHistory(records){
+    const body=$("teacherGpsHistoryRows");if(!body)return;
+    if(!records.length){body.innerHTML='<tr><td colspan="7">No GPS attendance records found for your account yet.</td></tr>';return;}
+    body.innerHTML=records.map(r=>{
+      let time="—";try{if(r.clientTimeIso)time=new Date(r.clientTimeIso).toLocaleTimeString("en-NG",{timeZone:"Africa/Lagos",hour:"2-digit",minute:"2-digit",second:"2-digit"});}catch(_e){}
+      const validity=r.validLocation===false?'<span style="color:#b42318;font-weight:900">Outside / low accuracy</span>':'<span style="color:#087c60;font-weight:900">Verified by browser GPS</span>';
+      return `<tr><td>${gpsEscape(r.attendanceDate||"—")}</td><td>${gpsEscape(time)}</td><td>${gpsEscape(r.locationName||r.locationId||"—")}</td><td>${gpsEscape(r.eventType||"—")}</td><td>${Number.isFinite(Number(r.distanceMeters))?Number(r.distanceMeters)+" m":"—"}</td><td>${Number.isFinite(Number(r.accuracyMeters))?Number(r.accuracyMeters)+" m":"—"}</td><td>${validity}</td></tr>`;
+    }).join("");
+  }
+  async function gpsLoadHistory(){
+    const db=window.teacherFirestore,f=window.firebaseFirestoreFns,conn=window.activeTeacherConnection,uid=window.firebaseTeacherUID;
+    if(!db||!f||!conn?.schoolId||!uid)throw new Error("Please sign in with your connected teacher account first.");
+    gpsStatus("teacherGpsHistoryStatus","Loading your GPS attendance history…");
+    const [checkins,events]=await Promise.all([
+      f.getDocs(f.query(f.collection(db,"teacherGpsAttendance"),f.where("schoolId","==",conn.schoolId),f.where("teacherUid","==",uid))),
+      f.getDocs(f.query(f.collection(db,"teacherGpsAttendanceEvents"),f.where("schoolId","==",conn.schoolId),f.where("teacherUid","==",uid)))
+    ]);
+    const records=[];
+    checkins.docs.forEach(d=>records.push({id:d.id,...(d.data()||{})}));
+    events.docs.forEach(d=>records.push({id:d.id,...(d.data()||{})}));
+    records.sort((a,b)=>String(b.clientTimeIso||"").localeCompare(String(a.clientTimeIso||"")));
+    gpsRenderHistory(records.slice(0,100));
+    gpsStatus("teacherGpsHistoryStatus",`${Math.min(records.length,100)} recent record(s) shown.`,"ok");
+  }
+  async function gpsRefreshAll(){
+    try{await gpsLoadLocations();}catch(e){gpsStatus("teacherGpsGlobalStatus",e.message+" Check the Firestore Rules for schoolGpsLocations.","bad");gpsStatus("teacherGpsStatus",e.message,"bad");}
+    try{await gpsLoadHistory();}catch(e){gpsStatus("teacherGpsHistoryStatus","Could not load your GPS records: "+(e.message||e)+". Check Firestore Rules and any Firebase index notice.","bad");}
+  }
+  window.stopTeacherGpsMonitoring=async function(silent=false){
+    if(gpsWatchId!==null&&navigator.geolocation){navigator.geolocation.clearWatch(gpsWatchId);gpsWatchId=null;}
+    if(gpsRefreshTimer){clearInterval(gpsRefreshTimer);gpsRefreshTimer=null;}
+    const hadSession=!!gpsSessionId;
+    if(hadSession){try{if(gpsPosition&&gpsSelectedLocation())await gpsWriteEvent("monitor-stop",gpsPosition,gpsSelectedLocation());}catch(e){console.warn("Could not save GPS monitor-stop event:",e);}}
+    gpsSessionId="";
+    if($("teacherGpsMonitorStatus"))$("teacherGpsMonitorStatus").textContent="Stopped";
+    gpsSetButtons();
+    if(hadSession&&!silent)gpsStatus("teacherGpsStatus","Lesson monitoring stopped.","warn");
+  };
+  window.initTeacherGpsAttendance=async function(){
+    const db=window.teacherFirestore,f=window.firebaseFirestoreFns,uid=window.firebaseTeacherUID;
+    const conn=window.activeTeacherConnection||{};
+    const connected=window.TEACHER_DASHBOARD_MODE==="school-connected"&&!!uid&&!!conn.schoolId&&["connected","approved","active"].includes(String(conn.status||"").toLowerCase());
+    if(!db||!f||!uid){gpsStatus("teacherGpsGlobalStatus","Firebase is still initializing. Please wait a moment and open GPS Attendance again.","warn");return;}
+    if(!connected){gpsSchoolId="";gpsUid=uid;gpsStatus("teacherGpsGlobalStatus","This GPS Attendance section requires an approved school connection. Contact your Registrar if your account should be connected.","bad");if($("teacherGpsSchoolInfo"))$("teacherGpsSchoolInfo").textContent="No active registrar-approved school connection.";if($("teacherGpsLocation"))$("teacherGpsLocation").innerHTML='<option value="">No active school connection</option>';gpsLocations=[];gpsInside=false;gpsSetButtons();return;}
+    const context=conn.schoolId+"|"+uid;
+    gpsSchoolId=conn.schoolId;gpsUid=uid;
+    if($("teacherGpsSchoolInfo"))$("teacherGpsSchoolInfo").textContent=`School: ${conn.schoolName||conn.school||conn.schoolId} · School ID: ${conn.schoolId}`;
+    gpsStatus("teacherGpsGlobalStatus","Connected to your Registrar's GPS attendance configuration.","ok");
+    if($("teacherGpsDate"))$("teacherGpsDate").textContent=gpsDateKey();
+    if(gpsInitializedFor!==context){
+      if(gpsSessionId)await window.stopTeacherGpsMonitoring(true);
+      gpsInitializedFor=context;
+      const select=$("teacherGpsLocation");if(select)select.onchange=()=>{gpsPosition=null;gpsInside=false;if($("teacherGpsDistance"))$("teacherGpsDistance").textContent="—";if($("teacherGpsAccuracy"))$("teacherGpsAccuracy").textContent="—";gpsStatus("teacherGpsStatus","Location selected. Tap Check My Location to verify your distance.");gpsSetButtons();};
+      $("teacherGpsGetLocation").onclick=async()=>{gpsStatus("teacherGpsStatus","Reading your current GPS location…");try{gpsApplyPosition(await gpsGetPosition());}catch(e){gpsStatus("teacherGpsStatus",e.message,"bad");}};
+      $("teacherGpsCheckIn").onclick=async()=>{const b=$("teacherGpsCheckIn");b.disabled=true;try{gpsApplyPosition(await gpsGetPosition());if(!gpsInside)throw new Error("You must be inside the permitted radius with acceptable GPS accuracy before checking in.");await gpsWriteEvent("check-in",gpsPosition);gpsStatus("teacherGpsStatus","Your GPS check-in has been saved successfully.","ok");await gpsLoadHistory();}catch(e){gpsStatus("teacherGpsStatus",(e.message||e)+" If Firebase says permission-denied, verify the published Firestore Rules.","bad");}finally{gpsSetButtons();}};
+      $("teacherGpsStartMonitor").onclick=async()=>{try{gpsApplyPosition(await gpsGetPosition());if(!gpsInside)throw new Error("You must be inside the permitted radius to start lesson monitoring.");gpsSessionId="session_"+(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36));await gpsWriteEvent("monitor-start",gpsPosition);gpsWatchId=navigator.geolocation.watchPosition(async p=>{if(!gpsSessionId)return;const pos={lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy};gpsApplyPosition(pos);const loc=gpsSelectedLocation();if(!loc)return;try{const within=gpsInside;await gpsWriteEvent(within?"monitor-location":"monitor-outside",pos,loc);if(within)gpsStatus("teacherGpsStatus","Monitoring is active. Latest GPS reading is within the permitted area.","ok");else gpsStatus("teacherGpsStatus","Warning: your latest GPS reading is outside the permitted area or accuracy threshold.","warn");await gpsLoadHistory();}catch(e){gpsStatus("teacherGpsStatus","Monitoring event could not be saved: "+(e.message||e),"warn");}},e=>gpsStatus("teacherGpsStatus","Location monitoring paused or failed: "+(e.message||"GPS unavailable"),"warn"),{enableHighAccuracy:true,timeout:20000,maximumAge:5000});gpsRefreshTimer=setInterval(()=>{if(document.visibilityState==="visible"&&gpsSessionId)gpsLoadHistory().catch(()=>{});},60000);$("teacherGpsMonitorStatus").textContent="Active";gpsSetButtons();gpsStatus("teacherGpsStatus","Lesson monitoring started. Keep this dashboard open and location permission enabled.","ok");}catch(e){gpsSessionId="";gpsSetButtons();gpsStatus("teacherGpsStatus",e.message||String(e),"bad");}};
+      $("teacherGpsStopMonitor").onclick=async()=>{await window.stopTeacherGpsMonitoring(false);try{await gpsLoadHistory();}catch(e){console.warn(e);}};
+      $("teacherGpsRefreshRecords").onclick=async()=>{try{await gpsLoadHistory();}catch(e){gpsStatus("teacherGpsHistoryStatus",e.message||String(e),"bad");}};
+    }
+    gpsSetButtons();
+    await gpsRefreshAll();
+  };
+  window.addEventListener("teacherAccountContextChanged",()=>{
+    if(gpsSessionId)window.stopTeacherGpsMonitoring(true);
+    gpsInitializedFor="";gpsLocations=[];gpsPosition=null;gpsInside=false;
+    if($("gpsAttendanceView")&&$("gpsAttendanceView").style.display!=="none")setTimeout(()=>window.initTeacherGpsAttendance&&window.initTeacherGpsAttendance(),0);
+  });
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"&&gpsSessionId)gpsStatus("teacherGpsStatus","This page is in the background. Your phone/browser may pause location updates.","warn");});
+  window.addEventListener("pagehide",()=>{if(gpsWatchId!==null&&navigator.geolocation)navigator.geolocation.clearWatch(gpsWatchId);});
+})();
+</script>
+</body>
+</html>
