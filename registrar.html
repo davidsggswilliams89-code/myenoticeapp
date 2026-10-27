@@ -900,9 +900,12 @@ function liveTeacherForLesson(r){
 function liveLessonDocId(day,date,r){return [date,day,r.startTime,r.className,r.subject].map(x=>String(x||"").replace(/[^a-zA-Z0-9_-]/g,"_")).join("__");}
 async function loadLiveAttendanceRecords(day,date){
  if(!profile?.schoolId)return;
- const snap=await getDocs(collection(db,"schools",profile.schoolId,"liveLessonAttendance"));
- liveAttendanceRecords={};
- snap.docs.forEach(d=>{const x=d.data();if(x.date===date&&x.day===day)liveAttendanceRecords[x.lessonKey||d.id]=x;});
+ // Read only this day's records instead of downloading the entire attendance history.
+ const recordsRef=collection(db,"schools",profile.schoolId,"liveLessonAttendance");
+ const snap=await getDocs(query(recordsRef,where("date","==",date),where("day","==",day)));
+ const nextRecords={};
+ snap.docs.forEach(d=>{const x=d.data();nextRecords[x.lessonKey||d.id]=x;});
+ liveAttendanceRecords=nextRecords;
  liveAttendanceLoadedDay=day+"|"+date;
 }
 function makeLiveLessonCard(r,day,date,nowMinutes){
@@ -977,19 +980,31 @@ function renderLiveAttendanceUI(){
   [...teacherStats.values()].sort((a,b)=>a.name.localeCompare(b.name)).forEach(st=>{const tr=document.createElement("tr");[st.name,st.total,st.attended,st.missed,st.pending].forEach(v=>{const td=document.createElement("td");td.textContent=String(v);tr.append(td)});body.append(tr)});table.append(body);statsBox.append(table);
  }
 }
+let liveAttendanceRequestId=0;
 async function refreshLiveAttendance(){
  const message=$("liveAttendanceMessage");if(!profile?.schoolId)return;
- if(message)message.textContent="Loading published timetable and attendance…";
+ const requestId=++liveAttendanceRequestId;
+ if(message){message.textContent="Loading current lessons…";message.style.color="var(--muted)";}
  try{
-  await loadConnectedTeachers();
-  const snap=await getDocs(collection(db,"schools",profile.schoolId,"timetable"));
-  liveAttendanceRows=snap.docs.map(d=>({id:d.id,...d.data()})).filter(r=>r.day&&r.className&&r.subject&&r.startTime&&r.endTime);
-  const today=liveDayName();
+  const today=liveDayName(),date=todayDateKeyForLive();
   if($("liveAttendanceDayFilter"))$("liveAttendanceDayFilter").value=today;
-  await loadLiveAttendanceRecords(today,todayDateKeyForLive());
-  if(message){message.textContent=liveAttendanceRows.length?"Tick a checkbox only after confirming the teacher is present. Attendance is saved to this school's Firestore records.":"No published timetable entries were found. Create the timetable first.";message.style.color="var(--muted)"}
+  // Load the timetable, teacher assignments, and today's attendance concurrently for a faster display.
+  const results=await Promise.allSettled([
+   getDocs(collection(db,"schools",profile.schoolId,"timetable")),
+   loadConnectedTeachers(),
+   loadLiveAttendanceRecords(today,date)
+  ]);
+  if(requestId!==liveAttendanceRequestId)return;
+  const timetableResult=results[0];
+  if(timetableResult.status!=="fulfilled")throw new Error("Could not read the published timetable: "+err(timetableResult.reason));
+  const snap=timetableResult.value;
+  liveAttendanceRows=snap.docs.map(d=>({id:d.id,...d.data()})).filter(r=>r.day&&r.className&&r.subject&&r.startTime&&r.endTime);
+  const teacherResult=results[1],attendanceResult=results[2];
+  if(teacherResult.status!=="fulfilled")console.warn("Teacher assignments could not be refreshed",teacherResult.reason);
+  if(attendanceResult.status!=="fulfilled")throw new Error("Could not read today's live attendance records. Check Firestore rules for schools/{schoolId}/liveLessonAttendance: "+err(attendanceResult.reason));
+  if(message){message.textContent=liveAttendanceRows.length?"":"No published timetable entries were found. Create the timetable first.";message.style.color="var(--muted)";}
   renderLiveAttendanceUI();
- }catch(e){console.error("Live class attendance failed",e);if(message){message.textContent="Could not load live class attendance: "+err(e);message.style.color="#a82929"}}
+ }catch(e){console.error("Live class attendance failed",e);if(message){message.textContent="Could not load live class attendance: "+(e.message||err(e));message.style.color="#a82929"}}
 }
 function todayDateKeyForLive(){return localDateKey(new Date());}
 $("refreshLiveAttendance")?.addEventListener("click",refreshLiveAttendance);
