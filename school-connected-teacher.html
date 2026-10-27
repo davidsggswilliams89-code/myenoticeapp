@@ -1575,6 +1575,19 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
 @media(max-width:600px){#formMasterPtaSection{padding:13px!important}#formMasterPtaSection>div:first-child{align-items:flex-start}#formMasterPtaSection table{font-size:12px}#formMasterPtaSection th,#formMasterPtaSection td{padding:8px 6px}#formMasterPtaSection button{max-width:100%}}
 </style>
 
+
+<style>
+#formMasterPtaSection .pta-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#formMasterPtaSection .pta-summary-card{background:#f4faf6;border:1px solid #dcebe3;border-radius:14px;padding:18px 16px;min-width:0}
+#formMasterPtaSection .pta-summary-card span{display:block;color:#66756f;font-size:14px;line-height:1.4;margin-bottom:9px}
+#formMasterPtaSection .pta-summary-card strong{display:block;color:#173b2e;font-size:27px;line-height:1.2;overflow-wrap:anywhere}
+#formMasterPtaSection .section-title{margin-bottom:14px}
+#formMasterPtaSection .cardhead input{width:min(100%,280px)}
+#formMasterPtaNav.active{background:#fff!important;border-color:#fff!important;color:#075c51!important}
+#formMasterPtaNav.active .navicon{background:#087c60!important;color:#fff!important}
+@media(max-width:760px){#formMasterPtaSection .pta-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}#formMasterPtaSection .pta-summary-card{padding:14px 12px}#formMasterPtaSection .pta-summary-card span{font-size:12px}#formMasterPtaSection .pta-summary-card strong{font-size:22px}}
+</style>
+
 </head>
 <body>
 <div id="teacherDashboardModeBadge" role="status" style="position:fixed;right:10px;bottom:10px;z-index:9998;padding:7px 10px;border-radius:999px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font:700 10px/1.2 Arial,sans-serif;box-shadow:0 2px 8px #00000012;pointer-events:none" aria-live="polite"></div>
@@ -1745,24 +1758,39 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
 
 
 
-<section id="formMasterPtaSection" class="teacher-section-card" style="display:none;margin:18px 0;padding:18px;border:1px solid var(--line,#dce6df);border-radius:16px;background:#fff">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
-    <div><h2 style="margin:0 0 5px">💳 PTA Payments</h2><p id="teacherPtaSummary" style="margin:0;color:#65736a">Loading Form Master assignment…</p></div>
-    <button type="button" class="topnav-item" style="border:1px solid #dce6df;border-radius:9px;padding:9px 12px" onclick="window.closeFormMasterPta()">← Back to Dashboard</button>
+<section id="formMasterPtaSection" class="section-view" style="display:none;padding-top:6px">
+  <div class="section-title">
+    <h2>PTA Payments</h2>
+    <p>Class PTA collection, payment status and outstanding balances.</p>
   </div>
-  <div id="teacherPtaNotice" role="status" style="margin:14px 0;padding:12px;border-radius:10px;background:#eef6ff;color:#194b75">Checking Form Master assignment…</div>
-  <div id="teacherPtaDashboard" style="display:none">
-    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0">
-      <div style="padding:15px;border:1px solid #e0eee7;border-radius:12px;background:#f5faf7"><span style="color:#66756f;font-size:13px">Students in assigned class</span><strong id="teacherPtaTotal" style="display:block;font-size:26px">0</strong></div>
-      <div style="padding:15px;border:1px solid #e0eee7;border-radius:12px;background:#f5faf7"><span style="color:#66756f;font-size:13px">Payment received</span><strong id="teacherPtaPaid" style="display:block;font-size:26px">0</strong></div>
-      <div style="padding:15px;border:1px solid #e0eee7;border-radius:12px;background:#f5faf7"><span style="color:#66756f;font-size:13px">Outstanding</span><strong id="teacherPtaOutstanding" style="display:block;font-size:26px">0</strong></div>
+  <div class="card" style="padding:18px;margin-bottom:14px">
+    <h3 style="margin:0 0 8px">Class PTA collection</h3>
+    <p id="teacherPtaSummary" style="margin:0 0 14px;color:#667085">Loading Form Master assignment…</p>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <label for="teacherPtaTerm" style="font-weight:700">Term</label>
+      <select id="teacherPtaTerm" style="padding:11px 14px;border:1px solid #cfd8e3;border-radius:10px;background:#fff;min-width:170px">
+        <option value="firstTerm">First Term</option><option value="secondTerm">Second Term</option><option value="thirdTerm">Third Term</option>
+      </select>
+      <button type="button" id="teacherPtaRefresh" class="primary">Refresh</button>
     </div>
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0">
-      <label for="teacherPtaTerm">Term</label><select id="teacherPtaTerm" style="padding:10px;border:1px solid #cfdad4;border-radius:9px"><option value="firstTerm">First Term</option><option value="secondTerm">Second Term</option><option value="thirdTerm">Third Term</option></select>
-      <input id="teacherPtaSearch" type="search" placeholder="Search student or admission no." style="flex:1;min-width:180px;padding:10px;border:1px solid #cfdad4;border-radius:9px">
-      <button type="button" id="teacherPtaRefresh" class="primary" style="padding:10px 14px">Refresh</button>
+  </div>
+  <div class="card" style="padding:16px;margin-bottom:14px">
+    <div class="pta-summary-grid">
+      <div class="pta-summary-card"><span>Students in assigned class</span><strong id="teacherPtaTotal">0</strong></div>
+      <div class="pta-summary-card"><span>Total amount expected</span><strong id="teacherPtaExpected">₦0</strong></div>
+      <div class="pta-summary-card"><span>Students paid</span><strong id="teacherPtaPaid">0</strong></div>
+      <div class="pta-summary-card"><span>Total amount received</span><strong id="teacherPtaReceived">₦0</strong></div>
+      <div class="pta-summary-card"><span>Students outstanding</span><strong id="teacherPtaOutstanding">0</strong></div>
+      <div class="pta-summary-card"><span>Remaining balance</span><strong id="teacherPtaBalance">₦0</strong></div>
     </div>
-    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:680px"><thead><tr><th>#</th><th>Student</th><th>Admission No.</th><th>Class</th><th>Guardian phone</th><th>Payment</th><th>Action</th></tr></thead><tbody id="teacherPtaStudentsBody"><tr><td colspan="7">Loading students…</td></tr></tbody></table></div>
+  </div>
+  <div class="card">
+    <div class="cardhead" style="flex-wrap:wrap;gap:10px">
+      <h3>Student PTA register</h3>
+      <input id="teacherPtaSearch" type="search" placeholder="Search student or admission no." style="padding:10px;border:1px solid #cfd8e3;border-radius:9px;min-width:190px;max-width:100%">
+    </div>
+    <div id="teacherPtaNotice" role="status" style="margin:12px;padding:12px;border-radius:10px;background:#eef6ff;color:#194b75">Checking Form Master assignment…</div>
+    <div class="tablewrap"><table style="min-width:680px"><thead><tr><th>#</th><th>Student</th><th>Admission No.</th><th>Class</th><th>Guardian phone</th><th>Payment status</th><th>Action</th></tr></thead><tbody id="teacherPtaStudentsBody"><tr><td colspan="7" class="empty">Loading students…</td></tr></tbody></table></div>
   </div>
 </section>
 </div>
@@ -2417,7 +2445,7 @@ function connectAllPages(){
 
 function showSection(id,el){
   if(id!=="gpsAttendanceView"&&typeof window.stopTeacherGpsMonitoring==="function")window.stopTeacherGpsMonitoring(true);
-  document.querySelectorAll("#dashboardView,#lessonsView,#caExamView,#studentsView,#attendanceView,#gpsAttendanceView,#profileView,#assignmentView,#myClassesView,#myTimetableView,#examTimetableView,#academicSessionView,#settingsView,#subscriptionView,#holidayView").forEach(v=>v.style.display="none");
+  document.querySelectorAll("#dashboardView,#lessonsView,#caExamView,#studentsView,#attendanceView,#gpsAttendanceView,#profileView,#assignmentView,#myClassesView,#myTimetableView,#examTimetableView,#academicSessionView,#settingsView,#subscriptionView,#holidayView,#formMasterPtaSection").forEach(v=>v.style.display="none");
   const target=document.getElementById(id);
   if(target) target.style.display="block";
   document.body.classList.toggle("lessons-active", id==="lessonsView");
@@ -2938,64 +2966,30 @@ function ptaTeacherEscape(value){return String(value??"").replace(/[&<>"']/g,c=>
 function ptaTeacherTermLabel(){const sel=document.getElementById("teacherPtaTerm");return sel?.selectedOptions?.[0]?.textContent||"First Term";}
 function ptaTeacherIsFormMaster(){const c=window.activeTeacherConnection||{},signedInUid=window.firebaseTeacherUID||auth.currentUser?.uid||"";return (window.TEACHER_DASHBOARD_MODE||"")==="school-connected"&&!!signedInUid&&c.teacherUid===signedInUid&&["connected","approved","active"].includes(String(c.status||"").toLowerCase())&&(c.ptaFormMaster===true||String(c.assignedRole||"").trim().toLowerCase()==="form master")&&!!String(c.ptaFormMasterClass||"").trim();}
 window.openFormMasterPta=function(button){
- if(!ptaTeacherIsFormMaster()){alert("PTA Payments is available only to the teacher UID currently assigned as Form Master.");if(button)button.style.display="none";return;}
- showSection("dashboardView",button);
+ if(!ptaTeacherIsFormMaster()){alert("PTA Payments is available only to the teacher UID currently assigned as Form Master.");return;}
+ document.querySelectorAll("#dashboardView,#lessonsView,#caExamView,#studentsView,#attendanceView,#gpsAttendanceView,#profileView,#assignmentView,#myClassesView,#myTimetableView,#examTimetableView,#academicSessionView,#settingsView,#subscriptionView,#holidayView,#formMasterPtaSection").forEach(v=>v.style.display="none");
  const section=document.getElementById("formMasterPtaSection");
- if(section){section.style.display="block";setTimeout(()=>section.scrollIntoView({behavior:"smooth",block:"start"}),80);}
+ if(section)section.style.display="block";
+ document.body.classList.remove("lessons-active");
+ document.querySelectorAll(".topnav-item").forEach(v=>v.classList.remove("active"));
+ if(button)button.classList.add("active");
+ try{sessionStorage.setItem("teacherActiveSection","formMasterPtaSection");}catch(e){}
  if(typeof window.renderFormMasterPtaPayments==="function")window.renderFormMasterPtaPayments();
+ if(typeof window.__loadTeacherPtaPayments==="function")window.__loadTeacherPtaPayments();
+ window.scrollTo({top:0,behavior:"smooth"});
 };
-window.renderFormMasterPtaPayments=function(){
- const isMaster=ptaTeacherIsFormMaster(),nav=document.getElementById("formMasterPtaNav");
- if(nav)nav.style.display=isMaster?"flex":"none";
- const section=document.getElementById("formMasterPtaSection");
- if(section && !isMaster) section.style.display="none";
- if(nav){nav.style.display="flex";nav.disabled=!isMaster;nav.setAttribute("aria-disabled",String(!isMaster));nav.style.opacity=isMaster?"1":".55";nav.style.cursor=isMaster?"pointer":"not-allowed";}
- if(!isMaster)return;
- const c=window.activeTeacherConnection||{},ptaClass=String(c.ptaFormMasterClass||"").trim();
- const summary=document.getElementById("teacherPtaSummary");if(summary)summary.textContent=(c.schoolName||"Connected school")+" · Form Master for "+ptaClass+" · ₦200 per term";
+window.closeFormMasterPta=function(){
+ const section=document.getElementById("formMasterPtaSection");if(section)section.style.display="none";
+ showSection("dashboardView");
+};
 
- const c=window.activeTeacherConnection||{},ptaClass=String(c.ptaFormMasterClass||"").trim(),classes=ptaClass?[ptaClass]:(typeof teacherAssignedClasses==="function"?teacherAssignedClasses():[]),termKey=document.getElementById("teacherPtaTerm")?.value||"firstTerm";
- const summary=document.getElementById("ptaTeacherSummary");if(summary)summary.textContent=`${c.schoolName||"Connected school"} · Form Master for ${ptaClass}`;
- const allowed=new Set(classes);const allRecords=students.map((s,index)=>({s,index,info:studentInfo(s)})).filter(x=>allowed.has(x.info.className||""));
- const paid=allRecords.filter(x=>String(x.s[8]?.ptaPayments?.[termKey]?.status||"").toLowerCase()==="paid").length;
- const totalEl=document.getElementById("ptaTotalStudents"),paidEl=document.getElementById("ptaPaidStudents"),pendingEl=document.getElementById("ptaPendingStudents"),paidAmountEl=document.getElementById("ptaPaidAmount"),pendingAmountEl=document.getElementById("ptaPendingAmount");
- if(totalEl)totalEl.textContent=allRecords.length;if(paidEl)paidEl.textContent=paid;if(pendingEl)pendingEl.textContent=allRecords.length-paid;if(paidAmountEl)paidAmountEl.textContent="₦"+(paid*200).toLocaleString()+" collected";if(pendingAmountEl)pendingAmountEl.textContent="₦"+((allRecords.length-paid)*200).toLocaleString()+" remaining";
- const search=String(document.getElementById("teacherPtaSearch")?.value||"").trim().toLowerCase();const records=allRecords.filter(x=>!search||[x.s[1],x.s[0],x.info.phone].some(v=>String(v||"").toLowerCase().includes(search)));
- if(message)message.textContent=`${c.assignedClass||classes.join(", ")||"Assigned class"} · ${allRecords.length} student(s) · ${paid} paid · ${allRecords.length-paid} outstanding · ${ptaTeacherTermLabel()}.`;
- body.replaceChildren();if(!records.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=5;td.className="pta-empty";td.textContent=allRecords.length?("No students match “"+search+"”.") : "No students are loaded for your assigned class. Ask the registrar to check your class assignment.";tr.append(td);body.append(tr);return;}
- records.forEach((x,n)=>{
-  const s=x.s,info=x.info,payment=s[8]?.ptaPayments?.[termKey]||{},isPaid=String(payment.status||"").toLowerCase()==="paid",tr=document.createElement("tr");
-  const photo=info.photo?`<img class="pta-student-photo" src="${ptaTeacherEscape(info.photo)}" alt="${ptaTeacherEscape(s[1]||"Student")} photo">`:'<span class="pta-student-photo" aria-label="No photo">👤</span>';
-  const phone=String(info.phone||"").trim(),tel=phone.replace(/[^\d+]/g,"");
-  const snTd=document.createElement("td");snTd.textContent=String(n+1);tr.append(snTd);
-  const studentTd=document.createElement("td");studentTd.innerHTML=`<div class="pta-student-cell">${photo}<div><span class="pta-student-name">${ptaTeacherEscape(s[1]||"Student")}</span><small class="pta-student-sub">${ptaTeacherEscape(info.className||ptaClass)}</small></div></div>`;tr.append(studentTd);
-  const admissionTd=document.createElement("td");admissionTd.textContent=String(s[0]||"—");tr.append(admissionTd);
-  const contactTd=document.createElement("td");contactTd.innerHTML=phone?`<a class="pta-call-link" href="tel:${ptaTeacherEscape(tel)}">☎ Call guardian</a><small class="pta-student-sub">${ptaTeacherEscape(phone)}</small>`:'<span style="color:#9ca39e">No guardian number</span>';tr.append(contactTd);
-  const actionTd=document.createElement("td");
-  if(isPaid){const badge=document.createElement("span");badge.className="pta-paid-badge";badge.textContent="✓ PAID";actionTd.append(badge);const meta=document.createElement("small");meta.className="pta-paid-meta";meta.textContent="₦200 · "+(payment.markedAt?.toDate?payment.markedAt.toDate().toLocaleDateString():payment.markedAtText||"Confirmed");actionTd.append(meta)}
-  else{const btn=document.createElement("button");btn.type="button";btn.className="pta-mark-btn";btn.textContent="MARK AS PAID · ₦200";btn.addEventListener("click",async()=>{
-    if(!confirm(`Confirm that you received the full ₦200 PTA payment for ${s[1]||"this student"} (${ptaTeacherTermLabel()})?`))return;
-    const db=window.teacherFirestore,fns=window.firebaseFirestoreFns,uid=window.firebaseTeacherUID,conn=window.activeTeacherConnection,sid=s[8]?.schoolStudentId;
-    if(!db||!fns||!uid||!conn?.schoolId||!sid){alert("The official student record or school connection is unavailable. Please refresh and try again.");return}
-    if(!ptaTeacherIsFormMaster()){alert("Only the assigned Form Master can mark PTA payments as paid.");return}
-    btn.disabled=true;btn.textContent="Saving…";
-    try{
-      const ref=fns.doc(db,"schools",conn.schoolId,"students",sid),fresh=await fns.getDoc(ref);
-      if(!fresh.exists())throw new Error("Official student record was not found.");
-      const data=fresh.data()||{},current=data.ptaPayments||{};
-      if(String(current[termKey]?.status||"").toLowerCase()==="paid")throw new Error("This student's PTA payment is already marked paid for this term.");
-      const termRecord={status:"paid",amount:200,term:ptaTeacherTermLabel(),markedByTeacherUid:uid,markedByTeacherName:window.firebaseTeacherUser?.displayName||"Form Master",markedAt:fns.serverTimestamp(),markedAtText:new Date().toISOString().slice(0,10)};
-      await fns.updateDoc(ref,{["ptaPayments."+termKey]:termRecord,updatedAt:fns.serverTimestamp(),updatedByTeacherUid:uid});
-      if(!s[8].ptaPayments)s[8].ptaPayments={};s[8].ptaPayments[termKey]={...termRecord,markedAtText:termRecord.markedAtText};
-      if(message)message.textContent=`Payment recorded for ${s[1]||"student"}. Registrar and linked parent can now see the ${ptaTeacherTermLabel()} status.`;
-      window.renderFormMasterPtaPayments();
-    }catch(e){console.error("PTA payment mark failed",e);alert("Could not mark payment as paid: "+(e.message||"Check Firebase rules and connection."));btn.disabled=false;btn.textContent="MARK AS PAID · ₦200"}
-  });actionTd.append(btn)}
-  tr.append(actionTd);body.append(tr);
- });
+window.renderFormMasterPtaPayments=function(){
+ const nav=document.getElementById('formMasterPtaNav');
+ const active=ptaTeacherIsFormMaster();
+ if(nav){nav.style.display='flex';nav.disabled=!active;nav.setAttribute('aria-disabled',String(!active));nav.style.opacity=active?'1':'.55';}
+ if(!active){const section=document.getElementById('formMasterPtaSection');if(section)section.style.display='none';}
 };
-document.getElementById("teacherPtaTerm")?.addEventListener("change",()=>window.renderFormMasterPtaPayments());
-document.getElementById("teacherPtaSearch")?.addEventListener("input",()=>window.renderFormMasterPtaPayments());
+
 function viewStudentResult(i){
  currentStudentIndex=i;
  const s=students[i];
@@ -3698,6 +3692,7 @@ window.closeFormMasterPta=function(){const section=pta$('formMasterPtaSection');
 async function ptaLoadStudents(){
  if(!ptaIsAssigned()){ptaNotice('Your Form Master assignment is not active. Ask the registrar to assign you.',true);return;}
  const c=window.activeTeacherConnection||ptaConnection||{},assignedClass=String(c.ptaFormMasterClass||c.assignedClass||'').trim();
+  const summary=pta$('teacherPtaSummary');if(summary)summary.textContent=(c.schoolName||'Connected school')+' · Assigned class: '+assignedClass+' · PTA payment ₦200 per term';
  if(!c.schoolId||!assignedClass){ptaNotice('Your school ID or assigned class is missing. Ask the registrar to check your assignment.',true);return;}
  ptaNotice('Loading students for '+assignedClass+'…');
  try{
@@ -3708,12 +3703,20 @@ async function ptaLoadStudents(){
 }
 function ptaRender(){
  const c=window.activeTeacherConnection||ptaConnection||{},assignedClass=String(c.ptaFormMasterClass||c.assignedClass||'').trim(),term=pta$('teacherPtaTerm').value,search=ptaNorm(pta$('teacherPtaSearch').value);
- const list=ptaStudents.filter(s=>ptaNorm(s.className)===ptaNorm(assignedClass)&&(!search||ptaNorm(s.name).includes(search)||ptaNorm(s.admission).includes(search)));
- const paid=list.filter(s=>ptaNorm(s.ptaPayments?.[term]?.status)==='paid').length;
- pta$('teacherPtaTotal').textContent=list.length;pta$('teacherPtaPaid').textContent=paid;pta$('teacherPtaOutstanding').textContent=list.length-paid;
+ const all=ptaStudents.filter(s=>ptaNorm(s.className)===ptaNorm(assignedClass));
+ const list=all.filter(s=>!search||ptaNorm(s.name).includes(search)||ptaNorm(s.admission).includes(search));
+ const paid=all.filter(s=>ptaNorm(s.ptaPayments?.[term]?.status)==='paid');
+ const totalPaid=paid.reduce((sum,s)=>sum+Number(s.ptaPayments?.[term]?.amount||200),0);
+ const expected=all.length*200,balance=Math.max(0,expected-totalPaid);
+ pta$('teacherPtaTotal').textContent=all.length;
+ pta$('teacherPtaExpected').textContent='₦'+expected.toLocaleString('en-NG');
+ pta$('teacherPtaPaid').textContent=paid.length;
+ pta$('teacherPtaReceived').textContent='₦'+totalPaid.toLocaleString('en-NG');
+ pta$('teacherPtaOutstanding').textContent=all.length-paid.length;
+ pta$('teacherPtaBalance').textContent='₦'+balance.toLocaleString('en-NG');
  const body=pta$('teacherPtaStudentsBody');body.replaceChildren();
- if(!list.length){body.innerHTML='<tr><td colspan="7" style="padding:20px;text-align:center;color:#66756f">No students found for your assigned class.</td></tr>';return;}
- list.forEach((s,i)=>{const payment=s.ptaPayments?.[term]||{},isPaid=ptaNorm(payment.status)==='paid',tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td>${s.photo?`<img src="${ptaEsc(s.photo)}" alt="" style="width:36px;height:40px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:7px">`:''}<b>${ptaEsc(s.name)}</b></td><td>${ptaEsc(s.admission||'—')}</td><td>${ptaEsc(s.className||'—')}</td><td>${s.phone?`<a href="tel:${ptaEsc(String(s.phone).replace(/[^\\d+]/g,''))}">${ptaEsc(s.phone)}</a>`:'—'}</td><td><span style="display:inline-block;padding:5px 9px;border-radius:99px;font-size:11px;font-weight:800;background:${isPaid?'#dcfce7':'#fff1d6'};color:${isPaid?'#166534':'#8a4b08'}">${isPaid?'PAID':'NOT PAID'}</span>${isPaid?`<div style="font-size:12px;color:#66756f">₦${Number(payment.amount||200)}${payment.markedAtText?' · '+ptaEsc(payment.markedAtText):''}</div>`:''}</td><td>${isPaid?'<span style="color:#66756f">Recorded</span>':`<button type="button" class="primary" data-pta-id="${ptaEsc(s.id)}" style="padding:8px 10px">Mark ₦200 paid</button>`}</td>`;
+ if(!list.length){body.innerHTML='<tr><td colspan="7" class="empty">'+(all.length?'No students match your search.':'No students found for your assigned class.')+'</td></tr>';return;}
+ list.forEach((s,i)=>{const payment=s.ptaPayments?.[term]||{},isPaid=ptaNorm(payment.status)==='paid',tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td>${s.photo?`<img src="${ptaEsc(s.photo)}" alt="" style="width:36px;height:40px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:7px">`:''}<b>${ptaEsc(s.name)}</b></td><td>${ptaEsc(s.admission||'—')}</td><td>${ptaEsc(s.className||'—')}</td><td>${s.phone?`<a href="tel:${ptaEsc(String(s.phone).replace(/[^\\d+]/g,''))}">${ptaEsc(s.phone)}</a>`:'—'}</td><td><span style="display:inline-block;padding:5px 9px;border-radius:99px;font-size:11px;font-weight:800;background:${isPaid?'#dcfce7':'#fff1d6'};color:${isPaid?'#166534':'#8a4b08'}">${isPaid?'PAID':'NOT PAID'}</span></td><td>${isPaid?'<span style="color:#66756f">Recorded</span>':`<button type="button" class="primary" data-pta-id="${ptaEsc(s.id)}" style="padding:8px 10px">Mark ₦200 paid</button>`}</td>`;
   const btn=tr.querySelector('[data-pta-id]');if(btn)btn.addEventListener('click',()=>ptaMarkPaid(s,btn));body.append(tr);
  });
 }
@@ -3733,8 +3736,8 @@ async function ptaMarkPaid(student,button){
   ptaNotice('Payment recorded for '+student.name+'.');ptaRender();
  }catch(e){console.error(e);alert('Could not save payment: '+(e.message||'Check internet connection and Firestore rules.'));button.disabled=false;button.textContent='Mark ₦200 paid';}
 }
-pta$('teacherPtaTerm')?.addEventListener('change',ptaRender);pta$('teacherPtaSearch')?.addEventListener('input',ptaRender);pta$('teacherPtaRefresh')?.addEventListener('click',ptaLoadStudents);
-onAuthStateChanged(ptaAuth,user=>{ptaUser=user;if(!user)return;const refresh=()=>{ptaConnection=window.activeTeacherConnection||ptaConnection;if(window.activeTeacherConnection){window.renderFormMasterPtaPayments?.();} };refresh();setTimeout(refresh,1200);setTimeout(refresh,3500);});
+pta$('teacherPtaTerm')?.addEventListener('change',ptaRender);pta$('teacherPtaSearch')?.addEventListener('input',ptaRender);pta$('teacherPtaRefresh')?.addEventListener('click',ptaLoadStudents);window.__loadTeacherPtaPayments=ptaLoadStudents;
+onAuthStateChanged(ptaAuth,user=>{ptaUser=user;if(!user)return;const refresh=()=>{ptaConnection=window.activeTeacherConnection||ptaConnection;if(window.activeTeacherConnection){window.renderFormMasterPtaPayments?.();const nav=pta$('formMasterPtaNav');if(nav&&ptaIsAssigned())nav.style.display='flex';} };refresh();setTimeout(refresh,1200);setTimeout(refresh,3500);});
 const ptaObserver=new MutationObserver(()=>{if(ptaUser&&window.activeTeacherConnection){ptaConnection=window.activeTeacherConnection;window.renderFormMasterPtaPayments?.();}});
 ptaObserver.observe(document.body,{childList:true,subtree:true});
 </script>
