@@ -892,12 +892,18 @@ function livePeriodLabel(r){return formatPeriod(r.startTime,r.endTime);}
 function liveMinutes(t){const p=String(t||"").split(":").map(Number);return p.length===2?p[0]*60+p[1]:-1;}
 function primaryClassOrder(value){const m=String(value||"").match(/primary\s*(\d+)/i);if(m)return Number(m[1]);const n=String(value||"").match(/(\d+)/);return n?100+Number(n[1]):999;}
 function sortLiveClasses(a,b){return primaryClassOrder(a.className)-primaryClassOrder(b.className)||String(a.className||"").localeCompare(String(b.className||""))||String(a.startTime||"").localeCompare(String(b.startTime||""));}
+function liveTeachersForLesson(r){
+ // A timetable lesson is valid for Live Class Check only when a connected teacher
+ // has an exact class + subject assignment approved in the Teachers section.
+ return connectedTeacherCache.filter(t=>t.status==="connected"&&teacherMatchesPair(t,String(r.className||"").trim(),String(r.subject||"").trim()));
+}
 function liveTeacherForLesson(r){
- const matches=connectedTeacherCache.filter(t=>t.status==="connected"&&teacherMatchesPair(t,r.className,r.subject));
+ const matches=liveTeachersForLesson(r);
  if(matches.length===1)return {uid:matches[0].teacherUid,name:matches[0].teacherName||matches[0].teacherEmail||"Teacher"};
  if(matches.length>1)return {uid:"",name:matches.map(t=>t.teacherName||t.teacherEmail||"Teacher").join(", ")+" (multiple assigned)"};
  return {uid:"",name:"No connected teacher assigned"};
 }
+function liveLessonHasUniqueAssignedTeacher(r){return liveTeachersForLesson(r).length===1;}
 function liveLessonDocId(day,date,r){return [date,day,r.startTime,r.className,r.subject].map(x=>String(x||"").replace(/[^a-zA-Z0-9_-]/g,"_")).join("__");}
 async function loadLiveAttendanceRecords(day,date){
  if(!profile?.schoolId)return;
@@ -946,7 +952,9 @@ function renderLiveAttendanceUI(){
  $("liveAttendanceDate").textContent=now.toLocaleDateString([],{weekday:"long",year:"numeric",month:"short",day:"numeric"});
  const chosen=$("liveAttendanceDayFilter")?.value||today;
  const date=chosen===today?todayDate:""; // Historical/future weekday records are not assigned a fabricated date.
- const todays=liveAttendanceRows.filter(r=>normalizeLiveDay(r.day)===today.toLowerCase() && liveMinutes(r.startTime)>=0 && liveMinutes(r.endTime)>liveMinutes(r.startTime)).sort((a,b)=>String(a.startTime).localeCompare(String(b.startTime)));
+ // Show/count only lessons whose exact class + subject pair has one connected,
+ // assigned teacher. The active-session filter keeps each half-hour batch separate.
+ const todays=liveAttendanceRows.filter(r=>normalizeLiveDay(r.day)===today.toLowerCase() && liveMinutes(r.startTime)>=0 && liveMinutes(r.endTime)>liveMinutes(r.startTime) && liveLessonHasUniqueAssignedTeacher(r)).sort((a,b)=>String(a.startTime).localeCompare(String(b.startTime)));
  const current=todays.filter(r=>nowM>=liveMinutes(r.startTime)&&nowM<liveMinutes(r.endTime)).sort(sortLiveClasses);
  const done=todays.filter(r=>liveAttendanceRecords[liveLessonDocId(today,todayDate,r)]?.attended).length;
  const missed=todays.filter(r=>nowM>=liveMinutes(r.endTime)&&!liveAttendanceRecords[liveLessonDocId(today,todayDate,r)]?.attended).length;
@@ -954,7 +962,7 @@ function renderLiveAttendanceUI(){
  $("liveAttendanceConfirmed").textContent=String(done);
  $("liveAttendanceMissed").textContent=String(missed);
  currentBox.replaceChildren();
- if(!current.length){const p=document.createElement("p");p.className="muted";p.textContent="No lessons are scheduled for the current time. This list will update automatically when the next period starts.";currentBox.append(p)}
+ if(!current.length){const p=document.createElement("p");p.className="muted";p.textContent="No lessons with a uniquely assigned connected teacher are scheduled for the current time. This list updates automatically when the next period starts.";currentBox.append(p)}
  else current.forEach(r=>currentBox.append(makeLiveLessonCard(r,today,todayDate,nowM)));
  dayBox.replaceChildren();
  // Attendance dashboard lists only lessons currently in progress. Statistics still summarize today's timetable.
