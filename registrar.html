@@ -363,17 +363,16 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
   <div class="card stat"><div class="stat-icon">⚠️</div><span>Lessons Missed</span><strong id="liveAttendanceMissed">0</strong><small>Past periods not checked</small></div>
  </div>
  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:12px 0">
-  <h4 style="margin:0">Lessons happening now</h4>
+  <h4 style="margin:0">Classes in session right now</h4>
   <button id="refreshLiveAttendance" class="secondary" type="button">↻ Refresh</button>
  </div>
  <p id="liveAttendanceMessage" class="muted" role="status">Loading today's lessons…</p>
  <div id="liveAttendanceCurrentList"></div>
  <hr style="border:0;border-top:1px solid var(--line);margin:22px 0">
  <h4 style="margin:0 0 8px">Today's timetable and attendance</h4>
- <p class="muted">This list also shows earlier and upcoming periods for the selected day. Use the checkbox only after confirming the teacher is in the listed class.</p>
- <label for="liveAttendanceDayFilter">Choose day</label>
- <select id="liveAttendanceDayFilter" style="max-width:100%;margin-bottom:12px"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option></select>
- <div id="liveAttendanceDayList"></div>
+ <p class="muted">Only timetable entries whose start time has arrived and whose end time has not passed are shown here. Classes are ordered Primary 1 through Primary 6. Use the checkbox only after physically confirming the teacher is present.</p>
+ <div id="liveAttendanceDayFilter" class="hidden" aria-hidden="true"></div>
+ <div id="liveAttendanceDayList" class="hidden" aria-hidden="true"></div>
  <hr style="border:0;border-top:1px solid var(--line);margin:22px 0">
  <h4 style="margin:0 0 8px">Teacher attendance statistics</h4>
  <p class="muted">Statistics are based on scheduled lessons for the selected day. A checked lesson is attended; an unchecked lesson whose period has ended is counted as missed. Unchecked future lessons are still pending.</p>
@@ -881,6 +880,8 @@ function localDateKey(d=new Date()){return `${d.getFullYear()}-${String(d.getMon
 function liveDayName(d=new Date()){return ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][d.getDay()];}
 function livePeriodLabel(r){return formatPeriod(r.startTime,r.endTime);}
 function liveMinutes(t){const p=String(t||"").split(":").map(Number);return p.length===2?p[0]*60+p[1]:-1;}
+function primaryClassOrder(value){const m=String(value||"").match(/primary\s*(\d+)/i);if(m)return Number(m[1]);const n=String(value||"").match(/(\d+)/);return n?100+Number(n[1]):999;}
+function sortLiveClasses(a,b){return primaryClassOrder(a.className)-primaryClassOrder(b.className)||String(a.className||"").localeCompare(String(b.className||""))||String(a.startTime||"").localeCompare(String(b.startTime||""));}
 function liveTeacherForLesson(r){
  const matches=connectedTeacherCache.filter(t=>t.status==="connected"&&teacherMatchesPair(t,r.className,r.subject));
  if(matches.length===1)return {uid:matches[0].teacherUid,name:matches[0].teacherName||matches[0].teacherEmail||"Teacher"};
@@ -933,28 +934,27 @@ function renderLiveAttendanceUI(){
  const chosen=$("liveAttendanceDayFilter")?.value||today;
  const date=chosen===today?todayDate:""; // Historical/future weekday records are not assigned a fabricated date.
  const todays=liveAttendanceRows.filter(r=>r.day===today).sort((a,b)=>String(a.startTime).localeCompare(String(b.startTime)));
- const current=todays.filter(r=>nowM>=liveMinutes(r.startTime)&&nowM<liveMinutes(r.endTime));
+ const current=todays.filter(r=>nowM>=liveMinutes(r.startTime)&&nowM<liveMinutes(r.endTime)).sort(sortLiveClasses);
  const done=todays.filter(r=>liveAttendanceRecords[liveLessonDocId(today,todayDate,r)]?.attended).length;
  const missed=todays.filter(r=>nowM>=liveMinutes(r.endTime)&&!liveAttendanceRecords[liveLessonDocId(today,todayDate,r)]?.attended).length;
  $("liveAttendanceScheduled").textContent=String(todays.length);
  $("liveAttendanceConfirmed").textContent=String(done);
  $("liveAttendanceMissed").textContent=String(missed);
  currentBox.replaceChildren();
- if(!current.length){const p=document.createElement("p");p.className="muted";p.textContent="No class period is scheduled for this exact time. Upcoming lessons are listed below.";currentBox.append(p)}
+ if(!current.length){const p=document.createElement("p");p.className="muted";p.textContent="No lessons are scheduled for the current time. This list will update automatically when the next period starts.";currentBox.append(p)}
  else current.forEach(r=>currentBox.append(makeLiveLessonCard(r,today,todayDate,nowM)));
  dayBox.replaceChildren();
- const dayRows=liveAttendanceRows.filter(r=>r.day===chosen).sort((a,b)=>String(a.startTime).localeCompare(String(b.startTime)));
- if(!dayRows.length){const p=document.createElement("p");p.className="muted";p.textContent="No timetable entries found for "+chosen+". Add and publish the class timetable first.";dayBox.append(p)}
- else dayRows.forEach(r=>dayBox.append(makeLiveLessonCard(r,chosen,chosen===today?todayDate:"",nowM)));
+ // Attendance dashboard lists only lessons currently in progress. Statistics still summarize today's timetable.
+ const dayRows=todays;
  statsBox.replaceChildren();
  const teacherStats=new Map();
  dayRows.forEach(r=>{
   const teacher=liveTeacherForLesson(r),key=teacher.uid||teacher.name;
   if(!teacherStats.has(key))teacherStats.set(key,{name:teacher.name,total:0,attended:0,missed:0,pending:0});
   const st=teacherStats.get(key);st.total++;
-  const record=chosen===today?liveAttendanceRecords[liveLessonDocId(chosen,todayDate,r)]:null;
+  const record=liveAttendanceRecords[liveLessonDocId(today,todayDate,r)];
   if(record?.attended)st.attended++;
-  else if(chosen===today&&nowM>=liveMinutes(r.endTime))st.missed++;
+  else if(nowM>=liveMinutes(r.endTime))st.missed++;
   else st.pending++;
  });
  if(!teacherStats.size){const p=document.createElement("p");p.className="muted";p.textContent="Teacher statistics will appear after timetable entries are published.";statsBox.append(p)}
@@ -974,7 +974,7 @@ async function refreshLiveAttendance(){
   const snap=await getDocs(collection(db,"schools",profile.schoolId,"timetable"));
   liveAttendanceRows=snap.docs.map(d=>({id:d.id,...d.data()})).filter(r=>r.day&&r.className&&r.subject&&r.startTime&&r.endTime);
   const today=liveDayName();
-  if($("liveAttendanceDayFilter"))$("liveAttendanceDayFilter").value=today==="Sunday"?"Monday":today;
+  if($("liveAttendanceDayFilter"))$("liveAttendanceDayFilter").value=today;
   await loadLiveAttendanceRecords(today,todayDateKeyForLive());
   if(message){message.textContent=liveAttendanceRows.length?"Tick a checkbox only after confirming the teacher is present. Attendance is saved to this school's Firestore records.":"No published timetable entries were found. Create the timetable first.";message.style.color="var(--muted)"}
   renderLiveAttendanceUI();
