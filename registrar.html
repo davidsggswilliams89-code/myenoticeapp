@@ -887,6 +887,7 @@ async function initializeTimetableModule(){if(!profile?.schoolId)return;fillTime
 let liveAttendanceRows=[],liveAttendanceRecords={},liveAttendanceLoadedDay="";
 function localDateKey(d=new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
 function liveDayName(d=new Date()){return ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][d.getDay()];}
+function normalizeLiveDay(value){const v=String(value||"").trim().toLowerCase();return ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"].find(d=>d===v)||v;}
 function livePeriodLabel(r){return formatPeriod(r.startTime,r.endTime);}
 function liveMinutes(t){const p=String(t||"").split(":").map(Number);return p.length===2?p[0]*60+p[1]:-1;}
 function primaryClassOrder(value){const m=String(value||"").match(/primary\s*(\d+)/i);if(m)return Number(m[1]);const n=String(value||"").match(/(\d+)/);return n?100+Number(n[1]):999;}
@@ -945,7 +946,7 @@ function renderLiveAttendanceUI(){
  $("liveAttendanceDate").textContent=now.toLocaleDateString([],{weekday:"long",year:"numeric",month:"short",day:"numeric"});
  const chosen=$("liveAttendanceDayFilter")?.value||today;
  const date=chosen===today?todayDate:""; // Historical/future weekday records are not assigned a fabricated date.
- const todays=liveAttendanceRows.filter(r=>r.day===today).sort((a,b)=>String(a.startTime).localeCompare(String(b.startTime)));
+ const todays=liveAttendanceRows.filter(r=>normalizeLiveDay(r.day)===today.toLowerCase() && liveMinutes(r.startTime)>=0 && liveMinutes(r.endTime)>liveMinutes(r.startTime)).sort((a,b)=>String(a.startTime).localeCompare(String(b.startTime)));
  const current=todays.filter(r=>nowM>=liveMinutes(r.startTime)&&nowM<liveMinutes(r.endTime)).sort(sortLiveClasses);
  const done=todays.filter(r=>liveAttendanceRecords[liveLessonDocId(today,todayDate,r)]?.attended).length;
  const missed=todays.filter(r=>nowM>=liveMinutes(r.endTime)&&!liveAttendanceRecords[liveLessonDocId(today,todayDate,r)]?.attended).length;
@@ -998,7 +999,7 @@ async function refreshLiveAttendance(){
   const timetableResult=results[0];
   if(timetableResult.status!=="fulfilled")throw new Error("Could not read the published timetable: "+err(timetableResult.reason));
   const snap=timetableResult.value;
-  liveAttendanceRows=snap.docs.map(d=>({id:d.id,...d.data()})).filter(r=>r.day&&r.className&&r.subject&&r.startTime&&r.endTime);
+  liveAttendanceRows=snap.docs.map(d=>({id:d.id,...d.data()})).filter(r=>normalizeLiveDay(r.day)&&r.className&&r.subject&&r.startTime&&r.endTime);
   const teacherResult=results[1],attendanceResult=results[2];
   if(teacherResult.status!=="fulfilled")console.warn("Teacher assignments could not be refreshed",teacherResult.reason);
   if(attendanceResult.status!=="fulfilled")throw new Error("Could not read today's live attendance records. Check Firestore rules for schools/{schoolId}/liveLessonAttendance: "+err(attendanceResult.reason));
@@ -1008,6 +1009,7 @@ async function refreshLiveAttendance(){
 }
 function todayDateKeyForLive(){return localDateKey(new Date());}
 $("refreshLiveAttendance")?.addEventListener("click",refreshLiveAttendance);
+setInterval(()=>{if(profile?.schoolId&&liveAttendanceRows.length)renderLiveAttendanceUI();},30000);
 $("liveAttendanceDayFilter")?.addEventListener("change",renderLiveAttendanceUI);
 $("addTimetablePeriod")?.addEventListener("click",()=>addTimetablePeriodRow());
 $("cancelTimetableEdit")?.addEventListener("click",()=>{$("generalTimetableForm").reset();stopTimetableEdit();renderTimetablePeriodBuilder();setTableStatus("timetableStatus","Edit cancelled.");});
