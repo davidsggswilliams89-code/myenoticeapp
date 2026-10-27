@@ -230,7 +230,7 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 <body>
 
 <nav id="registrarNav" class="registrar-nav hidden" aria-label="Registrar dashboard navigation">
-<button class="active" data-page="dashboard"><span>🏠</span>Dashboard</button><button data-page="classes"><span>🏫</span>Classes</button><button data-page="teachers"><span>👩‍🏫</span>Teachers</button><button data-page="students"><span>👥</span>Students</button><button data-page="payments"><span>💳</span>PTA Payments</button><button data-page="timetable"><span>📅</span>Timetable</button><button data-page="exams"><span>📝</span>Exam Timetable</button><button data-page="academic"><span>🗓️</span>Academic Session</button><button data-page="parents"><span>👨‍👩‍👧</span>Parent Requests</button><button type="button" onclick="window.location.href='gps-attendance.html'"><span>📍</span>GPS Attendance</button><button type="button" id="signOut" class="nav-logout"><span>↪️</span>Logout</button>
+<button class="active" data-page="dashboard"><span>🏠</span>Dashboard</button><button data-page="classes"><span>🏫</span>Classes</button><button data-page="teachers"><span>👩‍🏫</span>Teachers</button><button data-page="students"><span>👥</span>Students</button><button data-page="payments"><span>💳</span>PTA Payments</button><button data-page="timetable"><span>📅</span>Timetable</button><button data-page="liveattendance"><span>✅</span>Live Class Check</button><button data-page="exams"><span>📝</span>Exam Timetable</button><button data-page="academic"><span>🗓️</span>Academic Session</button><button data-page="parents"><span>👨‍👩‍👧</span>Parent Requests</button><button type="button" onclick="window.location.href='gps-attendance.html'"><span>📍</span>GPS Attendance</button><button type="button" id="signOut" class="nav-logout"><span>↪️</span>Logout</button>
 </nav>
 <main>
 <section class="hero"><h2>Welcome to your Registrar Portal</h2><p>Complete your school profile, add the official school photo, and manage your school information from one dashboard.</p></section>
@@ -351,6 +351,33 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 </div>
 <div class="wide" style="margin-top:12px"><h4 style="margin:0 0 6px">Subjects by period</h4><p class="muted">Add every subject and its time period for the selected class and day. Save once when the full class timetable is ready.</p><div id="timetablePeriodBuilder"></div><button class="secondary" type="button" id="addTimetablePeriod" style="margin-top:10px">＋ Add Subject / Period</button></div>
 <button class="primary" type="submit" id="saveTimetableEntry" style="margin-top:15px">Save Class Timetable</button><button class="secondary hidden" type="button" id="cancelTimetableEdit" style="margin:15px 0 0 8px">Cancel Edit</button><p id="timetableStatus" class="table-message muted" aria-live="polite"></p></form>
+</section>
+
+<section class="card section-anchor registrar-page-panel" data-page-panel="liveattendance" id="liveClassAttendanceCard" style="margin-top:18px">
+ <h3>✅ Live Class Attendance</h3>
+ <p class="muted">See which lessons are scheduled for the current time, verify the class and teacher, and tick attendance when you confirm the teacher is present. Lessons not checked by the end of their period count as missed in the summary.</p>
+ <div class="stats payment-stats" style="margin:14px 0">
+  <div class="card stat"><div class="stat-icon">🕒</div><span>Current Time</span><strong id="liveAttendanceClock">—</strong><small id="liveAttendanceDate">Loading date…</small></div>
+  <div class="card stat"><div class="stat-icon">📚</div><span>Lessons Scheduled Today</span><strong id="liveAttendanceScheduled">0</strong><small>From the published timetable</small></div>
+  <div class="card stat"><div class="stat-icon">✅</div><span>Lessons Confirmed</span><strong id="liveAttendanceConfirmed">0</strong><small>Attendance checked by registrar</small></div>
+  <div class="card stat"><div class="stat-icon">⚠️</div><span>Lessons Missed</span><strong id="liveAttendanceMissed">0</strong><small>Past periods not checked</small></div>
+ </div>
+ <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:12px 0">
+  <h4 style="margin:0">Lessons happening now</h4>
+  <button id="refreshLiveAttendance" class="secondary" type="button">↻ Refresh</button>
+ </div>
+ <p id="liveAttendanceMessage" class="muted" role="status">Loading today's lessons…</p>
+ <div id="liveAttendanceCurrentList"></div>
+ <hr style="border:0;border-top:1px solid var(--line);margin:22px 0">
+ <h4 style="margin:0 0 8px">Today's timetable and attendance</h4>
+ <p class="muted">This list also shows earlier and upcoming periods for the selected day. Use the checkbox only after confirming the teacher is in the listed class.</p>
+ <label for="liveAttendanceDayFilter">Choose day</label>
+ <select id="liveAttendanceDayFilter" style="max-width:100%;margin-bottom:12px"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option></select>
+ <div id="liveAttendanceDayList"></div>
+ <hr style="border:0;border-top:1px solid var(--line);margin:22px 0">
+ <h4 style="margin:0 0 8px">Teacher attendance statistics</h4>
+ <p class="muted">Statistics are based on scheduled lessons for the selected day. A checked lesson is attended; an unchecked lesson whose period has ended is counted as missed. Unchecked future lessons are still pending.</p>
+ <div id="liveTeacherAttendanceStats"></div>
 </section>
 <section class="card section-anchor registrar-page-panel" data-page-panel="exams" id="examTimetableCard" style="margin-top:18px"><h3>Examination Timetable & Invigilators</h3><p class="muted">Create the school's general exam schedule and assign an invigilator. Teachers see only exams matching their assigned class and subject.</p>
 <div class="exam-published-first">
@@ -847,6 +874,115 @@ async function refreshTimetableCollection(kind){
 }
 function formatPeriod(a,b){const f=t=>{if(!t)return "";let [h,m]=t.split(":").map(Number);return `${h%12||12}:${String(m).padStart(2,"0")}${h<12?"AM":"PM"}`};return f(a)+"–"+f(b)}
 async function initializeTimetableModule(){if(!profile?.schoolId)return;fillTimetableSelects();renderTimetablePeriodBuilder();await loadConnectedTeachers();populateInvigilatorOptions();await Promise.all([refreshTimetableCollection("lesson"),refreshTimetableCollection("exam")]);}
+
+// Live lesson attendance: uses the published timetable and connected teacher subject/class assignments.
+let liveAttendanceRows=[],liveAttendanceRecords={},liveAttendanceLoadedDay="";
+function localDateKey(d=new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
+function liveDayName(d=new Date()){return ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][d.getDay()];}
+function livePeriodLabel(r){return formatPeriod(r.startTime,r.endTime);}
+function liveMinutes(t){const p=String(t||"").split(":").map(Number);return p.length===2?p[0]*60+p[1]:-1;}
+function liveTeacherForLesson(r){
+ const matches=connectedTeacherCache.filter(t=>t.status==="connected"&&teacherMatchesPair(t,r.className,r.subject));
+ if(matches.length===1)return {uid:matches[0].teacherUid,name:matches[0].teacherName||matches[0].teacherEmail||"Teacher"};
+ if(matches.length>1)return {uid:"",name:matches.map(t=>t.teacherName||t.teacherEmail||"Teacher").join(", ")+" (multiple assigned)"};
+ return {uid:"",name:"No connected teacher assigned"};
+}
+function liveLessonDocId(day,date,r){return [date,day,r.startTime,r.className,r.subject].map(x=>String(x||"").replace(/[^a-zA-Z0-9_-]/g,"_")).join("__");}
+async function loadLiveAttendanceRecords(day,date){
+ if(!profile?.schoolId)return;
+ const snap=await getDocs(collection(db,"schools",profile.schoolId,"liveLessonAttendance"));
+ liveAttendanceRecords={};
+ snap.docs.forEach(d=>{const x=d.data();if(x.date===date&&x.day===day)liveAttendanceRecords[x.lessonKey||d.id]=x;});
+ liveAttendanceLoadedDay=day+"|"+date;
+}
+function makeLiveLessonCard(r,day,date,nowMinutes){
+ const key=liveLessonDocId(day,date,r),record=liveAttendanceRecords[key],teacher=liveTeacherForLesson(r);
+ const start=liveMinutes(r.startTime),end=liveMinutes(r.endTime),current=day===liveDayName()&&nowMinutes>=start&&nowMinutes<end;
+ const past=day===liveDayName()&&nowMinutes>=end;
+ const card=document.createElement("div");
+ card.style.cssText="border:1px solid var(--line);border-radius:12px;padding:14px;margin:9px 0;background:"+(record?.attended?"#f0faf3":"#fff");
+ const top=document.createElement("div");top.style.cssText="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap";
+ const title=document.createElement("strong");title.textContent=(r.subject||"Subject")+" · "+(r.className||"Class");
+ const status=document.createElement("span");status.style.cssText="font-size:12px;font-weight:800;padding:5px 8px;border-radius:7px;background:"+(record?.attended?"#dff4e6":current?"#e5f2ff":past?"#fff0f0":"#f1f3f2")+";color:"+(record?.attended?"#176b45":current?"#245b8c":past?"#a82929":"#65736a");
+ status.textContent=record?.attended?"ATTENDED":current?"IN PROGRESS":past?"MISSED / NOT CHECKED":"UPCOMING";
+ top.append(title,status);
+ const meta=document.createElement("p");meta.className="muted";meta.style.margin="8px 0";meta.textContent="Time: "+livePeriodLabel(r)+" · Teacher: "+teacher.name;
+ const dayText=document.createElement("p");dayText.className="muted";dayText.style.margin="0 0 10px";dayText.textContent="Day: "+day+" · Class: "+r.className+" · Subject: "+r.subject;
+ const label=document.createElement("label");label.style.cssText="display:flex;align-items:center;gap:10px;margin:10px 0 0;font-size:14px;cursor:pointer";
+ const cb=document.createElement("input");cb.type="checkbox";cb.checked=!!record?.attended;cb.disabled=!date;cb.style.cssText="width:22px;height:22px;flex:0 0 22px";cb.setAttribute("aria-label","Confirm teacher attendance for "+r.className+" "+r.subject);
+ const labelText=document.createElement("span");labelText.textContent=!date?"Attendance can only be recorded for today":cb.checked?"Teacher presence confirmed":"Confirm teacher is present in this class";
+ cb.addEventListener("change",async()=>{
+  cb.disabled=true;
+  try{
+   if(!profile?.schoolId||!user)throw new Error("Registrar session is not ready.");
+   const payload={schoolId:profile.schoolId,lessonKey:key,date,day,className:r.className||"",subject:r.subject||"",startTime:r.startTime||"",endTime:r.endTime||"",teacherUid:teacher.uid||"",teacherName:teacher.name||"No connected teacher assigned",attended:cb.checked,checkedBy:user.uid,checkedByName:profile?.fullName||user.displayName||"Registrar",checkedAt:serverTimestamp(),updatedAt:serverTimestamp()};
+   await setDoc(doc(db,"schools",profile.schoolId,"liveLessonAttendance",key),payload,{merge:true});
+   liveAttendanceRecords[key]={...payload,checkedAt:new Date(),updatedAt:new Date()};
+   renderLiveAttendanceUI();
+  }catch(e){cb.checked=!cb.checked;setTableStatus("liveAttendanceMessage","Could not save attendance: "+err(e),"error");}
+  finally{cb.disabled=false;}
+ });
+ label.append(cb,labelText);card.append(top,meta,dayText,label);return card;
+}
+function renderLiveAttendanceUI(){
+ const currentBox=$("liveAttendanceCurrentList"),dayBox=$("liveAttendanceDayList"),statsBox=$("liveTeacherAttendanceStats");
+ if(!currentBox||!dayBox||!statsBox)return;
+ const now=new Date(),today=liveDayName(now),todayDate=localDateKey(now),nowM=now.getHours()*60+now.getMinutes();
+ $("liveAttendanceClock").textContent=now.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
+ $("liveAttendanceDate").textContent=now.toLocaleDateString([],{weekday:"long",year:"numeric",month:"short",day:"numeric"});
+ const chosen=$("liveAttendanceDayFilter")?.value||today;
+ const date=chosen===today?todayDate:""; // Historical/future weekday records are not assigned a fabricated date.
+ const todays=liveAttendanceRows.filter(r=>r.day===today).sort((a,b)=>String(a.startTime).localeCompare(String(b.startTime)));
+ const current=todays.filter(r=>nowM>=liveMinutes(r.startTime)&&nowM<liveMinutes(r.endTime));
+ const done=todays.filter(r=>liveAttendanceRecords[liveLessonDocId(today,todayDate,r)]?.attended).length;
+ const missed=todays.filter(r=>nowM>=liveMinutes(r.endTime)&&!liveAttendanceRecords[liveLessonDocId(today,todayDate,r)]?.attended).length;
+ $("liveAttendanceScheduled").textContent=String(todays.length);
+ $("liveAttendanceConfirmed").textContent=String(done);
+ $("liveAttendanceMissed").textContent=String(missed);
+ currentBox.replaceChildren();
+ if(!current.length){const p=document.createElement("p");p.className="muted";p.textContent="No class period is scheduled for this exact time. Upcoming lessons are listed below.";currentBox.append(p)}
+ else current.forEach(r=>currentBox.append(makeLiveLessonCard(r,today,todayDate,nowM)));
+ dayBox.replaceChildren();
+ const dayRows=liveAttendanceRows.filter(r=>r.day===chosen).sort((a,b)=>String(a.startTime).localeCompare(String(b.startTime)));
+ if(!dayRows.length){const p=document.createElement("p");p.className="muted";p.textContent="No timetable entries found for "+chosen+". Add and publish the class timetable first.";dayBox.append(p)}
+ else dayRows.forEach(r=>dayBox.append(makeLiveLessonCard(r,chosen,chosen===today?todayDate:"",nowM)));
+ statsBox.replaceChildren();
+ const teacherStats=new Map();
+ dayRows.forEach(r=>{
+  const teacher=liveTeacherForLesson(r),key=teacher.uid||teacher.name;
+  if(!teacherStats.has(key))teacherStats.set(key,{name:teacher.name,total:0,attended:0,missed:0,pending:0});
+  const st=teacherStats.get(key);st.total++;
+  const record=chosen===today?liveAttendanceRecords[liveLessonDocId(chosen,todayDate,r)]:null;
+  if(record?.attended)st.attended++;
+  else if(chosen===today&&nowM>=liveMinutes(r.endTime))st.missed++;
+  else st.pending++;
+ });
+ if(!teacherStats.size){const p=document.createElement("p");p.className="muted";p.textContent="Teacher statistics will appear after timetable entries are published.";statsBox.append(p)}
+ else{
+  const table=document.createElement("table");table.style.cssText="width:100%;border-collapse:collapse";
+  const head=document.createElement("thead"),hr=document.createElement("tr");
+  ["Teacher","Scheduled","Attended","Missed","Pending"].forEach(v=>{const th=document.createElement("th");th.textContent=v;hr.append(th)});head.append(hr);table.append(head);
+  const body=document.createElement("tbody");
+  [...teacherStats.values()].sort((a,b)=>a.name.localeCompare(b.name)).forEach(st=>{const tr=document.createElement("tr");[st.name,st.total,st.attended,st.missed,st.pending].forEach(v=>{const td=document.createElement("td");td.textContent=String(v);tr.append(td)});body.append(tr)});table.append(body);statsBox.append(table);
+ }
+}
+async function refreshLiveAttendance(){
+ const message=$("liveAttendanceMessage");if(!profile?.schoolId)return;
+ if(message)message.textContent="Loading published timetable and attendance…";
+ try{
+  await loadConnectedTeachers();
+  const snap=await getDocs(collection(db,"schools",profile.schoolId,"timetable"));
+  liveAttendanceRows=snap.docs.map(d=>({id:d.id,...d.data()})).filter(r=>r.day&&r.className&&r.subject&&r.startTime&&r.endTime);
+  const today=liveDayName();
+  if($("liveAttendanceDayFilter"))$("liveAttendanceDayFilter").value=today==="Sunday"?"Monday":today;
+  await loadLiveAttendanceRecords(today,todayDateKeyForLive());
+  if(message){message.textContent=liveAttendanceRows.length?"Tick a checkbox only after confirming the teacher is present. Attendance is saved to this school's Firestore records.":"No published timetable entries were found. Create the timetable first.";message.style.color="var(--muted)"}
+  renderLiveAttendanceUI();
+ }catch(e){console.error("Live class attendance failed",e);if(message){message.textContent="Could not load live class attendance: "+err(e);message.style.color="#a82929"}}
+}
+function todayDateKeyForLive(){return localDateKey(new Date());}
+$("refreshLiveAttendance")?.addEventListener("click",refreshLiveAttendance);
+$("liveAttendanceDayFilter")?.addEventListener("change",renderLiveAttendanceUI);
 $("addTimetablePeriod")?.addEventListener("click",()=>addTimetablePeriodRow());
 $("cancelTimetableEdit")?.addEventListener("click",()=>{$("generalTimetableForm").reset();stopTimetableEdit();renderTimetablePeriodBuilder();setTableStatus("timetableStatus","Edit cancelled.");});
 $("exClass")?.addEventListener("change",populateInvigilatorOptions);$("exSubject")?.addEventListener("change",populateInvigilatorOptions);
@@ -995,7 +1131,7 @@ async function loadPtaPayments(){
 
 
 const REGISTRAR_PAGE_KEY="registrarPortalActivePage";
-const REGISTRAR_VALID_PAGES=["dashboard","classes","teachers","students","payments","timetable","exams","academic","parents"];
+const REGISTRAR_VALID_PAGES=["dashboard","classes","teachers","students","payments","timetable","liveattendance","exams","academic","parents"];
 function getSavedRegistrarPage(){
  const fromHash=String(window.location.hash||"").replace(/^#(?:page=)?/,"").trim();
  let saved="";
@@ -1018,8 +1154,9 @@ function showRegistrarPage(page,options={}){
  document.querySelectorAll(".dashboard-heading,.dashboard-stats").forEach(el=>el.classList.toggle("page-hidden",page!=="dashboard"));
  if(options.scroll!==false)window.scrollTo({top:0,behavior:options.smooth===false?"auto":"smooth"});
 }
-document.querySelectorAll("#registrarNav button[data-page]").forEach(btn=>btn.addEventListener("click",()=>{showRegistrarPage(btn.dataset.page);if(btn.dataset.page==="parents")loadParentRequests();if(btn.dataset.page==="payments")loadPtaPayments();}));
-window.addEventListener("hashchange",()=>{const page=String(window.location.hash||"").replace(/^#(?:page=)?/,"");if(REGISTRAR_VALID_PAGES.includes(page))showRegistrarPage(page,{updateUrl:false,scroll:false});});
+document.querySelectorAll("#registrarNav button[data-page]").forEach(btn=>btn.addEventListener("click",()=>{showRegistrarPage(btn.dataset.page);if(btn.dataset.page==="parents")loadParentRequests();if(btn.dataset.page==="payments")loadPtaPayments();if(btn.dataset.page==="liveattendance")refreshLiveAttendance();}));
+window.addEventListener("hashchange",()=>{const page=String(window.location.hash||"").replace(/^#(?:page=)?/,"");if(REGISTRAR_VALID_PAGES.includes(page)){showRegistrarPage(page,{updateUrl:false,scroll:false});if(page==="liveattendance")refreshLiveAttendance();}});
+setInterval(()=>{if(activeRegistrarPage==="liveattendance"&&profile?.schoolId){renderLiveAttendanceUI();}},60000);
 
 async function uploadSchoolPhoto(file,uid){if(!file)throw new Error("Please select a school photo.");if(!file.type.startsWith("image/"))throw new Error("Please select an image file.");if(file.size>10*1024*1024)throw new Error("School photo must be 10 MB or smaller.");const formData=new FormData();formData.append("file",file);formData.append("upload_preset","Obaestate");formData.append("folder","schools/"+uid);formData.append("public_id","school_profile_"+Date.now());const response=await fetch("https://api.cloudinary.com/v1_1/hjdnytcb/image/upload",{method:"POST",body:formData});const result=await response.json();if(!response.ok||!result.secure_url)throw new Error(result.error?.message||"Cloudinary upload failed.");return result.secure_url}
 $("schoolPhotoFile").addEventListener("change",()=>{const file=$("schoolPhotoFile").files?.[0];if(!file)return;const preview=$("schoolPhotoPreview");preview.src=URL.createObjectURL(file);preview.classList.remove("hidden")});
