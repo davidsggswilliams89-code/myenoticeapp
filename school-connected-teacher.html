@@ -1294,13 +1294,6 @@ table{max-width:100%}
 html.teacher-auth-pending .topnav-header,
 html.teacher-auth-pending .main{visibility:hidden !important;}
 html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
-html.teacher-auth-pending body::before{
-  content:"Checking your account and preparing your dashboard…";
-  position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;
-  padding:24px;text-align:center;background:#f7faf9;color:#176b45;
-  font:700 15px/1.5 Arial,sans-serif;
-}
-
 #firebaseAuthGate{position:fixed;inset:0;z-index:10000;background:linear-gradient(135deg,#eef8f5,#f4f7fb);display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto;visibility:visible}
 #firebaseAuthGate.auth-ready{visibility:visible}
 #firebaseAuthGate.auth-hidden{display:none}
@@ -2941,29 +2934,7 @@ function renderStudents(){
  if(typeof window.renderFormMasterPtaPayments==="function")window.renderFormMasterPtaPayments();
 }
 
-function ptaTeacherEscape(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;", "'":"&#39;"}[c]));}
-function ptaTeacherTermLabel(){const sel=document.getElementById("teacherPtaTerm");return sel?.selectedOptions?.[0]?.textContent||"First Term";}
-function ptaTeacherIsFormMaster(){const c=window.activeTeacherConnection||{},signedInUid=window.firebaseTeacherUID||auth.currentUser?.uid||"";return (window.TEACHER_DASHBOARD_MODE||"")==="school-connected"&&!!signedInUid&&c.teacherUid===signedInUid&&["connected","approved","active"].includes(String(c.status||"").toLowerCase())&&(c.ptaFormMaster===true||String(c.assignedRole||"").trim().toLowerCase()==="form master")&&!!String(c.ptaFormMasterClass||"").trim();}
-window.openFormMasterPta=function(button){
- if(!ptaTeacherIsFormMaster()){alert("PTA Payments is available only to the teacher UID currently assigned as Form Master.");if(button)button.style.display="none";return;}
- showSection("dashboardView",button);
- const section=document.getElementById("formMasterPtaSection");
- if(section){section.style.display="block";setTimeout(()=>section.scrollIntoView({behavior:"smooth",block:"start"}),80);}
- if(typeof window.renderFormMasterPtaPayments==="function")window.renderFormMasterPtaPayments();
-};
-window.renderFormMasterPtaPayments=function(){
- const c=window.activeTeacherConnection||{};
- const signedInUid=window.firebaseTeacherUID||auth.currentUser?.uid||"";
- const isMaster=(window.TEACHER_DASHBOARD_MODE||"")==="school-connected"&&!!signedInUid&&c.teacherUid===signedInUid&&["connected","approved","active"].includes(String(c.status||"").toLowerCase())&&(c.ptaFormMaster===true||String(c.assignedRole||c.role||"").trim().toLowerCase()==="form master")&&!!String(c.ptaFormMasterClass||c.assignedClass||"").trim();
- const nav=document.getElementById("formMasterPtaNav");
- if(nav){nav.style.display="flex";nav.disabled=!isMaster;nav.setAttribute("aria-disabled",String(!isMaster));nav.style.opacity=isMaster?"1":".55";nav.style.cursor=isMaster?"pointer":"not-allowed";}
- const section=document.getElementById("formMasterPtaSection");
- if(section&&!isMaster)section.style.display="none";
- const summary=document.getElementById("teacherPtaSummary");
- if(summary)summary.textContent=isMaster?((c.schoolName||"Connected school")+" · Form Master for "+String(c.ptaFormMasterClass||c.assignedClass||"")+" · ₦200 per term"):"PTA Payments is available only to the assigned Form Master.";
-};
-document.getElementById("teacherPtaTerm")?.addEventListener("change",()=>window.renderFormMasterPtaPayments());
-document.getElementById("teacherPtaSearch")?.addEventListener("input",()=>window.renderFormMasterPtaPayments());
+/* Legacy PTA renderer removed; the standalone embedded PTA module below owns this section. */
 function viewStudentResult(i){
  currentStudentIndex=i;
  const s=students[i];
@@ -4906,8 +4877,9 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     try{sessionStorage.removeItem('teacherActiveSection');}catch(_e){}
     busy(loginForm,true);
     try{
-      await signInWithEmailAndPassword(auth,document.getElementById('authEmail').value.trim(),document.getElementById('authPassword').value);
-      message('Login successful. Opening your dashboard…','success');
+      const credential=await signInWithEmailAndPassword(auth,document.getElementById('authEmail').value.trim(),document.getElementById('authPassword').value);
+      const role=await routeSignedInUser(credential.user);
+      if(role==='teacher') message('Login successful. Opening your dashboard…','success');
     }catch(err){message(friendlyError(err));}
     finally{busy(loginForm,false);}
   });
@@ -5061,7 +5033,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         const schoolInput=document.getElementById('teacherSchool');if(schoolInput)schoolInput.readOnly=false;
         showTeacherConnectionStatus('Not connected to a school yet. Enter the School ID above to send a request.');
         window.dispatchEvent(new Event('teacherAccountContextChanged'));
-        if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}
+        if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
         if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
       if(typeof window.renderFormMasterPtaPayments==='function')window.renderFormMasterPtaPayments();
         if(typeof window.loadDashboardTeacherSubjects==='function')window.loadDashboardTeacherSubjects();
@@ -5075,7 +5047,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         activeTeacherConnection=null;window.activeTeacherConnection=null;
         renderTeacherAssignments(null);
         window.dispatchEvent(new Event('teacherAccountContextChanged'));
-        if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}
+        if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
         if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
         if(typeof window.loadDashboardTeacherSubjects==='function')window.loadDashboardTeacherSubjects();
         const latest=records[0];
@@ -5090,7 +5062,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         activeTeacherConnection=null;window.activeTeacherConnection=null;
         renderTeacherAssignments(null);
         window.dispatchEvent(new Event('teacherAccountContextChanged'));
-        if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}
+        if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
         showTeacherConnectionStatus('This dashboard requires an approved school connection. Ask the registrar to approve your account.','error');
         return;
       }
@@ -5099,7 +5071,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       renderTeacherAssignments(r);
       window.dispatchEvent(new Event('teacherAccountContextChanged'));
       if(typeof window.applyAssignedClassFilters==='function'&&teacherIsSchoolConnected())window.applyAssignedClassFilters();
-      if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}
+      if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
       if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
       if(typeof window.loadDashboardTeacherSubjects==='function')window.loadDashboardTeacherSubjects();
       const schoolInput=document.getElementById('teacherSchool');
@@ -5113,14 +5085,14 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       else if(r.status==='deactivated')showTeacherConnectionStatus(`Your connection to ${r.schoolName||'the school'} has been deactivated. Contact the registrar or request a new connection.`,'error');
       else if(r.status==='rejected')showTeacherConnectionStatus(`Your request to ${r.schoolName||'the school'} was not approved. You may submit a new request if appropriate.`,'error');
       else showTeacherConnectionStatus('No active school connection. Enter a School ID to request connection.');
-      if(typeof window.loadTeacherAcademicSession==='function'){Promise.resolve().then(()=>window.loadTeacherAcademicSession()).catch(err=>console.error('Background academic-session load failed:',err));}
+      if(typeof window.loadTeacherAcademicSession==='function')await window.loadTeacherAcademicSession();
     }catch(e){
       console.error('Teacher connection lookup failed:',e);
       const mode=window.TEACHER_DASHBOARD_MODE||"independent";
       if(mode==="independent"){
         activeTeacherConnection=null;window.activeTeacherConnection=null;
         renderTeacherAssignments(null);
-        if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}
+        if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
         showTeacherConnectionStatus('Independent mode is active. School connection status could not be refreshed; your own records remain separate.','error');
         return;
       }
@@ -5140,11 +5112,11 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
               activeTeacherConnection=member;window.activeTeacherConnection=member;renderTeacherAssignments(member);
               window.dispatchEvent(new Event('teacherAccountContextChanged'));
               if(typeof window.applyAssignedClassFilters==='function')window.applyAssignedClassFilters();
-              if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}
+              if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
               if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
               if(typeof window.loadDashboardTeacherSubjects==='function')window.loadDashboardTeacherSubjects();
               showTeacherConnectionStatus('Connected to '+(member.schoolName||'your school')+'. Connection loaded from school membership.','success');
-              if(typeof window.loadTeacherAcademicSession==='function'){Promise.resolve().then(()=>window.loadTeacherAcademicSession()).catch(err=>console.error('Background academic-session load failed:',err));}
+              if(typeof window.loadTeacherAcademicSession==='function')await window.loadTeacherAcademicSession();
               return;
             }
           }
@@ -5155,7 +5127,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       if(typeof window.refreshStudentViews==='function')window.refreshStudentViews();
       if(typeof window.renderAttendance==='function')window.renderAttendance();
       showTeacherConnectionStatus('Could not verify the school connection: '+(e?.code||e?.message||'Firestore access denied')+'. School records remain locked until the connection can be verified.','error');
-      if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}
+      if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
     }
   }
   function teacherHasPair(record,entry){
@@ -5398,7 +5370,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       catch(err){console.error('Teacher profile sync failed:',err);applyFirestoreTeacherProfile({},user);}
       // Resolve this account's registrar connection before loading students or assignments.
       await refreshTeacherSchoolConnection();
-      try{if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}}
+      try{if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();}
       catch(err){console.error('Student Firebase query failed during login:',err);}
       if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
       gate?.classList.add('auth-hidden');gate?.classList.add('auth-ready');
