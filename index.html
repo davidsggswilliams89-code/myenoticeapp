@@ -1291,11 +1291,13 @@ table{max-width:100%}
 </style>
 
 <style id="firebase-auth-ui-style">
-/* Prevent refresh flicker while Firebase restores an already-signed-in teacher session. */
+/* Keep the screen visible while Firebase restores and verifies a session. */
 html.teacher-auth-pending .topnav-header,
 html.teacher-auth-pending .main{visibility:hidden !important;}
-html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
 #firebaseAuthGate{position:fixed;inset:0;z-index:10000;background:linear-gradient(135deg,#eef8f5,#f4f7fb);display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto;visibility:visible}
+html.teacher-auth-pending #firebaseAuthGate{display:flex !important;}
+html.teacher-auth-pending #firebaseAuthGate .auth-card{display:none !important;}
+html.teacher-auth-pending #firebaseAuthGate:after{content:'Checking your account… Please wait.';display:block;padding:22px 26px;background:#fff;border:1px solid #dfe7ef;border-radius:14px;box-shadow:0 12px 35px rgba(16,35,63,.12);color:#075c51;font-weight:800;text-align:center;max-width:90%;}
 #firebaseAuthGate.auth-ready{visibility:visible}
 #firebaseAuthGate.auth-hidden{display:none}
 .auth-card{width:min(430px,100%);background:#fff;border:1px solid #dfe7ef;border-radius:20px;box-shadow:0 18px 50px rgba(16,35,63,.14);padding:24px}
@@ -4792,11 +4794,11 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     try{sessionStorage.removeItem('teacherActiveSection');}catch(_e){}
     busy(loginForm,true);
     try{
-      const credential=await signInWithEmailAndPassword(auth,document.getElementById('authEmail').value.trim(),document.getElementById('authPassword').value);
-      const role=await routeSignedInUser(credential.user);
-      if(role==='teacher') message('Login successful. Opening your dashboard…','success');
-    }catch(err){message(friendlyError(err));}
-    finally{busy(loginForm,false);}
+      // Firebase's auth-state listener is the single authority for role checks
+      // and portal navigation. Do not route a second time from this form.
+      await signInWithEmailAndPassword(auth,document.getElementById('authEmail').value.trim(),document.getElementById('authPassword').value);
+      message('Login successful. Verifying your account and opening the correct portal…','success');
+    }catch(err){message(friendlyError(err));busy(loginForm,false);}
   });
 
   async function createTeacherAccount(e){
@@ -5232,6 +5234,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       }catch(err){
         console.error('Account role check failed:',err);
         window.firebaseTeacherUID=null;
+        try{await signOut(auth);}catch(signOutError){console.warn('Could not clear failed login session:',signOutError);}
         gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');
         showPanel(loginForm);message(friendlyError(err));
         document.documentElement.classList.remove('teacher-auth-pending');
@@ -5257,9 +5260,10 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         return;
       }
       if(window.teacherConnectionLookupState==='error'){
+        try{await signOut(auth);}catch(signOutError){console.warn('Could not clear session after connection verification failed:',signOutError);}
         gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');
         showPanel(loginForm);
-        message('We could not verify your school connection. Please check your internet connection or try again. For your safety, the system has not selected a dashboard.');
+        message('We could not verify your school connection. Check your internet connection and Firestore access, then sign in again. No dashboard was selected.');
         document.documentElement.classList.remove('teacher-auth-pending');
         return;
       }
