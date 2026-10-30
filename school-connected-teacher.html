@@ -5386,22 +5386,62 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         return;
       }
       window.firebaseTeacherUID=user.uid;window.firebaseTeacherUser=user;
-      localStorage.setItem('firebaseTeacherUID',user.uid);
-      localStorage.setItem('firebaseTeacherDisplayName',user.displayName||'');
-      try{const profile=await ensureTeacherProfile(user);applyFirestoreTeacherProfile(profile,user);}
-      catch(err){console.error('Teacher profile sync failed:',err);applyFirestoreTeacherProfile({},user);}
-      // Resolve this account's registrar connection before loading students or assignments.
-      await refreshTeacherSchoolConnection();
-      try{if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();}
-      catch(err){console.error('Student Firebase query failed during login:',err);}
-      if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
+      try{
+        localStorage.setItem('firebaseTeacherUID',user.uid);
+        localStorage.setItem('firebaseTeacherDisplayName',user.displayName||'');
+      }catch(storageError){console.warn('Teacher session could not be cached locally:',storageError);}
+      // A slow Firestore/profile request must never keep the whole dashboard hidden.
+      const waitFor = (promise, label, ms=8000) => Promise.race([
+        Promise.resolve().then(()=>promise),
+        new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+' timed out')),ms))
+      ]);
+      try{
+        const profile=await waitFor(ensureTeacherProfile(user),'Teacher profile loading',8000);
+        applyFirestoreTeacherProfile(profile,user);
+      }catch(err){
+        console.warn('Teacher profile sync delayed; opening dashboard with account details:',err);
+        applyFirestoreTeacherProfile({},user);
+      }
+      // Load the registrar connection, but do not let a slow student/school query
+      // hold the dashboard in its blank pending state.
+      try{
+        await waitFor(refreshTeacherSchoolConnection(),'School connection loading',9000);
+      }catch(err){
+        console.warn('School connection refresh did not finish before dashboard display:',err);
+        const status=document.getElementById('teacherSchoolConnectionStatus');
+        if(status){
+          status.textContent='Your dashboard is open. School information is still loading; use Refresh or check your connection if assignments do not appear.';
+          status.style.background='#fff7e6';status.style.color='#8a5a00';
+        }
+      }
+      try{
+        if(typeof window.loadStudentsFromFirestore==='function')
+          await waitFor(window.loadStudentsFromFirestore(),'Student records loading',6000);
+      }catch(err){console.warn('Student records will continue loading in the background:',err);}
+      try{if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();}
+      catch(err){console.warn('Teaching assignments could not be rendered yet:',err);}
       gate?.classList.add('auth-hidden');gate?.classList.add('auth-ready');
-      let activeSection='dashboardView';try{activeSection=sessionStorage.getItem('teacherActiveSection')||'dashboardView';}catch(_e){}
+      let activeSection='dashboardView';
+      try{activeSection=sessionStorage.getItem('teacherActiveSection')||'dashboardView';}catch(_e){}
       const validSections=['dashboardView','lessonsView','caExamView','studentsView','attendanceView','gpsAttendanceView','profileView','assignmentView','myClassesView','myTimetableView','examTimetableView','academicSessionView','settingsView','subscriptionView','holidayView'];
       if(!validSections.includes(activeSection))activeSection='dashboardView';
-      window.__restoringTeacherSection=true;if(typeof window.showSection==='function')window.showSection(activeSection,null);
-      if(activeSection==='profileView'&&typeof window.loadTeacherProfile==='function')window.loadTeacherProfile();
-      window.__restoringTeacherSection=false;document.documentElement.classList.remove('teacher-auth-pending');
+      window.__restoringTeacherSection=true;
+      try{
+        if(typeof window.showSection==='function')window.showSection(activeSection,null);
+        else{
+          const dashboard=document.getElementById('dashboardView');
+          if(dashboard)dashboard.style.display='block';
+        }
+        if(activeSection==='profileView'&&typeof window.loadTeacherProfile==='function')window.loadTeacherProfile();
+      }catch(renderError){
+        console.error('Dashboard section rendering failed; showing the main dashboard:',renderError);
+        document.querySelectorAll('.section-view').forEach(el=>el.style.display='none');
+        const dashboard=document.getElementById('dashboardView');
+        if(dashboard)dashboard.style.display='block';
+      }finally{
+        window.__restoringTeacherSection=false;
+        document.documentElement.classList.remove('teacher-auth-pending');
+      }
     }else{
       activeTeacherConnection=null;window.activeTeacherConnection=null;
       window.firebaseTeacherUID=null;window.firebaseTeacherUser=null;
@@ -6103,5 +6143,38 @@ onAuthStateChanged(ptaAuth,user=>{ptaUser=user;if(!user)return;const refresh=()=
 const ptaObserver=new MutationObserver(()=>{if(ptaUser&&window.activeTeacherConnection){ptaConnection=window.activeTeacherConnection;window.renderFormMasterPtaPayments?.();}});
 ptaObserver.observe(document.body,{childList:true,subtree:true});
 </script>
+
+<script id="teacher-dashboard-blank-screen-guard">
+/* Last-resort UI recovery: never leave a signed-in teacher on a blank page.
+   This does not grant access or bypass Firebase; it only reveals the dashboard shell. */
+(function(){
+  const started=Date.now();
+  function recover(){
+    const pending=document.documentElement.classList.contains('teacher-auth-pending');
+    if(!pending)return;
+    let cachedUid='';
+    try{cachedUid=localStorage.getItem('firebaseTeacherUID')||'';}catch(_e){}
+    if(!cachedUid)return;
+    document.documentElement.classList.remove('teacher-auth-pending');
+    const gate=document.getElementById('firebaseAuthGate');
+    if(gate){gate.classList.add('auth-hidden');gate.classList.add('auth-ready');}
+    const dashboard=document.getElementById('dashboardView');
+    if(dashboard && getComputedStyle(dashboard).display==='none'){
+      try{if(typeof window.showSection==='function')window.showSection('dashboardView',null);}
+      catch(_e){dashboard.style.display='block';}
+      if(getComputedStyle(dashboard).display==='none')dashboard.style.display='block';
+    }
+    const badge=document.getElementById('teacherDashboardModeBadge');
+    if(badge){
+      badge.title='Dashboard shell recovered while account data finishes loading.';
+      badge.setAttribute('aria-label','Teacher dashboard opened; some account data may still be loading.');
+    }
+    console.warn('Teacher dashboard recovery guard opened the dashboard shell after a delayed Firebase callback.');
+  }
+  window.setTimeout(recover,12000);
+  window.addEventListener('pageshow',function(){if(Date.now()-started>12000)recover();});
+})();
+</script>
+
 </body>
 </html>
