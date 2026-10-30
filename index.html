@@ -1598,7 +1598,7 @@ html.teacher-auth-pending #firebaseAuthGate:after{content:'Checking your account
     </div>
     <div id="authMessage" class="auth-message"></div>
 
-    <form id="teacherLoginForm" class="auth-form">
+    <form id="teacherLoginForm" class="auth-form" method="post" action="" onsubmit="if(!window.__myENoticeAuthReady){var m=document.getElementById('authMessage');if(m){m.textContent='Login service is not ready yet. Please refresh the page and try again.';m.className='auth-message error';}} return false;">
       <h3>Login</h3>
       <div class="auth-field"><label for="authEmail">Email Address</label><input id="authEmail" type="email" autocomplete="email" required></div>
       <div class="auth-field"><label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" required minlength="6"></div>
@@ -4800,6 +4800,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       message('Login successful. Verifying your account and opening the correct portal…','success');
     }catch(err){message(friendlyError(err));busy(loginForm,false);}
   });
+  window.__myENoticeAuthReady = !!loginForm;
 
   async function createTeacherAccount(e){
     e.preventDefault();clearMessage();try{sessionStorage.removeItem('teacherActiveSection');}catch(_e){}
@@ -5222,7 +5223,6 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
 
   let authInitialized=false;
   onAuthStateChanged(auth,async user=>{
-    try{
     if(user){
       document.documentElement.classList.add('teacher-auth-pending');
       // Never carry connection or school records from the previously signed-in account.
@@ -5261,10 +5261,12 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         return;
       }
       if(window.teacherConnectionLookupState==='error'){
-        // A school-connection lookup failure must not cancel a valid Firebase
-        // login. Keep the authenticated teacher on the existing dashboard.
-        // The connection warning remains visible in the profile/connection area.
-        console.warn('School connection could not be verified; opening the teacher dashboard as a safe fallback.');
+        try{await signOut(auth);}catch(signOutError){console.warn('Could not clear session after connection verification failed:',signOutError);}
+        gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');
+        showPanel(loginForm);
+        message('We could not verify your school connection. Check your internet connection and Firestore access, then sign in again. No dashboard was selected.');
+        document.documentElement.classList.remove('teacher-auth-pending');
+        return;
       }
       try{if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();}
       catch(err){console.error('Student Firebase query failed during login:',err);}
@@ -5287,58 +5289,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       showPanel(loginForm);if(subtitle)subtitle.textContent='Sign in to continue';
       if(!authInitialized){gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');authInitialized=true;}
     }
-    }catch(unexpectedAuthError){
-      console.error('Unexpected login/dashboard initialization error:',unexpectedAuthError);
-      gate?.classList.remove('auth-hidden');
-      gate?.classList.add('auth-ready');
-      if(user){
-        // Do not discard a valid Firebase session because a non-critical
-        // dashboard widget failed. Open the main dashboard as the fallback.
-        try{
-          gate?.classList.add('auth-hidden');
-          if(typeof window.showSection==='function')window.showSection('dashboardView',null);
-        }catch(dashboardError){
-          console.error('Dashboard fallback could not render:',dashboardError);
-          gate?.classList.remove('auth-hidden');
-          showPanel(loginForm);
-          message('You are signed in, but the dashboard could not finish loading. Refresh the page and try again.');
-        }
-      }else{
-        showPanel(loginForm);
-        message('The login screen could not finish initializing. Please try again. '+friendlyError(unexpectedAuthError));
-      }
-    }finally{
-      document.documentElement.classList.remove('teacher-auth-pending');
-      window.__myENoticeAuthInitialized=true;
-    }
   });
-</script>
-
-<script id="firebase-auth-emergency-fallback">
-/* Prevent a permanently hidden screen if Firebase's module/CDN fails to load. */
-(function(){
-  function restoreLogin(reason){
-    if(window.__myENoticeAuthInitialized)return;
-    console.error('My e-Notice authentication startup fallback:',reason||'Firebase initialization timed out');
-    document.documentElement.classList.remove('teacher-auth-pending');
-    var gate=document.getElementById('firebaseAuthGate');
-    if(!gate)return;
-    gate.classList.remove('auth-hidden');
-    gate.classList.add('auth-ready');
-    var card=gate.querySelector('.auth-card');
-    if(card)card.style.display='block';
-    var login=document.getElementById('teacherLoginForm');
-    if(login)login.style.display='block';
-    var msg=document.getElementById('authMessage');
-    if(msg){
-      msg.textContent='The sign-in service is taking too long to load. Check your internet connection and refresh the page.';
-      msg.className='auth-message error';
-    }
-  }
-  var moduleTag=document.getElementById('firebase-auth-module');
-  if(moduleTag)moduleTag.addEventListener('error',function(){restoreLogin('Firebase module failed to load');});
-  window.setTimeout(function(){restoreLogin('Firebase initialization timeout');},20000);
-})();
 </script>
 
 
