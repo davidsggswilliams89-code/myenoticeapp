@@ -4822,6 +4822,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   window.firebaseApp = app;
   window.teacherFirebaseAuth = auth;
   window.teacherFirestore = db;
+  window.__teacherFirebaseModuleReady = true;
   window.firebaseTeacherUID = null;
 
   const gate=document.getElementById('firebaseAuthGate');
@@ -5368,6 +5369,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
 
   let authInitialized=false;
   onAuthStateChanged(auth,async user=>{
+    window.__teacherAuthStateSeen = true;
     if(user){
       document.documentElement.classList.add('teacher-auth-pending');
       // Never carry connection or school records from the previously signed-in account.
@@ -5375,7 +5377,10 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       window.firebaseTeacherUID=user.uid;window.firebaseTeacherUser=user;
       window.dispatchEvent(new Event('teacherAccountContextChanged'));
       try{
-        const role=await routeSignedInUser(user);
+        const role=await Promise.race([
+          routeSignedInUser(user),
+          new Promise((_,reject)=>setTimeout(()=>reject(new Error('Account verification timed out. Please check your internet connection and Firestore Rules, then sign in again.')),10000))
+        ]);
         if(role==='registrar')return;
       }catch(err){
         console.error('Account role check failed:',err);
@@ -6145,34 +6150,44 @@ ptaObserver.observe(document.body,{childList:true,subtree:true});
 </script>
 
 <script id="teacher-dashboard-blank-screen-guard">
-/* Last-resort UI recovery: never leave a signed-in teacher on a blank page.
-   This does not grant access or bypass Firebase; it only reveals the dashboard shell. */
+/* Fail-safe: a failed/blocked Firebase module must show a usable login screen,
+   never a blank page. It does not bypass authentication or grant dashboard access. */
 (function(){
-  const started=Date.now();
-  function recover(){
-    const pending=document.documentElement.classList.contains('teacher-auth-pending');
-    if(!pending)return;
-    let cachedUid='';
-    try{cachedUid=localStorage.getItem('firebaseTeacherUID')||'';}catch(_e){}
-    if(!cachedUid)return;
+  function showLoginFallback(reason){
     document.documentElement.classList.remove('teacher-auth-pending');
     const gate=document.getElementById('firebaseAuthGate');
-    if(gate){gate.classList.add('auth-hidden');gate.classList.add('auth-ready');}
-    const dashboard=document.getElementById('dashboardView');
-    if(dashboard && getComputedStyle(dashboard).display==='none'){
-      try{if(typeof window.showSection==='function')window.showSection('dashboardView',null);}
-      catch(_e){dashboard.style.display='block';}
-      if(getComputedStyle(dashboard).display==='none')dashboard.style.display='block';
+    const form=document.getElementById('teacherLoginForm');
+    if(gate){
+      gate.classList.remove('auth-hidden');
+      gate.classList.add('auth-ready');
+      gate.style.display='flex';
+      gate.style.visibility='visible';
     }
-    const badge=document.getElementById('teacherDashboardModeBadge');
-    if(badge){
-      badge.title='Dashboard shell recovered while account data finishes loading.';
-      badge.setAttribute('aria-label','Teacher dashboard opened; some account data may still be loading.');
+    if(form)form.style.display='block';
+    const message=document.getElementById('authMessage');
+    if(message){
+      message.textContent=reason;
+      message.className='auth-message error';
     }
-    console.warn('Teacher dashboard recovery guard opened the dashboard shell after a delayed Firebase callback.');
+    console.error('[My e-Notice] Authentication startup fallback:',reason);
   }
-  window.setTimeout(recover,12000);
-  window.addEventListener('pageshow',function(){if(Date.now()-started>12000)recover();});
+  window.setTimeout(function(){
+    if(!window.__teacherFirebaseModuleReady){
+      showLoginFallback('The login service could not start. Check your internet connection, then refresh this page. If the problem continues, check that Firebase module access is not blocked by your browser.');
+      return;
+    }
+    if(!window.__teacherAuthStateSeen){
+      showLoginFallback('Firebase is taking too long to restore your session. Please refresh the page and sign in again.');
+    }
+  },10000);
+  window.addEventListener('error',function(e){
+    if(!window.__teacherFirebaseModuleReady){
+      showLoginFallback('A page script failed to load. Refresh the page; if this continues, check the browser console for the script error.');
+    }
+  });
+  window.addEventListener('unhandledrejection',function(e){
+    console.error('[My e-Notice] Unhandled page promise:',e.reason);
+  });
 })();
 </script>
 
