@@ -2,16 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<style>
-html.registrar-auth-pending body::before{
- content:"Checking registrar account and loading school information…";
- position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;
- padding:24px;text-align:center;background:#f3f7f4;color:#176b45;
- font:700 15px/1.5 Arial,sans-serif;
-}
-</style>
-<script>document.documentElement.classList.add("registrar-auth-pending");</script>
-
 <title>my e-notice app | Registrar Portal</title>
 <style>
 :root{--g:#176b45;--gd:#104b32;--bg:#f3f7f4;--line:#dce6df;--muted:#65736a}
@@ -578,7 +568,7 @@ $("registrarPhotoFile")?.addEventListener("change",async()=>{
  finally{$("registrarPhotoFile").value=""}
 });
 
-async function load(userObj,registrarData){const data=registrarData||((await getDoc(doc(db,"registrars",userObj.uid))).data());if(!data){profile=null;view("setup");return}profile={uid:userObj.uid,...data};if(!profile.schoolId){view("setup");return}const ss=await getDoc(doc(db,"schools",profile.schoolId));if(!ss.exists()){msg("The school record could not be found. Please contact support.","error");view("setup");return}render({id:ss.id,...ss.data()})}
+async function load(userObj){const snap=await getDoc(doc(db,"registrars",userObj.uid));if(!snap.exists()){profile=null;view("setup");return}profile={uid:userObj.uid,...snap.data()};if(!profile.schoolId){view("setup");return}const ss=await getDoc(doc(db,"schools",profile.schoolId));if(!ss.exists()){msg("The school record could not be found. Please contact support.","error");view("setup");return}render({id:ss.id,...ss.data()})}
 const DEFAULT_SCHOOL_CLASSES=["Primary 1","Primary 2","Primary 3","Primary 4","Primary 5","Primary 6"];
 const DEFAULT_SCHOOL_SUBJECTS=["English Studies","Mathematics","Basic Science and Technology","National Values Education","Pre-Vocational Studies","Religion and National Values","Physical and Health Education","Cultural and Creative Arts","Nigerian Languages","Computer Studies","Social Studies","Agricultural Science"];
 let activeSchoolSubjects=DEFAULT_SCHOOL_SUBJECTS.slice();
@@ -1215,9 +1205,8 @@ onAuthStateChanged(auth,async u=>{
   try{
     const roleSnap=await getDoc(doc(db,"registrars",u.uid));
     if(!roleSnap.exists() || roleSnap.data()?.role!=="registrar"){await signOut(auth);window.location.replace("index.html");return}
-    await load(u,roleSnap.data());
+    await load(u);
   }catch(e){msg(err(e),"error");setTimeout(()=>window.location.replace("index.html"),1800)}
-  finally{document.documentElement.classList.remove("registrar-auth-pending")}
 });
 </script>
 </body></html>
