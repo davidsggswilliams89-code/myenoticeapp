@@ -2934,7 +2934,29 @@ function renderStudents(){
  if(typeof window.renderFormMasterPtaPayments==="function")window.renderFormMasterPtaPayments();
 }
 
-/* Legacy PTA renderer removed; the standalone embedded PTA module below owns this section. */
+function ptaTeacherEscape(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;", "'":"&#39;"}[c]));}
+function ptaTeacherTermLabel(){const sel=document.getElementById("teacherPtaTerm");return sel?.selectedOptions?.[0]?.textContent||"First Term";}
+function ptaTeacherIsFormMaster(){const c=window.activeTeacherConnection||{},signedInUid=window.firebaseTeacherUID||auth.currentUser?.uid||"";return (window.TEACHER_DASHBOARD_MODE||"")==="school-connected"&&!!signedInUid&&c.teacherUid===signedInUid&&["connected","approved","active"].includes(String(c.status||"").toLowerCase())&&(c.ptaFormMaster===true||String(c.assignedRole||"").trim().toLowerCase()==="form master")&&!!String(c.ptaFormMasterClass||"").trim();}
+window.openFormMasterPta=function(button){
+ if(!ptaTeacherIsFormMaster()){alert("PTA Payments is available only to the teacher UID currently assigned as Form Master.");if(button)button.style.display="none";return;}
+ showSection("dashboardView",button);
+ const section=document.getElementById("formMasterPtaSection");
+ if(section){section.style.display="block";setTimeout(()=>section.scrollIntoView({behavior:"smooth",block:"start"}),80);}
+ if(typeof window.renderFormMasterPtaPayments==="function")window.renderFormMasterPtaPayments();
+};
+window.renderFormMasterPtaPayments=function(){
+ const c=window.activeTeacherConnection||{};
+ const signedInUid=window.firebaseTeacherUID||auth.currentUser?.uid||"";
+ const isMaster=(window.TEACHER_DASHBOARD_MODE||"")==="school-connected"&&!!signedInUid&&c.teacherUid===signedInUid&&["connected","approved","active"].includes(String(c.status||"").toLowerCase())&&(c.ptaFormMaster===true||String(c.assignedRole||c.role||"").trim().toLowerCase()==="form master")&&!!String(c.ptaFormMasterClass||c.assignedClass||"").trim();
+ const nav=document.getElementById("formMasterPtaNav");
+ if(nav){nav.style.display="flex";nav.disabled=!isMaster;nav.setAttribute("aria-disabled",String(!isMaster));nav.style.opacity=isMaster?"1":".55";nav.style.cursor=isMaster?"pointer":"not-allowed";}
+ const section=document.getElementById("formMasterPtaSection");
+ if(section&&!isMaster)section.style.display="none";
+ const summary=document.getElementById("teacherPtaSummary");
+ if(summary)summary.textContent=isMaster?((c.schoolName||"Connected school")+" · Form Master for "+String(c.ptaFormMasterClass||c.assignedClass||"")+" · ₦200 per term"):"PTA Payments is available only to the assigned Form Master.";
+};
+document.getElementById("teacherPtaTerm")?.addEventListener("change",()=>window.renderFormMasterPtaPayments());
+document.getElementById("teacherPtaSearch")?.addEventListener("input",()=>window.renderFormMasterPtaPayments());
 function viewStudentResult(i){
  currentStudentIndex=i;
  const s=students[i];
