@@ -1596,10 +1596,10 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
     </div>
     <div id="authMessage" class="auth-message"></div>
 
-    <form id="teacherLoginForm" class="auth-form">
+    <form id="teacherLoginForm" class="auth-form" autocomplete="on">
       <h3>Login</h3>
-      <div class="auth-field"><label for="authEmail">Email Address</label><input id="authEmail" type="email" autocomplete="email" required></div>
-      <div class="auth-field"><label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" required minlength="6"></div>
+      <div class="auth-field"><label for="authEmail">Email Address</label><input id="authEmail" name="username" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
+      <div class="auth-field"><label for="authPassword">Password</label><input id="authPassword" name="password" type="password" autocomplete="current-password" required minlength="6"></div>
       <button class="auth-primary" type="submit" id="authLoginBtn">LOGIN</button>
       <div class="auth-links"><button class="auth-link" type="button" id="authForgotBtn">Forgot Password?</button></div>
       <button class="auth-secondary" type="button" id="authShowRegister">CREATE ACCOUNT</button>
@@ -4725,8 +4725,15 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   function clearMessage(){ if(msg){msg.textContent='';msg.className='auth-message';} }
   function busy(form,yes){ if(form)form.classList.toggle('auth-loading',yes); }
   function showPanel(panel){
-    [loginForm,registerRoleChoice,registerForm,registrarRegisterForm,parentRegisterForm].forEach(el=>{if(el)el.style.display='none';});
-    if(panel)panel.style.display='block';
+    // Do not hide and re-show a panel that is already visible. On some mobile
+    // browsers this display:none/display:block cycle clears focused/autofilled
+    // login fields when Firebase emits its initial auth-state callback.
+    const panels=[loginForm,registerRoleChoice,registerForm,registrarRegisterForm,parentRegisterForm].filter(Boolean);
+    const alreadyVisible=!!panel && getComputedStyle(panel).display!=='none' && panels.every(el=>el===panel || getComputedStyle(el).display==='none');
+    if(!alreadyVisible){
+      panels.forEach(el=>{if(el!==panel)el.style.display='none';});
+      if(panel)panel.style.display='block';
+    }
     clearMessage();
   }
   function friendlyError(e){
@@ -4792,9 +4799,10 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     try{sessionStorage.removeItem('teacherActiveSection');}catch(_e){}
     busy(loginForm,true);
     try{
-      const credential=await signInWithEmailAndPassword(auth,document.getElementById('authEmail').value.trim(),document.getElementById('authPassword').value);
-      const role=await routeSignedInUser(credential.user);
-      if(role==='teacher') message('Login successful. Opening your dashboard…','success');
+      // onAuthStateChanged is the single source of truth for role verification
+      // and dashboard routing. Do not run routeSignedInUser a second time here.
+      await signInWithEmailAndPassword(auth,document.getElementById('authEmail').value.trim(),document.getElementById('authPassword').value);
+      message('Sign-in successful. Verifying your account and opening your dashboard…','success');
     }catch(err){message(friendlyError(err));}
     finally{busy(loginForm,false);}
   });
@@ -4812,7 +4820,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       cred=await createUserWithEmailAndPassword(auth,email,password);
       if(name) await updateProfile(cred.user,{displayName:name});
       await setDoc(doc(db,'teachers',cred.user.uid),{
-        fullName:name || cred.user.displayName || '', email:cred.user.email || email,
+        uid:cred.user.uid,fullName:name || cred.user.displayName || '', email:cred.user.email || email,
         phone:'',gender:'',schoolId:'',schoolName:'',role:'teacher',qualification:'',
         specialization:'',experience:'',address:'',profilePhoto:'',
         createdAt:serverTimestamp(),updatedAt:serverTimestamp(),initialSavedAt:null
@@ -4887,13 +4895,18 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     const snap=await getDoc(ref);
     if(!snap.exists()){
       await setDoc(ref,{
-        fullName:user.displayName||'',email:user.email||'',phone:'',gender:'',schoolId:'',schoolName:'',role:'teacher',
+        uid:user.uid,fullName:user.displayName||'',email:user.email||'',phone:'',gender:'',schoolId:'',schoolName:'',role:'teacher',
         qualification:'',specialization:'',experience:'',address:'',profilePhoto:'',
         createdAt:serverTimestamp(),updatedAt:serverTimestamp()
       });
-      return {fullName:user.displayName||'',email:user.email||'',phone:'',gender:'',schoolId:'',schoolName:'',role:'teacher',qualification:'',specialization:'',experience:'',address:'',profilePhoto:''};
+      return {uid:user.uid,fullName:user.displayName||'',email:user.email||'',phone:'',gender:'',schoolId:'',schoolName:'',role:'teacher',qualification:'',specialization:'',experience:'',address:'',profilePhoto:''};
     }
-    return snap.data()||{};
+    const existing=snap.data()||{};
+    const profilePatch={};
+    if(existing.uid!==user.uid)profilePatch.uid=user.uid;
+    if(!existing.role)profilePatch.role='teacher';
+    if(Object.keys(profilePatch).length){profilePatch.updatedAt=serverTimestamp();await setDoc(ref,profilePatch,{merge:true});Object.assign(existing,profilePatch);}
+    return existing;
   }
 
   function applyFirestoreTeacherProfile(data,user){
@@ -5211,7 +5224,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     const user=auth.currentUser;
     if(!user)throw new Error('No authenticated teacher.');
     await setDoc(doc(db,'teachers',user.uid),{
-      fullName:user.displayName||data.fullName||'',email:user.email||'',phone:data.phone||'',gender:data.gender||'',
+      uid:user.uid,fullName:user.displayName||data.fullName||'',email:user.email||'',phone:data.phone||'',gender:data.gender||'',
       schoolName:activeTeacherConnection?.status==='connected'?(activeTeacherConnection.schoolName||''):(data.school||''),role:'teacher',qualification:data.qualification||'',
       specialization:data.specialization||'',experience:data.experience||'',address:data.address||'',
       profilePhoto:data.photo||'',initialSavedAt:data.initialSavedAt||null,updatedAt:serverTimestamp()
@@ -5220,6 +5233,8 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
 
   let authInitialized=false;
   onAuthStateChanged(auth,async user=>{
+    const firstAuthState=!authInitialized;
+    authInitialized=true;
     if(user){
       document.documentElement.classList.add('teacher-auth-pending');
       // Never carry connection or school records from the previously signed-in account.
@@ -5281,8 +5296,10 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       try{localStorage.removeItem('firebaseTeacherUID');localStorage.removeItem('firebaseTeacherDisplayName');}catch(_e){}
       window.dispatchEvent(new Event('teacherAccountContextChanged'));
       document.documentElement.classList.remove('teacher-auth-pending');
-      showPanel(loginForm);if(subtitle)subtitle.textContent='Sign in to continue';
-      if(!authInitialized){gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');authInitialized=true;}
+      // On the first Firebase callback the login form is already the default
+      // visible panel. Do not hide/show it: that can clear fields being typed.
+      if(firstAuthState){gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');}
+      else{showPanel(loginForm);if(subtitle)subtitle.textContent='Sign in to continue';gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');}
     }
   });
 </script>
