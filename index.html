@@ -2669,7 +2669,7 @@ window.addEventListener('teacherAccountContextChanged',()=>{if(teacherIsSchoolCo
 function visibleStudentRecords(){const selected=document.getElementById("classSelect")?.value||"",connected=teacherIsSchoolConnected(),allowed=connected?teacherAssignedClasses():[];return students.map((s,index)=>({s,index})).filter(x=>{const cls=studentInfo(x.s).className;if(connected&&!allowed.includes(cls))return false;return !selected||cls===selected;});}
 function selectedDashboardClass(){return document.getElementById("classSelect")?.value||"Primary 5";}
 function selectedDashboardTerm(){return document.getElementById("termSelect")?.value||"First Term";}
-/* Duplicate visibleStudentRecords declaration removed; keep assigned-class filtering above. */
+function visibleStudentRecords(){const cls=selectedDashboardClass();return students.map((s,index)=>({s,index})).filter(x=>studentInfo(x.s).className===cls);}
 
 
 
@@ -2812,7 +2812,11 @@ function closeModal(){
 }
 function saveModal(){alert("Saved locally in this demo. Firebase can be connected later.");closeModal()}
 
-/* Duplicate modal helpers removed; the earlier definitions are retained. */
+function closeModal(){
+ document.getElementById("modal").classList.remove("show");
+ currentLessonType=null;
+}
+function saveModal(){alert("Saved locally in this demo. Firebase can be connected later.");closeModal()}
 
 
 
@@ -4691,8 +4695,6 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut, updateProfile, deleteUser, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
   import { getFirestore, collection, doc, getDoc, getDocs, addDoc, setDoc, deleteDoc, serverTimestamp, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-  window.__MY_ENOTICE_INDEX_BUILD='2026-10-31-route-timeout-guard';
-
   const firebaseConfig = {
     apiKey: "AIzaSyAyqE3tESdUlDPtAdmEa8pYsviiX2J8ltM",
     authDomain: "myschoolbook-4d23d.firebaseapp.com",
@@ -4774,7 +4776,6 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       const normalizedRole=String(teacherData.role||'').trim().toLowerCase();
       const acceptedTeacherRoles=['','teacher','class teacher','subject teacher','primary teacher'];
       if(!acceptedTeacherRoles.includes(normalizedRole)){
-        await signOut(auth);
         throw new Error('This account is registered with the role "'+teacherData.role+'", not Teacher. Please contact the administrator.');
       }
       return 'teacher';
@@ -4782,12 +4783,11 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
 
     const parentSnap=await getDoc(doc(db,'parents',user.uid));
     if(parentSnap.exists() && parentSnap.data()?.role==='parent'){ try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){} window.location.replace('parents.html'); return 'parent'; }
-    await signOut(auth);
     throw new Error('This account has no registered role. Please create an account or contact support.');
   }
 
   loginForm?.addEventListener('submit',async e=>{
-    e.preventDefault(); clearMessage();
+    e.preventDefault(); lastAuthErrorMessage=''; clearMessage();
     try{
       sessionStorage.removeItem('teacherActiveSection');
       sessionStorage.setItem('myENoticeLoginIntent','1');
@@ -5227,9 +5227,11 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   };
 
   let authInitialized=false;
+  // Keep the reason for a rejected login visible even if Firebase emits a
+  // second (user === null) auth event after signOut().
+  let lastAuthErrorMessage='';
   onAuthStateChanged(auth,async user=>{
     if(user){
-      try{
       // The homepage is always the login page on a fresh visit/refresh.
       // Only a login or registration started in this tab may route to a portal.
       let deliberateLogin=false;
@@ -5253,10 +5255,11 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         if(role==='registrar')return;
       }catch(err){
         console.error('Account role check failed:',err);
+        lastAuthErrorMessage=friendlyError(err);
         window.firebaseTeacherUID=null;
         try{await signOut(auth);}catch(signOutError){console.warn('Could not clear failed login session:',signOutError);}
         gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');
-        showPanel(loginForm);message(friendlyError(err));
+        showPanel(loginForm);message(lastAuthErrorMessage);
         document.documentElement.classList.remove('teacher-auth-pending');
         return;
       }
@@ -5266,20 +5269,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       try{const profile=await ensureTeacherProfile(user);applyFirestoreTeacherProfile(profile,user);}
       catch(err){console.error('Teacher profile sync failed:',err);applyFirestoreTeacherProfile({},user);}
       // Phase 3: resolve connection status before loading any student data, then route to the right dashboard.
-      // Do not leave the login screen waiting forever if Firestore stalls.
-      window.teacherConnectionLookupError='';
-      let connectionTimer;
-      await Promise.race([
-        refreshTeacherSchoolConnection(),
-        new Promise(resolve=>{
-          connectionTimer=setTimeout(()=>{
-            window.teacherConnectionLookupState='error';
-            window.teacherConnectionLookupError='School connection verification timed out. Please check your internet connection and Firestore access, then try again.';
-            resolve();
-          },15000);
-        })
-      ]);
-      if(connectionTimer)clearTimeout(connectionTimer);
+      await refreshTeacherSchoolConnection();
       if(window.teacherConnectionLookupState==='connected'){
         try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
         const target=new URL('school-connected-teacher.html',window.location.href);
@@ -5294,10 +5284,11 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       }
       if(window.teacherConnectionLookupState==='error'){
         try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
+        lastAuthErrorMessage='We could not verify your school connection. Check your internet connection and Firestore access, then sign in again. No dashboard was selected.';
         try{await signOut(auth);}catch(signOutError){console.warn('Could not clear session after connection verification failed:',signOutError);}
         gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');
         showPanel(loginForm);
-        message(window.teacherConnectionLookupError||'We could not verify your school connection. Check your internet connection and Firestore access, then sign in again. No dashboard was selected.');
+        message(lastAuthErrorMessage);
         document.documentElement.classList.remove('teacher-auth-pending');
         return;
       }
@@ -5312,16 +5303,6 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       if(activeSection==='profileView'&&typeof window.loadTeacherProfile==='function')window.loadTeacherProfile();
       window.__restoringTeacherSection=false;document.documentElement.classList.remove('teacher-auth-pending');
       try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
-      }catch(startupError){
-        console.error('Dashboard authentication startup failed:',startupError);
-        document.documentElement.classList.remove('teacher-auth-pending');
-        gate?.classList.remove('auth-hidden');
-        gate?.classList.add('auth-ready');
-        showPanel(loginForm);
-        message('Your login was accepted, but the dashboard could not finish opening: '+friendlyError(startupError));
-        try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
-        try{await signOut(auth);}catch(signOutError){console.warn('Could not clear incomplete login session:',signOutError);}
-      }
     }else{
       activeTeacherConnection=null;window.activeTeacherConnection=null;
       window.firebaseTeacherUID=null;window.firebaseTeacherUser=null;
@@ -5331,6 +5312,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       window.dispatchEvent(new Event('teacherAccountContextChanged'));
       document.documentElement.classList.remove('teacher-auth-pending');
       showPanel(loginForm);if(subtitle)subtitle.textContent='Sign in to continue';
+      if(lastAuthErrorMessage)message(lastAuthErrorMessage);
       if(!authInitialized){gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');authInitialized=true;}
     }
   });
