@@ -5025,7 +5025,17 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     const classes=record?.assignedClasses?.length?record.assignedClasses:(record?.assignedClass?[record.assignedClass]:[]);
     const subjects=record?.assignedSubjects||[];
     if(!record||!['connected','approved','active'].includes(String(record.status||'').toLowerCase())){const p=document.createElement('p');p.textContent='Your registrar-assigned classes and subjects will appear here after your school connection is approved.';p.style.cssText='padding:16px;background:#f8fafc;border-radius:10px;color:#475569';box.append(p);return;}
-    const heading=document.createElement('p');heading.textContent=`School: ${record.schoolName||'Connected school'} · Role: ${record.assignedRole||'Not assigned'}`;heading.style.cssText='padding:12px;background:#ecfdf5;border-radius:10px;color:#166534;font-weight:700';box.append(heading);
+    const heading=document.createElement('p');heading.textContent=`School: ${record.schoolName||'Connected school'} · Role: ${record.assignedRole||'Teacher'}`;heading.style.cssText='padding:12px;background:#ecfdf5;border-radius:10px;color:#166534;font-weight:700';box.append(heading);
+    const responsibilities=Array.isArray(record.assignedResponsibilities)?record.assignedResponsibilities.filter(x=>String(x||'').trim()):[];
+    if(responsibilities.length){
+      const dutyCard=document.createElement('section');dutyCard.style.cssText='border:1px solid #cfe4d7;border-radius:12px;padding:14px;margin:10px 0;background:#f7fcf8';
+      const dutyTitle=document.createElement('h3');dutyTitle.textContent='My Additional School Responsibilities';dutyTitle.style.cssText='margin:0 0 10px;color:#14532d;font-size:16px';dutyCard.append(dutyTitle);
+      const dutyList=document.createElement('div');dutyList.style.cssText='display:flex;gap:8px;flex-wrap:wrap';
+      responsibilities.forEach(duty=>{const tag=document.createElement('span');tag.textContent=duty;tag.style.cssText='padding:7px 10px;background:#e5f5eb;border:1px solid #cce8d5;border-radius:20px;font-size:13px;font-weight:700;color:#166534';dutyList.append(tag)});
+      dutyCard.append(dutyList);box.append(dutyCard);
+    }else{
+      const noDuty=document.createElement('p');noDuty.textContent='No additional school responsibilities have been assigned to you yet.';noDuty.style.cssText='padding:12px;background:#f8fafc;border-radius:10px;color:#64748b';box.append(noDuty);
+    }
     if(!classes.length||!subjects.length){const p=document.createElement('p');p.textContent='The registrar has not assigned both classes and subjects yet.';box.append(p);}
     const pairs=Array.isArray(record.assignedTeachingAssignments)?record.assignedTeachingAssignments:[];
     if(pairs.length){
@@ -5047,6 +5057,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         if(!snap.exists())return;
         const latest={id:snap.id,...snap.data()};
         activeTeacherConnection=latest;window.activeTeacherConnection=latest;
+        renderTeacherAssignments(latest);
         if(typeof window.loadStudentsFromFirestore==="function")await window.loadStudentsFromFirestore();
         if(typeof window.renderFormMasterPtaPayments==="function")window.renderFormMasterPtaPayments();
       },err=>console.warn("Live Form Master assignment updates unavailable:",err));

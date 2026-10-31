@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>my e-notice app | Registrar Portal</title>
+<title>my e-notice app | Headmaster Office</title>
 <style>
 :root{--g:#176b45;--gd:#104b32;--bg:#f3f7f4;--line:#dce6df;--muted:#65736a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:#17251d;font:16px Arial,sans-serif}
@@ -237,15 +237,27 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 .teacher-compact-controls.teacher-card-actions>button{width:100%!important;min-width:0!important;min-height:42px;margin:0!important;padding:8px 6px!important;font-size:13px!important;white-space:normal}
 .teacher-compact-controls.teacher-card-actions>button:disabled{cursor:not-allowed;opacity:.45!important}
 .teacher-compact-info{min-width:0}.teacher-compact-name{display:block}.teacher-compact-meta{margin:3px 0 0!important}
+
+/* Headmaster-assigned staff responsibilities */
+.staff-responsibility-editor{width:100%;min-width:0;padding:10px;border:1px solid #d5e8dc;border-radius:10px;background:#fff;box-sizing:border-box}
+.staff-responsibility-title{display:block;font-size:12px;font-weight:800;color:#17452e;margin:0 0 8px}
+.staff-responsibility-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.staff-responsibility-option{display:flex;align-items:flex-start;gap:7px;padding:7px;border:1px solid #e2ebe4;border-radius:8px;background:#f8fbf9;font-size:11px;line-height:1.3;font-weight:600;min-width:0}
+.staff-responsibility-option input{width:auto;flex:0 0 auto;margin:1px 0 0;accent-color:#176b45}
+.staff-custom-role-row{display:flex;gap:6px;margin-top:9px}
+.staff-custom-role-row input{min-width:0;padding:8px;font-size:12px}
+.staff-custom-role-row button{padding:7px 9px;font-size:11px;white-space:nowrap}
+@media(max-width:560px){.staff-responsibility-options{grid-template-columns:1fr}.staff-custom-role-row{flex-wrap:wrap}.staff-custom-role-row input{flex:1 1 140px}}
+
 </style>
 </head>
 <body>
 
-<nav id="registrarNav" class="registrar-nav hidden" aria-label="Registrar dashboard navigation">
+<nav id="registrarNav" class="registrar-nav hidden" aria-label="Headmaster dashboard navigation">
 <button class="active" data-page="dashboard"><span>🏠</span>Dashboard</button><button data-page="classes"><span>🏫</span>Classes</button><button data-page="teachers"><span>👩‍🏫</span>Teachers</button><button data-page="students"><span>👥</span>Students</button><button data-page="payments"><span>💳</span>PTA Payments</button><button data-page="timetable"><span>📅</span>Timetable</button><button data-page="liveattendance"><span>✅</span>Live Class Check</button><button data-page="exams"><span>📝</span>Exam Timetable</button><button data-page="academic"><span>🗓️</span>Academic Session</button><button data-page="parents"><span>👨‍👩‍👧</span>Parent Requests</button><button type="button" id="signOut" class="nav-logout"><span>↪️</span>Logout</button>
 </nav>
 <main>
-<section class="hero"><h2>Welcome to your Registrar Portal</h2><p>Complete your school profile, add the official school photo, and manage your school information from one dashboard.</p></section>
+<section class="hero"><h2>Welcome to the Headmaster Office</h2><p>Complete your school profile, add the official school photo, and manage your school information from one dashboard.</p></section>
 <div id="message" class="notice hidden" role="status" aria-live="polite"></div>
 <section id="setup" class="card hidden"><h3>Set up your school profile</h3><p class="muted">Enter the school's official details. A unique internal school ID will be generated automatically.</p>
 <form id="schoolForm"><label for="schoolName">Official school name</label><input id="schoolName" required maxlength="160" placeholder="e.g. Bright Future Primary School">
@@ -257,10 +269,10 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 <button class="primary full" type="submit">Save school profile</button></form></section>
 <section id="dashboard" class="hidden">
 <div id="dashboardTop" class="section-anchor"></div>
-<section class="registrar-profile-hero dashboard-heading" aria-label="Registrar and school profile">
-<p class="profile-kicker">Registrar Dashboard</p>
-<div id="registrarAvatar" class="registrar-avatar" aria-label="Registrar profile photo">R</div>
-<h2 id="registrarDisplayName">Registrar</h2>
+<section class="registrar-profile-hero dashboard-heading" aria-label="Headmaster and school profile">
+<p class="profile-kicker">Headmaster Dashboard</p>
+<div id="registrarAvatar" class="registrar-avatar" aria-label="Headmaster profile photo">R</div>
+<h2 id="registrarDisplayName">Headmaster</h2>
 <p id="registrarSchoolDisplay" class="school-name">School name</p>
 <div class="registrar-profile-actions"><label for="registrarPhotoFile" class="secondary" style="display:inline-flex;align-items:center;justify-content:center;margin:0;cursor:pointer">Change profile photo</label><input id="registrarPhotoFile" type="file" accept="image/*" class="hidden"></div><p id="registrarPhotoStatus" class="muted" aria-live="polite" style="margin:10px 0 0"></p>
 </section>
@@ -294,7 +306,7 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 <h4 style="margin:0 0 6px">Your Subjects</h4><div id="subjectManagementList" class="subject-management-list" aria-label="Available school subjects"></div>
 <form id="createSubjectForm" class="management-create-form"><div class="field"><label for="newSubjectName">Create a subject</label><input id="newSubjectName" maxlength="100" placeholder="e.g. Civic Education, Hausa" required></div><button id="createSubjectButton" type="submit" class="primary">＋ Add Subject</button></form><span id="subjectManagementStatus" class="muted management-status" aria-live="polite"></span>
 </div>
-<div class="card section-anchor registrar-page-panel" data-page-panel="teachers" id="teacherConnectionsCard" style="margin-top:18px"><h3>Teacher Connection Requests</h3><p class="muted">Review teachers who requested to connect to this school. Approve only teachers you recognize.</p><div id="teacherConnectionsMessage" class="muted" style="margin:10px 0">Loading teacher requests…</div><div id="teacherConnectionList"></div><button id="refreshTeacherConnections" type="button" class="secondary" style="margin-top:12px">Refresh teacher requests</button></div>
+<div class="card section-anchor registrar-page-panel" data-page-panel="teachers" id="teacherConnectionsCard" style="margin-top:18px"><h3>Staff Connections & Responsibilities</h3><p class="muted">Review staff who requested to connect to this school, approve recognized teachers, and assign their additional school responsibilities.</p><div id="teacherConnectionsMessage" class="muted" style="margin:10px 0">Loading teacher requests…</div><div id="teacherConnectionList"></div><button id="refreshTeacherConnections" type="button" class="secondary" style="margin-top:12px">Refresh teacher requests</button></div>
 <div class="card registrar-page-panel" data-page-panel="students" id="officialStudentsCard" style="margin-top:18px"><h3>Official Student Registration & Records</h3><p class="muted">Register pupils using the same core fields as the Teacher Dashboard. Official records are stored under this school's ID and are not automatically copied over or used to delete teachers’ existing records.</p><form id="officialStudentForm"><div class="grid" style="gap:0 14px"><div><label for="osName">Student full name *</label><input id="osName" required maxlength="160" placeholder="Full student name"></div><div><label for="osAdmission">Admission number *</label><input id="osAdmission" required maxlength="60" placeholder="e.g. P5/009"></div><div><label for="osGender">Gender *</label><select id="osGender" required><option value="">Select gender</option><option>Male</option><option>Female</option></select></div><div><label for="osClass">Class *</label><select id="osClass" required><option value="">Select class</option></select></div><div><label for="osDob">Date of birth</label><input id="osDob" type="date"></div><div><label for="osPhone">Parent phone number</label><input id="osPhone" type="tel" maxlength="40" placeholder="Parent phone number"></div><div><label for="osGuardian">Parent / guardian</label><input id="osGuardian" maxlength="160" placeholder="Parent or guardian name"></div><div><label for="osPhoto">Student photo</label><input id="osPhoto" type="file" accept="image/*"><small class="muted">Photo uploads to the existing Cloudinary account.</small></div><div style="grid-column:1/-1"><label for="osAddress">Parent address</label><input id="osAddress" maxlength="300" placeholder="Parent/guardian address"></div></div><button id="osSave" class="primary" type="submit" style="margin-top:16px">Register Student</button></form><div id="officialStudentStatus" class="notice hidden" style="margin-top:14px"></div><hr style="border:0;border-top:1px solid var(--line);margin:20px 0"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><h3 style="margin:0">Official Student List</h3><button id="refreshOfficialStudents" type="button" class="secondary">Refresh list</button></div><p id="officialStudentCount" class="muted" style="margin-top:8px">Loading official records…</p><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:650px"><thead><tr><th>Photo</th><th>Admission No.</th><th>Student Name</th><th>Gender</th><th>Class</th><th>Parent Phone</th><th>Actions</th></tr></thead><tbody id="officialStudentsBody"><tr><td colspan="6">Loading…</td></tr></tbody></table></div></div>
 <section class="card section-anchor registrar-page-panel" data-page-panel="payments" id="ptaPaymentsCard" style="margin-top:18px">
 <h2 style="margin:0 0 8px">💳 PTA Payment Report</h2>
@@ -435,7 +447,7 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 </form>
 </section>
 </section>
-</main><footer>my e-notice app · Registrar Portal</footer>
+</main><footer>my e-notice app · Headmaster Office</footer>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
@@ -535,7 +547,7 @@ async function refreshDashboardStatistics(school){
   $("statStudentsRemainingHint").textContent=`Out of ${students.length} registered students`;
  }catch(e){console.warn("Dashboard statistics could not be refreshed",e);["statTeachers","statStudents","statMaleStudents","statFemaleStudents","statTimetable","statExams"].forEach(id=>{const el=$(id);if(el&&el.textContent==="—")el.textContent="—"})}
 }
-function render(school){currentSchoolData=school||currentSchoolData;const headerLogo=$("headerSchoolLogo");if(headerLogo){if(school.photo){const img=document.createElement("img");img.src=school.photo;img.alt=(school.name||"School")+" logo";headerLogo.replaceChildren(img);headerLogo.setAttribute("aria-label",img.alt)}else{headerLogo.textContent="eN";headerLogo.setAttribute("aria-label","School logo")}}const welcome=$("welcome");if(welcome)welcome.textContent="Welcome, "+(user.displayName||profile?.fullName||"Registrar");const registrarName=profile?.fullName||profile?.name||user.displayName||"Registrar";const registrarDisplayName=$("registrarDisplayName");if(registrarDisplayName)registrarDisplayName.textContent=registrarName;const registrarSchoolDisplay=$("registrarSchoolDisplay");if(registrarSchoolDisplay)registrarSchoolDisplay.textContent=school.name||"School name";const avatar=$("registrarAvatar");const registrarPhoto=profile?.photoURL||profile?.photoUrl||profile?.photo||user.photoURL||"";if(avatar)avatar.replaceChildren();if(registrarPhoto&&avatar){const avatarImg=document.createElement("img");avatarImg.src=registrarPhoto;avatarImg.alt=registrarName+" profile photo";avatar.append(avatarImg)}else{avatar.textContent=registrarName.split(/\\s+/).filter(Boolean).slice(0,2).map(part=>part[0].toUpperCase()).join("")||"R"}$("statSchoolStatus").textContent=school.status||"Active";$("dashboardSchoolName").textContent=school.name||"School Profile";const schoolIdEl=$("schoolId");if(schoolIdEl)schoolIdEl.textContent=school.id||"School ID unavailable";view("dashboard");showRegistrarPage(activeRegistrarPage||"dashboard");loadAcademicSessionForm().catch(e=>console.error(e));renderSchoolClasses(school);populateOfficialStudentClasses();refreshOfficialStudents().catch(e=>console.error(e));refreshTeacherConnections().catch(e=>console.error(e));loadPtaFormMasterAssignments().catch(e=>console.error(e));refreshDashboardStatistics(school);loadPtaPayments().catch(e=>console.error(e));initializeTimetableModule().catch(e=>console.error(e))}
+function render(school){currentSchoolData=school||currentSchoolData;const headerLogo=$("headerSchoolLogo");if(headerLogo){if(school.photo){const img=document.createElement("img");img.src=school.photo;img.alt=(school.name||"School")+" logo";headerLogo.replaceChildren(img);headerLogo.setAttribute("aria-label",img.alt)}else{headerLogo.textContent="eN";headerLogo.setAttribute("aria-label","School logo")}}const welcome=$("welcome");if(welcome)welcome.textContent="Welcome, "+(user.displayName||profile?.fullName||"Headmaster");const registrarName=profile?.fullName||profile?.name||user.displayName||"Headmaster";const registrarDisplayName=$("registrarDisplayName");if(registrarDisplayName)registrarDisplayName.textContent=registrarName;const registrarSchoolDisplay=$("registrarSchoolDisplay");if(registrarSchoolDisplay)registrarSchoolDisplay.textContent=school.name||"School name";const avatar=$("registrarAvatar");const registrarPhoto=profile?.photoURL||profile?.photoUrl||profile?.photo||user.photoURL||"";if(avatar)avatar.replaceChildren();if(registrarPhoto&&avatar){const avatarImg=document.createElement("img");avatarImg.src=registrarPhoto;avatarImg.alt=registrarName+" profile photo";avatar.append(avatarImg)}else{avatar.textContent=registrarName.split(/\\s+/).filter(Boolean).slice(0,2).map(part=>part[0].toUpperCase()).join("")||"R"}$("statSchoolStatus").textContent=school.status||"Active";$("dashboardSchoolName").textContent=school.name||"School Profile";const schoolIdEl=$("schoolId");if(schoolIdEl)schoolIdEl.textContent=school.id||"School ID unavailable";view("dashboard");showRegistrarPage(activeRegistrarPage||"dashboard");loadAcademicSessionForm().catch(e=>console.error(e));renderSchoolClasses(school);populateOfficialStudentClasses();refreshOfficialStudents().catch(e=>console.error(e));refreshTeacherConnections().catch(e=>console.error(e));loadPtaFormMasterAssignments().catch(e=>console.error(e));refreshDashboardStatistics(school);loadPtaPayments().catch(e=>console.error(e));initializeTimetableModule().catch(e=>console.error(e))}
 async function copySchoolId(){
  const id=profile?.schoolId;
  const feedback=$("copySchoolIdMessage");
@@ -562,8 +574,8 @@ $("registrarPhotoFile")?.addEventListener("change",async()=>{
   const result=await response.json();if(!response.ok||!result.secure_url)throw new Error(result.error?.message||"Photo upload failed.");
   await updateDoc(doc(db,"registrars",user.uid),{photo:result.secure_url,photoURL:result.secure_url,updatedAt:serverTimestamp()});
   profile={...profile,photo:result.secure_url,photoURL:result.secure_url};
-  const avatar=$("registrarAvatar"),img=document.createElement("img");img.src=result.secure_url;img.alt=(profile.fullName||user.displayName||"Registrar")+" profile photo";avatar.replaceChildren(img);
-  status.textContent="Registrar profile photo updated.";
+  const avatar=$("registrarAvatar"),img=document.createElement("img");img.src=result.secure_url;img.alt=(profile.fullName||user.displayName||"Headmaster")+" profile photo";avatar.replaceChildren(img);
+  status.textContent="Headmaster profile photo updated.";
  }catch(e){console.error(e);status.textContent=err(e)}
  finally{$("registrarPhotoFile").value=""}
 });
@@ -690,6 +702,34 @@ function createAssignmentEditor(initial=[]){
  (initial.length?initial:[{}]).forEach((item,index)=>addRow(item,false));
  return {element:wrap,read(){const result=[];for(const row of rows.querySelectorAll(".assignment-row")){const selects=row.querySelectorAll("select");const className=selects[0].value,subject=selects[1].value;if(!className&&!subject)continue;if(!className||!subject)throw new Error("For every assignment row, select both a class and a subject.");if(!activeSchoolClasses.includes(className))throw new Error(className+" is disabled in Class Management. Enable it before assigning it to a teacher.");if(result.some(x=>x.className===className&&x.subject===subject))continue;result.push({className,subject})}if(!result.length)throw new Error("Add at least one class and subject assignment.");return result}};
 }
+const STAFF_RESPONSIBILITY_OPTIONS=[
+ "AHM Academic","AHM Administration","Examination Officer","Form Master",
+ "Assessment Coordinator","Attendance Officer","Discipline Officer","Safeguarding / Welfare Officer",
+ "ICT Coordinator","Library Coordinator","Sports Coordinator","Health Coordinator",
+ "Timetable Coordinator","Curriculum Coordinator","School Events Coordinator"
+];
+function createStaffResponsibilitiesEditor(initial=[]){
+ const wrap=document.createElement("section");wrap.className="staff-responsibility-editor";
+ const title=document.createElement("strong");title.className="staff-responsibility-title";title.textContent="Additional staff responsibilities";wrap.append(title);
+ const options=document.createElement("div");options.className="staff-responsibility-options";wrap.append(options);
+ const selected=new Set((Array.isArray(initial)?initial:[]).map(x=>String(x||"").trim()).filter(Boolean));
+ function addOption(value){
+  const label=document.createElement("label");label.className="staff-responsibility-option";
+  const input=document.createElement("input");input.type="checkbox";input.value=value;input.checked=selected.has(value);
+  input.addEventListener("change",()=>input.checked?selected.add(value):selected.delete(value));
+  const text=document.createElement("span");text.textContent=value;label.append(input,text);options.append(label);
+ }
+ STAFF_RESPONSIBILITY_OPTIONS.forEach(addOption);
+ [...selected].filter(x=>!STAFF_RESPONSIBILITY_OPTIONS.includes(x)).forEach(addOption);
+ const custom=document.createElement("div");custom.className="staff-custom-role-row";
+ const input=document.createElement("input");input.type="text";input.maxLength=70;input.placeholder="Add another school responsibility";input.setAttribute("aria-label","Custom school responsibility");
+ const add=document.createElement("button");add.type="button";add.className="secondary";add.textContent="＋ Add";
+ add.addEventListener("click",()=>{const value=input.value.trim().replace(/\s+/g," ");if(!value)return;if(value.length>70){alert("Responsibility must be 70 characters or fewer.");return;}if(selected.has(value)){input.value="";return;}selected.add(value);addOption(value);input.value="";});
+ input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();add.click();}});
+ custom.append(input,add);wrap.append(custom);
+ const hint=document.createElement("small");hint.className="muted";hint.style.cssText="display:block;margin:8px 0 0;font-size:11px";hint.textContent="These duties are additional to the teacher's normal teaching account. Form Master PTA access still requires a class assignment in PTA Payments.";wrap.append(hint);
+ return {element:wrap,read:()=>[...selected]};
+}
 function ptaFormMasterStatus(text,type="info"){
  const el=$("ptaFormMasterStatus");if(!el)return;el.textContent=text;el.style.color=type==="error"?"#b42318":type==="success"?"#067647":"#667085";
 }
@@ -791,22 +831,25 @@ async function refreshTeacherConnections(){
    const card=document.createElement("div");card.className="teacher-compact-card";
    const head=document.createElement("div");head.className="teacher-compact-head";
    if(r.teacherPhoto){const img=document.createElement("img");img.src=r.teacherPhoto;img.alt="Teacher photo";img.className="teacher-compact-avatar";head.append(img)}
-   const info=document.createElement("div");info.className="teacher-compact-info";const name=document.createElement("strong");name.className="teacher-compact-name";name.textContent=r.teacherName||"Teacher";const meta=document.createElement("p");meta.className="teacher-compact-meta";meta.textContent="Status: "+(r.status||"unknown");info.append(name,meta);head.append(info);card.append(head);
+   const info=document.createElement("div");info.className="teacher-compact-info";const name=document.createElement("strong");name.className="teacher-compact-name";name.textContent=r.teacherName||"Teacher";const meta=document.createElement("p");meta.className="teacher-compact-meta";const responsibilityCount=Array.isArray(r.assignedResponsibilities)?r.assignedResponsibilities.length:0;meta.textContent="Status: "+(r.status||"unknown")+(responsibilityCount?" · "+responsibilityCount+" responsibility"+(responsibilityCount===1?"":"ies"):"");info.append(name,meta);head.append(info);card.append(head);
    const controls=document.createElement("div");controls.className="teacher-compact-controls teacher-card-actions";
    if(["pending","connected","deactivated","disconnected"].includes(r.status)){
     const assignedRole=r.assignedRole||"Subject Teacher";
     const existing=r.assignedTeachingAssignments||[];
     const legacy=existing.length?existing:((r.assignedClasses|| (r.assignedClass?[r.assignedClass]:[])).flatMap(c=>(r.assignedSubjects||[]).map(subject=>({className:c,subject}))));
-    const editor=createAssignmentEditor(["connected","deactivated","disconnected"].includes(r.status)?legacy:[]);controls.append(editor.element);
+    const editor=createAssignmentEditor(["connected","deactivated","disconnected"].includes(r.status)?legacy:[]);
+    const responsibilityEditor=createStaffResponsibilitiesEditor(r.assignedResponsibilities||[]);
+    editor.element.append(responsibilityEditor.element);
+    controls.append(editor.element);
     controls.classList.add("teacher-card-actions");
     if(r.status==="pending"){
-     const approve=document.createElement("button");approve.className="primary";approve.textContent="Approve & Save";approve.onclick=()=>{try{decideTeacherConnection(r,"connected",assignedRole,editor.read())}catch(e){msg(e.message,"error")}};controls.append(approve);
+     const approve=document.createElement("button");approve.className="primary";approve.textContent="Approve & Save";approve.onclick=()=>{try{decideTeacherConnection(r,"connected",assignedRole,editor.read(),responsibilityEditor.read())}catch(e){msg(e.message,"error")}};controls.append(approve);
      const reject=document.createElement("button");reject.className="secondary danger";reject.textContent="Reject";reject.onclick=()=>{if(confirm("Reject this teacher connection request?"))decideTeacherConnection(r,"rejected",assignedRole,[])};controls.append(reject);
     }else{
      const del=document.createElement("button");del.className="secondary danger";del.textContent="Delete";del.style.gridArea="delete";del.onclick=()=>deleteTeacherConnection(r);controls.append(del);
-     const save=document.createElement("button");save.className="primary";save.textContent="Save Changes";save.style.gridArea="save";save.onclick=()=>{try{decideTeacherConnection(r,r.status,assignedRole,editor.read())}catch(e){msg(e.message,"error")}};controls.append(save);
-     const deactivate=document.createElement("button");deactivate.className="secondary";deactivate.textContent="Deactivate";deactivate.style.gridArea="deactivate";deactivate.disabled=r.status!=="connected";deactivate.onclick=()=>{try{if(confirm("Temporarily deactivate "+(r.teacherName||"this teacher")+"?"))decideTeacherConnection(r,"deactivated",assignedRole,editor.read())}catch(e){msg(e.message,"error")}};controls.append(deactivate);
-     const activate=document.createElement("button");activate.className="primary";activate.textContent=r.status==="disconnected"?"Reconnect":"Activate";activate.style.gridArea="activate";activate.disabled=r.status==="connected";activate.onclick=()=>{try{if(confirm("Activate "+(r.teacherName||"this teacher")+" for this school?"))decideTeacherConnection(r,"connected",assignedRole,editor.read())}catch(e){msg(e.message,"error")}};controls.append(activate);
+     const save=document.createElement("button");save.className="primary";save.textContent="Save Changes";save.style.gridArea="save";save.onclick=()=>{try{decideTeacherConnection(r,r.status,assignedRole,editor.read(),responsibilityEditor.read())}catch(e){msg(e.message,"error")}};controls.append(save);
+     const deactivate=document.createElement("button");deactivate.className="secondary";deactivate.textContent="Deactivate";deactivate.style.gridArea="deactivate";deactivate.disabled=r.status!=="connected";deactivate.onclick=()=>{try{if(confirm("Temporarily deactivate "+(r.teacherName||"this teacher")+"?"))decideTeacherConnection(r,"deactivated",assignedRole,editor.read(),responsibilityEditor.read())}catch(e){msg(e.message,"error")}};controls.append(deactivate);
+     const activate=document.createElement("button");activate.className="primary";activate.textContent=r.status==="disconnected"?"Reconnect":"Activate";activate.style.gridArea="activate";activate.disabled=r.status==="connected";activate.onclick=()=>{try{if(confirm("Activate "+(r.teacherName||"this teacher")+" for this school?"))decideTeacherConnection(r,"connected",assignedRole,editor.read(),responsibilityEditor.read())}catch(e){msg(e.message,"error")}};controls.append(activate);
     }
    }
    card.append(controls);box.append(card);
@@ -824,15 +867,16 @@ async function deleteTeacherConnection(r){
   await refreshTeacherConnections();await loadPtaFormMasterAssignments();
  }catch(e){console.error(e);msg("Could not delete this teacher. Check Firestore permissions: "+err(e),"error");}
 }
-async function decideTeacherConnection(r,status,assignedRole,assignments=[]){
+async function decideTeacherConnection(r,status,assignedRole,assignments=[],responsibilities=[]){
+ const assignedResponsibilities=[...new Set((Array.isArray(responsibilities)?responsibilities:[]).map(x=>String(x||"").trim()).filter(Boolean))];
  const assignedClasses=[...new Set(assignments.map(a=>a.className))];const assignedSubjects=[...new Set(assignments.map(a=>a.subject))];const assignedPairKeys=[...new Set(assignments.map(a=>String(a.className)+"::"+String(a.subject)))];const assignedClass=assignedClasses[0]||"";
  try{
   if(!profile?.schoolId||!user)throw new Error("Registrar or school profile is not ready.");
   const requestRef=doc(db,"teacherConnectionRequests",r.id);
-  await updateDoc(requestRef,{status,assignedRole,assignedClass,assignedClasses,assignedSubjects,assignedPairKeys,assignedTeachingAssignments:assignments,reviewedBy:user.uid,updatedAt:serverTimestamp(),...(status==="connected"?{approvedAt:r.status==="pending"?serverTimestamp():(r.approvedAt||serverTimestamp())}:status==="deactivated"?{deactivatedAt:serverTimestamp(),deactivatedBy:user.uid}:status==="disconnected"?{disconnectedAt:serverTimestamp(),disconnectedBy:user.uid}:{reviewedAt:serverTimestamp()})});
+  await updateDoc(requestRef,{status,assignedRole,assignedClass,assignedClasses,assignedSubjects,assignedPairKeys,assignedTeachingAssignments:assignments,assignedResponsibilities,reviewedBy:user.uid,updatedAt:serverTimestamp(),...(status==="connected"?{approvedAt:r.status==="pending"?serverTimestamp():(r.approvedAt||serverTimestamp())}:status==="deactivated"?{deactivatedAt:serverTimestamp(),deactivatedBy:user.uid}:status==="disconnected"?{disconnectedAt:serverTimestamp(),disconnectedBy:user.uid}:{reviewedAt:serverTimestamp()})});
   const memberId=profile.schoolId+"_"+r.teacherUid;const memberRef=doc(db,"schoolTeachers",memberId);
-  if(status==="connected")await setDoc(memberRef,{schoolId:profile.schoolId,schoolName:r.schoolName||$("dashboardSchoolName").textContent,registrarUid:user.uid,teacherUid:r.teacherUid,teacherName:r.teacherName||"Teacher",teacherEmail:r.teacherEmail||"",teacherPhoto:r.teacherPhoto||"",status:"connected",assignedRole,assignedClass,assignedClasses,assignedSubjects,assignedPairKeys,assignedTeachingAssignments:assignments,connectedAt:r.status==="pending"?serverTimestamp():(r.connectedAt||serverTimestamp()),updatedAt:serverTimestamp()},{merge:true});
-  else if(status==="deactivated"||status==="disconnected")await setDoc(memberRef,{schoolId:profile.schoolId,teacherUid:r.teacherUid,status,assignedRole,assignedClass,assignedClasses,assignedSubjects,assignedPairKeys,assignedTeachingAssignments:assignments,updatedAt:serverTimestamp(),...(status==="deactivated"?{deactivatedAt:serverTimestamp()}:{disconnectedAt:serverTimestamp()})},{merge:true});
+  if(status==="connected")await setDoc(memberRef,{schoolId:profile.schoolId,schoolName:r.schoolName||$("dashboardSchoolName").textContent,registrarUid:user.uid,teacherUid:r.teacherUid,teacherName:r.teacherName||"Teacher",teacherEmail:r.teacherEmail||"",teacherPhoto:r.teacherPhoto||"",status:"connected",assignedRole,assignedClass,assignedClasses,assignedSubjects,assignedPairKeys,assignedTeachingAssignments:assignments,assignedResponsibilities,connectedAt:r.status==="pending"?serverTimestamp():(r.connectedAt||serverTimestamp()),updatedAt:serverTimestamp()},{merge:true});
+  else if(status==="deactivated"||status==="disconnected")await setDoc(memberRef,{schoolId:profile.schoolId,teacherUid:r.teacherUid,status,assignedRole,assignedClass,assignedClasses,assignedSubjects,assignedPairKeys,assignedTeachingAssignments:assignments,assignedResponsibilities,updatedAt:serverTimestamp(),...(status==="deactivated"?{deactivatedAt:serverTimestamp()}:{disconnectedAt:serverTimestamp()})},{merge:true});
   msg(status==="connected"?(r.status==="pending"?"Teacher connection approved and assignments saved.":"Teacher assignments updated successfully."):status==="rejected"?"Teacher request rejected.":status==="disconnected"?"Teacher disconnected from this school. The record was retained.":status==="deactivated"?"Teacher connection deactivated.":"Teacher status updated.","success");await refreshTeacherConnections();await loadPtaFormMasterAssignments();
  }catch(e){console.error(e);msg(err(e),"error")}
 }
