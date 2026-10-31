@@ -4900,9 +4900,9 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     try{sessionStorage.removeItem('teacherActiveSection');}catch(_e){}
     busy(loginForm,true);
     try{
-      await signInWithEmailAndPassword(auth,document.getElementById('authEmail').value.trim(),document.getElementById('authPassword').value);
-      // onAuthStateChanged is the single owner of role verification and dashboard routing.
-      message('Login successful. Verifying your account and opening the dashboard…','success');
+      const credential=await signInWithEmailAndPassword(auth,document.getElementById('authEmail').value.trim(),document.getElementById('authPassword').value);
+      const role=await routeSignedInUser(credential.user);
+      if(role==='teacher') message('Login successful. Opening your dashboard…','success');
     }catch(err){message(friendlyError(err));}
     finally{busy(loginForm,false);}
   });
@@ -5371,9 +5371,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   onAuthStateChanged(auth,async user=>{
     window.__teacherAuthStateSeen = true;
     if(user){
-      let teacherRoleVerified=false;
       document.documentElement.classList.add('teacher-auth-pending');
-      try {
       // Never carry connection or school records from the previously signed-in account.
       activeTeacherConnection=null;window.activeTeacherConnection=null;
       window.firebaseTeacherUID=user.uid;window.firebaseTeacherUser=user;
@@ -5384,7 +5382,6 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
           new Promise((_,reject)=>setTimeout(()=>reject(new Error('Account verification timed out. Please check your internet connection and Firestore Rules, then sign in again.')),10000))
         ]);
         if(role==='registrar')return;
-        teacherRoleVerified=true;
       }catch(err){
         console.error('Account role check failed:',err);
         window.firebaseTeacherUID=null;
@@ -5448,25 +5445,8 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         if(dashboard)dashboard.style.display='block';
       }finally{
         window.__restoringTeacherSection=false;
-      }
-      } catch(unexpectedAuthError) {
-        console.error('Unexpected teacher dashboard startup error:',unexpectedAuthError);
-        if(teacherRoleVerified){
-          // Role is verified: keep the authenticated teacher inside the dashboard
-          // even if an optional profile/connection/render step fails.
-          gate?.classList.add('auth-hidden');gate?.classList.add('auth-ready');
-          document.querySelectorAll('.section-view').forEach(el=>el.style.display='none');
-          const dashboard=document.getElementById('dashboardView');
-          if(dashboard)dashboard.style.display='block';
-          const status=document.getElementById('teacherSchoolConnectionStatus');
-          if(status){status.textContent='Dashboard opened, but some information could not load. Check your connection and use Refresh.';status.style.background='#fff7e6';status.style.color='#8a5a00';}
-        }else{
-          gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');
-          showPanel(loginForm);message(friendlyError(unexpectedAuthError));
-        }
-      } finally {
-        window.__restoringTeacherSection=false;
         document.documentElement.classList.remove('teacher-auth-pending');
+        window.__teacherDashboardReady = true;
       }
     }else{
       activeTeacherConnection=null;window.activeTeacherConnection=null;
@@ -6201,6 +6181,16 @@ ptaObserver.observe(document.body,{childList:true,subtree:true});
       showLoginFallback('Firebase is taking too long to restore your session. Please refresh the page and sign in again.');
     }
   },10000);
+
+  // Recovery for an authenticated page that remains hidden after the auth
+  // callback has started. This never bypasses account verification: it
+  // reveals the login gate and lets the user retry instead of leaving a blank page.
+  window.setTimeout(function(){
+    if(document.documentElement.classList.contains('teacher-auth-pending') &&
+       !window.__teacherDashboardReady){
+      showLoginFallback('The teacher dashboard did not finish opening. Your session was not bypassed. Please sign in again; if it repeats, check the Firebase connection and account permissions.');
+    }
+  },18000);
   window.addEventListener('error',function(e){
     if(!window.__teacherFirebaseModuleReady){
       showLoginFallback('A page script failed to load. Refresh the page; if this continues, check the browser console for the script error.');
