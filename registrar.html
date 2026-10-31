@@ -568,7 +568,52 @@ $("registrarPhotoFile")?.addEventListener("change",async()=>{
  finally{$("registrarPhotoFile").value=""}
 });
 
-async function load(userObj){const snap=await getDoc(doc(db,"registrars",userObj.uid));if(!snap.exists()){profile=null;view("setup");return}profile={uid:userObj.uid,...snap.data()};if(!profile.schoolId){view("setup");return}const ss=await getDoc(doc(db,"schools",profile.schoolId));if(!ss.exists()){msg("The school record could not be found. Please contact support.","error");view("setup");return}render({id:ss.id,...ss.data()})}
+async function load(userObj){
+ const registrarRef=doc(db,"registrars",userObj.uid);
+ const snap=await getDoc(registrarRef);
+ if(!snap.exists()){
+  profile=null;
+  msg("Your registrar account is signed in, but its registrar profile document is missing. Please contact the platform administrator; do not create another school account.","error");
+  view("setup");
+  return;
+ }
+ profile={uid:userObj.uid,...snap.data()};
+ let schoolId=String(profile.schoolId||"").trim();
+
+ // Recovery: older registrar profiles may not have been linked to the school
+ // document created by this same registrar. Search only by the authenticated UID.
+ if(!schoolId){
+  try{
+   const ownedSchools=await getDocs(query(collection(db,"schools"),where("createdBy","==",userObj.uid)));
+   if(ownedSchools.size===1){
+    const owned=ownedSchools.docs[0];
+    schoolId=owned.id;
+    await updateDoc(registrarRef,{schoolId,updatedAt:serverTimestamp()});
+    profile={...profile,schoolId};
+   }else if(ownedSchools.size>1){
+    msg("More than one school record is linked to this registrar UID. No school was selected or changed. Please contact the platform administrator to confirm the correct school.","error");
+    view("setup");
+    return;
+   }else{
+    msg("No existing school was found under this registrar account. Your existing records have not been changed. If the school was created under another registrar UID, the platform administrator must link the correct school ID.","info");
+    view("setup");
+    return;
+   }
+  }catch(recoveryError){
+   console.error("Existing school recovery lookup failed:",recoveryError);
+   msg("Your registrar profile has no School ID, and Firebase did not allow the existing-school lookup. No new school was created. Please check the Firestore rules for reading schools where createdBy matches your UID. Details: "+err(recoveryError),"error");
+   view("setup");
+   return;
+  }
+ }
+ const ss=await getDoc(doc(db,"schools",schoolId));
+ if(!ss.exists()){
+  msg("Your registrar profile points to school ID "+schoolId+", but that school document could not be read or was not found. No replacement school was created. Please check the school document and Firestore read permissions.","error");
+  view("setup");
+  return;
+ }
+ render({id:ss.id,...ss.data()});
+}
 const DEFAULT_SCHOOL_CLASSES=["Primary 1","Primary 2","Primary 3","Primary 4","Primary 5","Primary 6"];
 const DEFAULT_SCHOOL_SUBJECTS=["English Studies","Mathematics","Basic Science and Technology","National Values Education","Pre-Vocational Studies","Religion and National Values","Physical and Health Education","Cultural and Creative Arts","Nigerian Languages","Computer Studies","Social Studies","Agricultural Science"];
 let activeSchoolSubjects=DEFAULT_SCHOOL_SUBJECTS.slice();
