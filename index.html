@@ -1291,11 +1291,13 @@ table{max-width:100%}
 </style>
 
 <style id="firebase-auth-ui-style">
-/* Prevent refresh flicker while Firebase restores an already-signed-in teacher session. */
+/* Keep the screen visible while Firebase restores and verifies a session. */
 html.teacher-auth-pending .topnav-header,
 html.teacher-auth-pending .main{visibility:hidden !important;}
-html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
 #firebaseAuthGate{position:fixed;inset:0;z-index:10000;background:linear-gradient(135deg,#eef8f5,#f4f7fb);display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto;visibility:visible}
+html.teacher-auth-pending #firebaseAuthGate{display:flex !important;}
+html.teacher-auth-pending #firebaseAuthGate .auth-card{display:none !important;}
+html.teacher-auth-pending #firebaseAuthGate:after{content:'Checking your account… Please wait.';display:block;padding:22px 26px;background:#fff;border:1px solid #dfe7ef;border-radius:14px;box-shadow:0 12px 35px rgba(16,35,63,.12);color:#075c51;font-weight:800;text-align:center;max-width:90%;}
 #firebaseAuthGate.auth-ready{visibility:visible}
 #firebaseAuthGate.auth-hidden{display:none}
 .auth-card{width:min(430px,100%);background:#fff;border:1px solid #dfe7ef;border-radius:20px;box-shadow:0 18px 50px rgba(16,35,63,.14);padding:24px}
@@ -1579,8 +1581,13 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
 <style id="subject-system-marker">/* SUBJECT_SYSTEM */</style></head>
 <body>
 <script>
-  /* Do not hide the login form based on a cached localStorage UID.
-     Firebase Auth is the source of truth for whether a session exists. */
+  /* Mark an existing Firebase session as pending before the dashboard paints.
+     This prevents the login overlay/dashboard from flashing during refresh. */
+  try{
+    if(localStorage.getItem('firebaseTeacherUID')){
+      document.documentElement.classList.add('teacher-auth-pending');
+    }
+  }catch(_e){}
 </script>
 <div id="firebaseAuthGate">
   <div class="auth-card">
@@ -1591,10 +1598,10 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
     </div>
     <div id="authMessage" class="auth-message"></div>
 
-    <form id="teacherLoginForm" class="auth-form" autocomplete="on">
+    <form id="teacherLoginForm" class="auth-form" method="post" action="" onsubmit="if(!window.__myENoticeAuthReady){var m=document.getElementById('authMessage');if(m){m.textContent='Login service is not ready yet. Please refresh the page and try again.';m.className='auth-message error';}} return false;">
       <h3>Login</h3>
-      <div class="auth-field"><label for="authEmail">Email Address</label><input id="authEmail" name="username" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
-      <div class="auth-field"><label for="authPassword">Password</label><input id="authPassword" name="password" type="password" autocomplete="current-password" required minlength="6"></div>
+      <div class="auth-field"><label for="authEmail">Email Address</label><input id="authEmail" type="email" autocomplete="email" required></div>
+      <div class="auth-field"><label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" required minlength="6"></div>
       <button class="auth-primary" type="submit" id="authLoginBtn">LOGIN</button>
       <div class="auth-links"><button class="auth-link" type="button" id="authForgotBtn">Forgot Password?</button></div>
       <button class="auth-secondary" type="button" id="authShowRegister">CREATE ACCOUNT</button>
@@ -4720,15 +4727,8 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   function clearMessage(){ if(msg){msg.textContent='';msg.className='auth-message';} }
   function busy(form,yes){ if(form)form.classList.toggle('auth-loading',yes); }
   function showPanel(panel){
-    // Do not hide and re-show a panel that is already visible. On some mobile
-    // browsers this display:none/display:block cycle clears focused/autofilled
-    // login fields when Firebase emits its initial auth-state callback.
-    const panels=[loginForm,registerRoleChoice,registerForm,registrarRegisterForm,parentRegisterForm].filter(Boolean);
-    const alreadyVisible=!!panel && getComputedStyle(panel).display!=='none' && panels.every(el=>el===panel || getComputedStyle(el).display==='none');
-    if(!alreadyVisible){
-      panels.forEach(el=>{if(el!==panel)el.style.display='none';});
-      if(panel)panel.style.display='block';
-    }
+    [loginForm,registerRoleChoice,registerForm,registrarRegisterForm,parentRegisterForm].forEach(el=>{if(el)el.style.display='none';});
+    if(panel)panel.style.display='block';
     clearMessage();
   }
   function friendlyError(e){
@@ -4758,49 +4758,57 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   document.getElementById('parentRegisterBack')?.addEventListener('click',()=>{showPanel(registerRoleChoice);subtitle.textContent='Choose the account you want to create';});
 
   async function routeSignedInUser(user){
-    // Check the user's own teacher profile first. This preserves existing teacher
-    // login under the current teacher-only Firestore rules, without requiring a
-    // read from the registrars collection.
+    // Check the teacher's own profile first. A teacher must not be blocked
+    // because Firestore rules deny reading the unrelated registrars collection.
     const teacherSnap=await getDoc(doc(db,'teachers',user.uid));
     if(teacherSnap.exists()){
       const teacherData=teacherSnap.data()||{};
-      // Older teacher profiles may store the role with different capitalization
-      // or legacy wording. Normalize it before deciding whether to allow access.
       const normalizedRole=String(teacherData.role||'').trim().toLowerCase();
       const acceptedTeacherRoles=['','teacher','class teacher','subject teacher','primary teacher'];
-      if(!acceptedTeacherRoles.includes(normalizedRole)){
-        await signOut(auth);
+      if(acceptedTeacherRoles.includes(normalizedRole)) return 'teacher';
+      // A legacy teacher document may coexist with a Registrar account.
+      if(normalizedRole!=='registrar'){
         throw new Error('This account is registered with the role "'+teacherData.role+'", not Teacher. Please contact the administrator.');
       }
-      return 'teacher';
     }
 
-    // Only check the registrar record if this account has no teacher profile.
-    // Registrar access still requires appropriate Firestore rules for registrars/{uid}.
+    // Only check other role collections when no valid teacher profile was found.
     const registrarSnap=await getDoc(doc(db,'registrars',user.uid));
-    if(registrarSnap.exists() && registrarSnap.data()?.role==='registrar'){
+    if(registrarSnap.exists() && String(registrarSnap.data()?.role||'').trim().toLowerCase()==='registrar'){
+      try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
       window.location.replace('registrar.html');
       return 'registrar';
     }
 
     const parentSnap=await getDoc(doc(db,'parents',user.uid));
-    if(parentSnap.exists() && parentSnap.data()?.role==='parent'){ window.location.replace('parents.html'); return 'parent'; }
-    await signOut(auth);
-    throw new Error('This account has no registered role. Please create an account or contact support.');
+    if(parentSnap.exists() && parentSnap.data()?.role==='parent'){
+      try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
+      window.location.replace('parents.html');
+      return 'parent';
+    }
+    throw new Error('This account has no registered role. Please contact the school administrator.');
   }
 
   loginForm?.addEventListener('submit',async e=>{
-    e.preventDefault(); clearMessage();
-    try{sessionStorage.removeItem('teacherActiveSection');}catch(_e){}
+    e.preventDefault(); lastAuthErrorMessage=''; clearMessage();
+    loginAttemptInProgress=true;
+    try{
+      sessionStorage.removeItem('teacherActiveSection');
+      sessionStorage.setItem('myENoticeLoginIntent','1');
+    }catch(_e){}
     busy(loginForm,true);
     try{
-      // onAuthStateChanged is the single source of truth for role verification
-      // and dashboard routing. Do not run routeSignedInUser a second time here.
+      // Firebase's auth-state listener is the single authority for role checks
+      // and portal navigation. Do not route a second time from this form.
       await signInWithEmailAndPassword(auth,document.getElementById('authEmail').value.trim(),document.getElementById('authPassword').value);
-      message('Sign-in successful. Verifying your account and opening your dashboard…','success');
-    }catch(err){message(friendlyError(err));}
-    finally{busy(loginForm,false);}
+      message('Login successful. Verifying your account and opening the correct portal…','success');
+    }catch(err){
+      loginAttemptInProgress=false;
+      try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
+      message(friendlyError(err));busy(loginForm,false);
+    }
   });
+  window.__myENoticeAuthReady = !!loginForm;
 
   async function createTeacherAccount(e){
     e.preventDefault();clearMessage();try{sessionStorage.removeItem('teacherActiveSection');}catch(_e){}
@@ -4810,12 +4818,13 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     const confirm=document.getElementById('authConfirmPassword').value;
     if(password!==confirm){message('Passwords do not match.');return;}
     busy(registerForm,true);
+    try{sessionStorage.setItem('myENoticeLoginIntent','1');}catch(_e){}
     let cred=null;
     try{
       cred=await createUserWithEmailAndPassword(auth,email,password);
       if(name) await updateProfile(cred.user,{displayName:name});
       await setDoc(doc(db,'teachers',cred.user.uid),{
-        uid:cred.user.uid,fullName:name || cred.user.displayName || '', email:cred.user.email || email,
+        fullName:name || cred.user.displayName || '', email:cred.user.email || email,
         phone:'',gender:'',schoolId:'',schoolName:'',role:'teacher',qualification:'',
         specialization:'',experience:'',address:'',profilePhoto:'',
         createdAt:serverTimestamp(),updatedAt:serverTimestamp(),initialSavedAt:null
@@ -4840,6 +4849,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     const confirm=document.getElementById('registrarConfirmPassword').value;
     if(password!==confirm){message('Passwords do not match.');return;}
     busy(registrarRegisterForm,true);
+    try{sessionStorage.setItem('myENoticeLoginIntent','1');}catch(_e){}
     let cred=null;
     try{
       cred=await createUserWithEmailAndPassword(auth,email,password);
@@ -4860,7 +4870,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     e.preventDefault();clearMessage();
     const name=document.getElementById('parentFullName').value.trim(),phone=document.getElementById('parentRegisterPhone').value.trim(),email=document.getElementById('parentRegisterEmail').value.trim(),password=document.getElementById('parentRegisterPassword').value,confirm=document.getElementById('parentConfirmPassword').value;
     if(password!==confirm){message('Passwords do not match.');return;}
-    busy(parentRegisterForm,true);let cred=null;
+    busy(parentRegisterForm,true);try{sessionStorage.setItem('myENoticeLoginIntent','1');}catch(_e){}let cred=null;
     try{cred=await createUserWithEmailAndPassword(auth,email,password);await updateProfile(cred.user,{displayName:name});await setDoc(doc(db,'parents',cred.user.uid),{uid:cred.user.uid,fullName:name,email:cred.user.email||email,phone,role:'parent',createdAt:serverTimestamp(),updatedAt:serverTimestamp()});message('Parent account created. Opening your dashboard…','success');window.location.replace('parents.html');}
     catch(err){if(cred?.user){try{await deleteUser(cred.user);}catch(cleanupErr){}}message(friendlyError(err));}
     finally{busy(parentRegisterForm,false);}
@@ -4890,18 +4900,13 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     const snap=await getDoc(ref);
     if(!snap.exists()){
       await setDoc(ref,{
-        uid:user.uid,fullName:user.displayName||'',email:user.email||'',phone:'',gender:'',schoolId:'',schoolName:'',role:'teacher',
+        fullName:user.displayName||'',email:user.email||'',phone:'',gender:'',schoolId:'',schoolName:'',role:'teacher',
         qualification:'',specialization:'',experience:'',address:'',profilePhoto:'',
         createdAt:serverTimestamp(),updatedAt:serverTimestamp()
       });
-      return {uid:user.uid,fullName:user.displayName||'',email:user.email||'',phone:'',gender:'',schoolId:'',schoolName:'',role:'teacher',qualification:'',specialization:'',experience:'',address:'',profilePhoto:''};
+      return {fullName:user.displayName||'',email:user.email||'',phone:'',gender:'',schoolId:'',schoolName:'',role:'teacher',qualification:'',specialization:'',experience:'',address:'',profilePhoto:''};
     }
-    const existing=snap.data()||{};
-    const profilePatch={};
-    if(existing.uid!==user.uid)profilePatch.uid=user.uid;
-    if(!existing.role)profilePatch.role='teacher';
-    if(Object.keys(profilePatch).length){profilePatch.updatedAt=serverTimestamp();await setDoc(ref,profilePatch,{merge:true});Object.assign(existing,profilePatch);}
-    return existing;
+    return snap.data()||{};
   }
 
   function applyFirestoreTeacherProfile(data,user){
@@ -5219,15 +5224,33 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     const user=auth.currentUser;
     if(!user)throw new Error('No authenticated teacher.');
     await setDoc(doc(db,'teachers',user.uid),{
-      uid:user.uid,fullName:user.displayName||data.fullName||'',email:user.email||'',phone:data.phone||'',gender:data.gender||'',
+      fullName:user.displayName||data.fullName||'',email:user.email||'',phone:data.phone||'',gender:data.gender||'',
       schoolName:activeTeacherConnection?.status==='connected'?(activeTeacherConnection.schoolName||''):(data.school||''),role:'teacher',qualification:data.qualification||'',
       specialization:data.specialization||'',experience:data.experience||'',address:data.address||'',
       profilePhoto:data.photo||'',initialSavedAt:data.initialSavedAt||null,updatedAt:serverTimestamp()
     },{merge:true});
   };
 
+  let authInitialized=false;
+  let loginAttemptInProgress=false;
+  // Keep the reason for a rejected login visible even if Firebase emits a
+  // second (user === null) auth event after signOut().
+  let lastAuthErrorMessage='';
   onAuthStateChanged(auth,async user=>{
     if(user){
+      // The homepage is always the login page on a fresh visit/refresh.
+      // Only a login or registration started in this tab may route to a portal.
+      let deliberateLogin=loginAttemptInProgress;
+      try{deliberateLogin=deliberateLogin || sessionStorage.getItem('myENoticeLoginIntent')==='1';}catch(_e){}
+      if(!deliberateLogin){
+        try{localStorage.removeItem('firebaseTeacherUID');localStorage.removeItem('firebaseTeacherDisplayName');}catch(_e){}
+        try{await signOut(auth);}catch(signOutError){console.warn('Could not clear restored homepage session:',signOutError);}
+        document.documentElement.classList.remove('teacher-auth-pending');
+        gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');
+        showPanel(loginForm);
+        if(subtitle)subtitle.textContent='Sign in to continue';
+        return;
+      }
       document.documentElement.classList.add('teacher-auth-pending');
       // Never carry connection or school records from the previously signed-in account.
       activeTeacherConnection=null;window.activeTeacherConnection=null;
@@ -5235,12 +5258,15 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       window.dispatchEvent(new Event('teacherAccountContextChanged'));
       try{
         const role=await routeSignedInUser(user);
-        if(role==='registrar')return;
+        if(role==='registrar'){loginAttemptInProgress=false;return;}
       }catch(err){
         console.error('Account role check failed:',err);
+        loginAttemptInProgress=false;
+        lastAuthErrorMessage=friendlyError(err);
         window.firebaseTeacherUID=null;
+        try{await signOut(auth);}catch(signOutError){console.warn('Could not clear failed login session:',signOutError);}
         gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');
-        showPanel(loginForm);message(friendlyError(err));
+        showPanel(loginForm);message(lastAuthErrorMessage);
         document.documentElement.classList.remove('teacher-auth-pending');
         return;
       }
@@ -5252,21 +5278,27 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       // Phase 3: resolve connection status before loading any student data, then route to the right dashboard.
       await refreshTeacherSchoolConnection();
       if(window.teacherConnectionLookupState==='connected'){
+        loginAttemptInProgress=false;
+        try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
         const target=new URL('school-connected-teacher.html',window.location.href);
-        target.searchParams.set('phase3','1');
         window.location.replace(target.href);
         return;
       }
       if(window.teacherConnectionLookupState==='independent'){
+        loginAttemptInProgress=false;
+        try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
         const target=new URL('independent-teacher.html',window.location.href);
-        target.searchParams.set('phase3','1');
         window.location.replace(target.href);
         return;
       }
       if(window.teacherConnectionLookupState==='error'){
+        loginAttemptInProgress=false;
+        try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
+        lastAuthErrorMessage='We could not verify your school connection. Check your internet connection and Firestore access, then sign in again. No dashboard was selected.';
+        try{await signOut(auth);}catch(signOutError){console.warn('Could not clear session after connection verification failed:',signOutError);}
         gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');
         showPanel(loginForm);
-        message('We could not verify your school connection. Please check your internet connection or try again. For your safety, the system has not selected a dashboard.');
+        message(lastAuthErrorMessage);
         document.documentElement.classList.remove('teacher-auth-pending');
         return;
       }
@@ -5279,7 +5311,8 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       if(!validSections.includes(activeSection))activeSection='dashboardView';
       window.__restoringTeacherSection=true;if(typeof window.showSection==='function')window.showSection(activeSection,null);
       if(activeSection==='profileView'&&typeof window.loadTeacherProfile==='function')window.loadTeacherProfile();
-      window.__restoringTeacherSection=false;document.documentElement.classList.remove('teacher-auth-pending');
+      window.__restoringTeacherSection=false;loginAttemptInProgress=false;document.documentElement.classList.remove('teacher-auth-pending');
+      try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
     }else{
       activeTeacherConnection=null;window.activeTeacherConnection=null;
       window.firebaseTeacherUID=null;window.firebaseTeacherUser=null;
@@ -5288,11 +5321,9 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       try{localStorage.removeItem('firebaseTeacherUID');localStorage.removeItem('firebaseTeacherDisplayName');}catch(_e){}
       window.dispatchEvent(new Event('teacherAccountContextChanged'));
       document.documentElement.classList.remove('teacher-auth-pending');
-      // Never re-render the login panel from an auth-state callback.
-      // A later null callback can occur while the user is typing; cycling
-      // display:none/display:block can clear input values on mobile browsers.
-      gate?.classList.remove('auth-hidden');
-      gate?.classList.add('auth-ready');
+      showPanel(loginForm);if(subtitle)subtitle.textContent='Sign in to continue';
+      if(lastAuthErrorMessage)message(lastAuthErrorMessage);
+      if(!authInitialized){gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');authInitialized=true;}
     }
   });
 </script>
