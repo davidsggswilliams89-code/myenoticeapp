@@ -1,0 +1,19 @@
+INDEX HOMEPAGE / LOGIN-FIRST FIX
+
+Replace the repository's existing index.html with this corrected index.html.
+Do not rename it. GitHub Pages will serve it as the homepage at:
+https://davidsggswilliams89-code.github.io/myenoticeapp/
+
+What this change does:
+- Keeps index.html as the homepage and login screen.
+- When someone opens or refreshes the homepage, a previously restored Firebase
+  session is cleared and the login screen is shown first.
+- Only a deliberate login or account-registration action in the current tab
+  may route to the appropriate portal.
+- Removes the ?phase3=1 query string from teacher dashboard redirects.
+- Clears the one-time login marker after routing, so browser Back to index
+  returns to the login page instead of immediately redirecting again.
+
+This does not change Firebase configuration, Firestore data, or Firestore rules.
+After replacing the file, commit and push to GitHub Pages. Test the homepage
+using the site root URL, not the school-connected-teacher.html URL.

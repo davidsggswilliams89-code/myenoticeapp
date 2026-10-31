@@ -4779,26 +4779,33 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     // Registrar access still requires appropriate Firestore rules for registrars/{uid}.
     const registrarSnap=await getDoc(doc(db,'registrars',user.uid));
     if(registrarSnap.exists() && registrarSnap.data()?.role==='registrar'){
+      try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
       window.location.replace('registrar.html');
       return 'registrar';
     }
 
     const parentSnap=await getDoc(doc(db,'parents',user.uid));
-    if(parentSnap.exists() && parentSnap.data()?.role==='parent'){ window.location.replace('parents.html'); return 'parent'; }
+    if(parentSnap.exists() && parentSnap.data()?.role==='parent'){ try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){} window.location.replace('parents.html'); return 'parent'; }
     await signOut(auth);
     throw new Error('This account has no registered role. Please create an account or contact support.');
   }
 
   loginForm?.addEventListener('submit',async e=>{
     e.preventDefault(); clearMessage();
-    try{sessionStorage.removeItem('teacherActiveSection');}catch(_e){}
+    try{
+      sessionStorage.removeItem('teacherActiveSection');
+      sessionStorage.setItem('myENoticeLoginIntent','1');
+    }catch(_e){}
     busy(loginForm,true);
     try{
       // Firebase's auth-state listener is the single authority for role checks
       // and portal navigation. Do not route a second time from this form.
       await signInWithEmailAndPassword(auth,document.getElementById('authEmail').value.trim(),document.getElementById('authPassword').value);
       message('Login successful. Verifying your account and opening the correct portal…','success');
-    }catch(err){message(friendlyError(err));busy(loginForm,false);}
+    }catch(err){
+      try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
+      message(friendlyError(err));busy(loginForm,false);
+    }
   });
   window.__myENoticeAuthReady = !!loginForm;
 
@@ -4810,6 +4817,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     const confirm=document.getElementById('authConfirmPassword').value;
     if(password!==confirm){message('Passwords do not match.');return;}
     busy(registerForm,true);
+    try{sessionStorage.setItem('myENoticeLoginIntent','1');}catch(_e){}
     let cred=null;
     try{
       cred=await createUserWithEmailAndPassword(auth,email,password);
@@ -4840,6 +4848,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     const confirm=document.getElementById('registrarConfirmPassword').value;
     if(password!==confirm){message('Passwords do not match.');return;}
     busy(registrarRegisterForm,true);
+    try{sessionStorage.setItem('myENoticeLoginIntent','1');}catch(_e){}
     let cred=null;
     try{
       cred=await createUserWithEmailAndPassword(auth,email,password);
@@ -4860,7 +4869,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     e.preventDefault();clearMessage();
     const name=document.getElementById('parentFullName').value.trim(),phone=document.getElementById('parentRegisterPhone').value.trim(),email=document.getElementById('parentRegisterEmail').value.trim(),password=document.getElementById('parentRegisterPassword').value,confirm=document.getElementById('parentConfirmPassword').value;
     if(password!==confirm){message('Passwords do not match.');return;}
-    busy(parentRegisterForm,true);let cred=null;
+    busy(parentRegisterForm,true);try{sessionStorage.setItem('myENoticeLoginIntent','1');}catch(_e){}let cred=null;
     try{cred=await createUserWithEmailAndPassword(auth,email,password);await updateProfile(cred.user,{displayName:name});await setDoc(doc(db,'parents',cred.user.uid),{uid:cred.user.uid,fullName:name,email:cred.user.email||email,phone,role:'parent',createdAt:serverTimestamp(),updatedAt:serverTimestamp()});message('Parent account created. Opening your dashboard…','success');window.location.replace('parents.html');}
     catch(err){if(cred?.user){try{await deleteUser(cred.user);}catch(cleanupErr){}}message(friendlyError(err));}
     finally{busy(parentRegisterForm,false);}
@@ -5224,6 +5233,19 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   let authInitialized=false;
   onAuthStateChanged(auth,async user=>{
     if(user){
+      // The homepage is always the login page on a fresh visit/refresh.
+      // Only a login or registration started in this tab may route to a portal.
+      let deliberateLogin=false;
+      try{deliberateLogin=sessionStorage.getItem('myENoticeLoginIntent')==='1';}catch(_e){}
+      if(!deliberateLogin){
+        try{localStorage.removeItem('firebaseTeacherUID');localStorage.removeItem('firebaseTeacherDisplayName');}catch(_e){}
+        try{await signOut(auth);}catch(signOutError){console.warn('Could not clear restored homepage session:',signOutError);}
+        document.documentElement.classList.remove('teacher-auth-pending');
+        gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');
+        showPanel(loginForm);
+        if(subtitle)subtitle.textContent='Sign in to continue';
+        return;
+      }
       document.documentElement.classList.add('teacher-auth-pending');
       // Never carry connection or school records from the previously signed-in account.
       activeTeacherConnection=null;window.activeTeacherConnection=null;
@@ -5249,18 +5271,19 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       // Phase 3: resolve connection status before loading any student data, then route to the right dashboard.
       await refreshTeacherSchoolConnection();
       if(window.teacherConnectionLookupState==='connected'){
+        try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
         const target=new URL('school-connected-teacher.html',window.location.href);
-        target.searchParams.set('phase3','1');
         window.location.replace(target.href);
         return;
       }
       if(window.teacherConnectionLookupState==='independent'){
+        try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
         const target=new URL('independent-teacher.html',window.location.href);
-        target.searchParams.set('phase3','1');
         window.location.replace(target.href);
         return;
       }
       if(window.teacherConnectionLookupState==='error'){
+        try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
         try{await signOut(auth);}catch(signOutError){console.warn('Could not clear session after connection verification failed:',signOutError);}
         gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');
         showPanel(loginForm);
@@ -5278,6 +5301,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       window.__restoringTeacherSection=true;if(typeof window.showSection==='function')window.showSection(activeSection,null);
       if(activeSection==='profileView'&&typeof window.loadTeacherProfile==='function')window.loadTeacherProfile();
       window.__restoringTeacherSection=false;document.documentElement.classList.remove('teacher-auth-pending');
+      try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
     }else{
       activeTeacherConnection=null;window.activeTeacherConnection=null;
       window.firebaseTeacherUID=null;window.firebaseTeacherUser=null;
