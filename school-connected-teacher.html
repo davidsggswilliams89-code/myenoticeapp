@@ -5385,7 +5385,9 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   };
 
   let authInitialized=false;
+  window.__teacherRoleVerified=false;
   onAuthStateChanged(auth,async user=>{
+    try {
     window.__teacherAuthStateSeen = true;
     if(user){
       document.documentElement.classList.add('teacher-auth-pending');
@@ -5399,6 +5401,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
           new Promise((_,reject)=>setTimeout(()=>reject(new Error('Account verification timed out. Please check your internet connection and Firestore Rules, then sign in again.')),10000))
         ]);
         if(role==='registrar')return;
+        window.__teacherRoleVerified = (role === 'teacher');
       }catch(err){
         console.error('Account role check failed:',err);
         window.firebaseTeacherUID=null;
@@ -5475,6 +5478,34 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       document.documentElement.classList.remove('teacher-auth-pending');
       showPanel(loginForm);if(subtitle)subtitle.textContent='Sign in to continue';
       if(!authInitialized){gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');authInitialized=true;}
+    }
+    } catch (startupError) {
+      console.error('[My e-Notice] Teacher dashboard startup failed:', startupError);
+      document.documentElement.classList.remove('teacher-auth-pending');
+      if (window.__teacherRoleVerified && auth.currentUser) {
+        // The account has already passed its teacher-role check. Keep access
+        // limited to the authenticated teacher and recover to the dashboard.
+        const gateEl=document.getElementById('firebaseAuthGate');
+        gateEl?.classList.add('auth-hidden');
+        gateEl?.classList.add('auth-ready');
+        document.querySelectorAll('.section-view').forEach(el=>el.style.display='none');
+        const dashboard=document.getElementById('dashboardView');
+        if(dashboard)dashboard.style.display='block';
+        window.__teacherDashboardReady=true;
+        const status=document.getElementById('teacherSchoolConnectionStatus');
+        if(status){
+          status.textContent='Your account is verified. Some dashboard information could not load. Please use Refresh or check your internet connection.';
+          status.style.background='#fff7e6';
+          status.style.color='#8a5a00';
+        }
+      } else {
+        const gateEl=document.getElementById('firebaseAuthGate');
+        gateEl?.classList.remove('auth-hidden');
+        gateEl?.classList.add('auth-ready');
+        if(gateEl){gateEl.style.display='flex';gateEl.style.visibility='visible';}
+        showPanel(loginForm);
+        message('Dashboard startup failed: '+friendlyError(startupError)+'. Please sign in again or contact the school administrator.');
+      }
     }
   });
 </script>
