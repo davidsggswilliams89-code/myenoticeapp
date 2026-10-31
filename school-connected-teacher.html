@@ -1611,7 +1611,15 @@ html.teacher-auth-pending #firebaseAuthGate{
       const node=document.getElementById(labels[key]);
       if(node) node.textContent = node.textContent.split(':')[0]+': '+state[key];
     }
-    if(detail){state.error=clean(detail);const box=document.getElementById('teacherDiagError');if(box){box.style.display='block';box.textContent='Reason: '+state.error;}}
+    if(detail===null){
+      state.error='';
+      const box=document.getElementById('teacherDiagError');
+      if(box){box.style.display='none';box.textContent='';}
+    }else if(detail){
+      state.error=clean(detail);
+      const box=document.getElementById('teacherDiagError');
+      if(box){box.style.display='block';box.textContent='Reason: '+state.error;}
+    }
     const statusNode=document.getElementById('teacherDiagStatus');
     if(statusNode)statusNode.textContent=detail?'Action needed — see the reason below.':(status||'Checking login…');
   };
@@ -5527,6 +5535,12 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       // Profile, school connection and student queries must never hold the login gate open.
       gate?.classList.add('auth-hidden');
       gate?.classList.add('auth-ready');
+      // showLoginFallback() uses inline display:flex; remove that override on
+      // successful authentication so the .auth-hidden class can hide the gate.
+      if(gate){
+        gate.style.removeProperty('display');
+        gate.style.removeProperty('visibility');
+      }
       let activeSection='dashboardView';
       try{activeSection=sessionStorage.getItem('teacherActiveSection')||'dashboardView';}catch(_e){}
       const validSections=['dashboardView','lessonsView','caExamView','studentsView','attendanceView','gpsAttendanceView','profileView','assignmentView','myClassesView','myTimetableView','examTimetableView','academicSessionView','settingsView','subscriptionView','holidayView'];
@@ -5548,7 +5562,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         window.__restoringTeacherSection=false;
         document.documentElement.classList.remove('teacher-auth-pending');
         window.__teacherDashboardReady = true;
-        window.teacherLoginDiagnostic?.('dashboard','Dashboard opened successfully; loading school data');
+        window.teacherLoginDiagnostic?.('dashboard','Dashboard opened successfully; loading school data',null);
       }
 
       // Background setup starts only after the dashboard is visible.
