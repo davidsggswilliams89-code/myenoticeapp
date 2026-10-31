@@ -1579,13 +1579,8 @@ html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
 <style id="subject-system-marker">/* SUBJECT_SYSTEM */</style></head>
 <body>
 <script>
-  /* Mark an existing Firebase session as pending before the dashboard paints.
-     This prevents the login overlay/dashboard from flashing during refresh. */
-  try{
-    if(localStorage.getItem('firebaseTeacherUID')){
-      document.documentElement.classList.add('teacher-auth-pending');
-    }
-  }catch(_e){}
+  /* Do not hide the login form based on a cached localStorage UID.
+     Firebase Auth is the source of truth for whether a session exists. */
 </script>
 <div id="firebaseAuthGate">
   <div class="auth-card">
@@ -5231,10 +5226,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     },{merge:true});
   };
 
-  let authInitialized=false;
   onAuthStateChanged(auth,async user=>{
-    const firstAuthState=!authInitialized;
-    authInitialized=true;
     if(user){
       document.documentElement.classList.add('teacher-auth-pending');
       // Never carry connection or school records from the previously signed-in account.
@@ -5296,10 +5288,11 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       try{localStorage.removeItem('firebaseTeacherUID');localStorage.removeItem('firebaseTeacherDisplayName');}catch(_e){}
       window.dispatchEvent(new Event('teacherAccountContextChanged'));
       document.documentElement.classList.remove('teacher-auth-pending');
-      // On the first Firebase callback the login form is already the default
-      // visible panel. Do not hide/show it: that can clear fields being typed.
-      if(firstAuthState){gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');}
-      else{showPanel(loginForm);if(subtitle)subtitle.textContent='Sign in to continue';gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');}
+      // Never re-render the login panel from an auth-state callback.
+      // A later null callback can occur while the user is typing; cycling
+      // display:none/display:block can clear input values on mobile browsers.
+      gate?.classList.remove('auth-hidden');
+      gate?.classList.add('auth-ready');
     }
   });
 </script>
