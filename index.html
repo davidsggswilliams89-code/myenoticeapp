@@ -4758,8 +4758,21 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   document.getElementById('parentRegisterBack')?.addEventListener('click',()=>{showPanel(registerRoleChoice);subtitle.textContent='Choose the account you want to create';});
 
   async function routeSignedInUser(user){
-    // Check the Registrar profile first. A UID with both a legacy teacher
-    // document and a Registrar document must still reach the Registrar Portal.
+    // Check the teacher's own profile first. A teacher must not be blocked
+    // because Firestore rules deny reading the unrelated registrars collection.
+    const teacherSnap=await getDoc(doc(db,'teachers',user.uid));
+    if(teacherSnap.exists()){
+      const teacherData=teacherSnap.data()||{};
+      const normalizedRole=String(teacherData.role||'').trim().toLowerCase();
+      const acceptedTeacherRoles=['','teacher','class teacher','subject teacher','primary teacher'];
+      if(acceptedTeacherRoles.includes(normalizedRole)) return 'teacher';
+      // A legacy teacher document may coexist with a Registrar account.
+      if(normalizedRole!=='registrar'){
+        throw new Error('This account is registered with the role "'+teacherData.role+'", not Teacher. Please contact the administrator.');
+      }
+    }
+
+    // Only check other role collections when no valid teacher profile was found.
     const registrarSnap=await getDoc(doc(db,'registrars',user.uid));
     if(registrarSnap.exists() && String(registrarSnap.data()?.role||'').trim().toLowerCase()==='registrar'){
       try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
@@ -4767,27 +4780,18 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       return 'registrar';
     }
 
-    // If no Registrar profile exists, continue with the existing teacher route.
-    const teacherSnap=await getDoc(doc(db,'teachers',user.uid));
-    if(teacherSnap.exists()){
-      const teacherData=teacherSnap.data()||{};
-      // Older teacher profiles may store the role with different capitalization
-      // or legacy wording. Normalize it before deciding whether to allow access.
-      const normalizedRole=String(teacherData.role||'').trim().toLowerCase();
-      const acceptedTeacherRoles=['','teacher','class teacher','subject teacher','primary teacher'];
-      if(!acceptedTeacherRoles.includes(normalizedRole)){
-        throw new Error('This account is registered with the role "'+teacherData.role+'", not Teacher. Please contact the administrator.');
-      }
-      return 'teacher';
-    }
-
     const parentSnap=await getDoc(doc(db,'parents',user.uid));
-    if(parentSnap.exists() && parentSnap.data()?.role==='parent'){ try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){} window.location.replace('parents.html'); return 'parent'; }
-    throw new Error('This account has no registered role. Please create an account or contact support.');
+    if(parentSnap.exists() && parentSnap.data()?.role==='parent'){
+      try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
+      window.location.replace('parents.html');
+      return 'parent';
+    }
+    throw new Error('This account has no registered role. Please contact the school administrator.');
   }
 
   loginForm?.addEventListener('submit',async e=>{
     e.preventDefault(); lastAuthErrorMessage=''; clearMessage();
+    loginAttemptInProgress=true;
     try{
       sessionStorage.removeItem('teacherActiveSection');
       sessionStorage.setItem('myENoticeLoginIntent','1');
@@ -4799,6 +4803,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       await signInWithEmailAndPassword(auth,document.getElementById('authEmail').value.trim(),document.getElementById('authPassword').value);
       message('Login successful. Verifying your account and opening the correct portal…','success');
     }catch(err){
+      loginAttemptInProgress=false;
       try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
       message(friendlyError(err));busy(loginForm,false);
     }
@@ -5227,6 +5232,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   };
 
   let authInitialized=false;
+  let loginAttemptInProgress=false;
   // Keep the reason for a rejected login visible even if Firebase emits a
   // second (user === null) auth event after signOut().
   let lastAuthErrorMessage='';
@@ -5234,8 +5240,8 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     if(user){
       // The homepage is always the login page on a fresh visit/refresh.
       // Only a login or registration started in this tab may route to a portal.
-      let deliberateLogin=false;
-      try{deliberateLogin=sessionStorage.getItem('myENoticeLoginIntent')==='1';}catch(_e){}
+      let deliberateLogin=loginAttemptInProgress;
+      try{deliberateLogin=deliberateLogin || sessionStorage.getItem('myENoticeLoginIntent')==='1';}catch(_e){}
       if(!deliberateLogin){
         try{localStorage.removeItem('firebaseTeacherUID');localStorage.removeItem('firebaseTeacherDisplayName');}catch(_e){}
         try{await signOut(auth);}catch(signOutError){console.warn('Could not clear restored homepage session:',signOutError);}
@@ -5252,9 +5258,10 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       window.dispatchEvent(new Event('teacherAccountContextChanged'));
       try{
         const role=await routeSignedInUser(user);
-        if(role==='registrar')return;
+        if(role==='registrar'){loginAttemptInProgress=false;return;}
       }catch(err){
         console.error('Account role check failed:',err);
+        loginAttemptInProgress=false;
         lastAuthErrorMessage=friendlyError(err);
         window.firebaseTeacherUID=null;
         try{await signOut(auth);}catch(signOutError){console.warn('Could not clear failed login session:',signOutError);}
@@ -5271,18 +5278,21 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       // Phase 3: resolve connection status before loading any student data, then route to the right dashboard.
       await refreshTeacherSchoolConnection();
       if(window.teacherConnectionLookupState==='connected'){
+        loginAttemptInProgress=false;
         try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
         const target=new URL('school-connected-teacher.html',window.location.href);
         window.location.replace(target.href);
         return;
       }
       if(window.teacherConnectionLookupState==='independent'){
+        loginAttemptInProgress=false;
         try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
         const target=new URL('independent-teacher.html',window.location.href);
         window.location.replace(target.href);
         return;
       }
       if(window.teacherConnectionLookupState==='error'){
+        loginAttemptInProgress=false;
         try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
         lastAuthErrorMessage='We could not verify your school connection. Check your internet connection and Firestore access, then sign in again. No dashboard was selected.';
         try{await signOut(auth);}catch(signOutError){console.warn('Could not clear session after connection verification failed:',signOutError);}
@@ -5301,7 +5311,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       if(!validSections.includes(activeSection))activeSection='dashboardView';
       window.__restoringTeacherSection=true;if(typeof window.showSection==='function')window.showSection(activeSection,null);
       if(activeSection==='profileView'&&typeof window.loadTeacherProfile==='function')window.loadTeacherProfile();
-      window.__restoringTeacherSection=false;document.documentElement.classList.remove('teacher-auth-pending');
+      window.__restoringTeacherSection=false;loginAttemptInProgress=false;document.documentElement.classList.remove('teacher-auth-pending');
       try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
     }else{
       activeTeacherConnection=null;window.activeTeacherConnection=null;
