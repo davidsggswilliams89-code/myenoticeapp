@@ -1622,6 +1622,16 @@ html.teacher-auth-pending #firebaseAuthGate{
       'Reason: '+(state.error||'No error reported'),
       'Page: '+location.href,'Time: '+new Date().toISOString()].join('\\n');
   };
+  document.addEventListener('submit',function(e){
+    if(e.target && e.target.id==='teacherLoginForm' && !window.__teacherFirebaseModuleReady){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      window.teacherLoginDiagnostic('firebase','Firebase login module has not initialized',
+        'The Firebase JavaScript module did not finish loading. Check the internet connection or whether gstatic.com/firebasejs modules are blocked. This is a page startup problem, not proof that the email or password is wrong.');
+      const msg=document.getElementById('authMessage');
+      if(msg){msg.textContent='Login is not ready because the Firebase sign-in module has not loaded. Please check your connection and reload. See the diagnostic section below.';msg.className='auth-message error';}
+    }
+  },true);
   document.addEventListener('click',function(e){
     if(e.target && e.target.id==='teacherDiagRetry') location.reload();
     if(e.target && e.target.id==='teacherDiagCopy'){
@@ -4899,13 +4909,20 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   const auth = getAuth(app);
   const db = getFirestore(app);
   window.firebaseFirestoreFns = { collection, doc, getDoc, getDocs, addDoc, setDoc, deleteDoc, serverTimestamp, query, where, updateDoc, onSnapshot };
-  try { await setPersistence(auth, browserLocalPersistence); } catch(err) { console.error("Firebase auth persistence setup failed:", err); }
+  // Publish the Firebase services before optional persistence setup. Waiting for
+  // persistence here can leave the login form uninitialized on slow/blocked storage.
   window.firebaseApp = app;
   window.teacherFirebaseAuth = auth;
   window.teacherFirestore = db;
-  window.__teacherFirebaseModuleReady = true;
-  window.teacherLoginDiagnostic?.('firebase','Ready — Firebase modules loaded');
   window.firebaseTeacherUID = null;
+  window.__teacherFirebaseModuleReady = true;
+  window.teacherLoginDiagnostic?.('firebase','Firebase modules loaded; preparing sign-in');
+  setPersistence(auth, browserLocalPersistence).then(() => {
+    window.teacherLoginDiagnostic?.('firebase','Ready — persistent sign-in enabled');
+  }).catch(err => {
+    console.warn("Firebase auth persistence setup failed; continuing with default persistence:", err);
+    window.teacherLoginDiagnostic?.('firebase','Ready — using default sign-in persistence', (err && err.message) || 'Persistence setup was unavailable');
+  });
 
   const gate=document.getElementById('firebaseAuthGate');
   const loginForm=document.getElementById('teacherLoginForm');
