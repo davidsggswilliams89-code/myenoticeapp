@@ -1646,6 +1646,11 @@ html.teacher-auth-pending #firebaseAuthGate{
     window.teacherLoginDiagnostic('dashboard','Page script error',message);
   });
   window.addEventListener('unhandledrejection',function(e){
+    const reason=e&&e.reason;
+    window.teacherLoginDiagnostic('dashboard','Firebase/background operation failed',
+      reason&&(reason.message||reason)||'An asynchronous operation was rejected');
+  });
+  window.addEventListener('unhandledrejection',function(e){
     const reason=e&&e.reason;window.teacherLoginDiagnostic('dashboard','Unexpected background error',reason&&(reason.message||reason));
   });
 })();
@@ -4917,12 +4922,10 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   window.firebaseTeacherUID = null;
   window.__teacherFirebaseModuleReady = true;
   window.teacherLoginDiagnostic?.('firebase','Firebase modules loaded; preparing sign-in');
-  setPersistence(auth, browserLocalPersistence).then(() => {
-    window.teacherLoginDiagnostic?.('firebase','Ready — persistent sign-in enabled');
-  }).catch(err => {
-    console.warn("Firebase auth persistence setup failed; continuing with default persistence:", err);
-    window.teacherLoginDiagnostic?.('firebase','Ready — using default sign-in persistence', (err && err.message) || 'Persistence setup was unavailable');
-  });
+  // Firebase Auth uses browserLocal persistence by default in supported browsers.
+  // Do not call setPersistence here: racing it against onAuthStateChanged can
+  // delay the initial auth-state callback on some mobile browsers/storage modes.
+  window.teacherLoginDiagnostic?.('firebase','Ready — using Firebase default browser persistence');
 
   const gate=document.getElementById('firebaseAuthGate');
   const loginForm=document.getElementById('teacherLoginForm');
@@ -6294,7 +6297,7 @@ ptaObserver.observe(document.body,{childList:true,subtree:true});
       return;
     }
     if(!window.__teacherAuthStateSeen){
-      showLoginFallback('Firebase is taking too long to restore your session. Please refresh the page and sign in again.');
+      showLoginFallback('Firebase loaded, but its authentication-state callback did not start. This can happen when browser storage or session restoration is stalled. Reload the page; if it repeats, send the diagnostic details.');
     }
   },10000);
 
