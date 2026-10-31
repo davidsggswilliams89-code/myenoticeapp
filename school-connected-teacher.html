@@ -3027,7 +3027,7 @@ function renderStudents(){
 
 function ptaTeacherEscape(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;", "'":"&#39;"}[c]));}
 function ptaTeacherTermLabel(){const sel=document.getElementById("teacherPtaTerm");return sel?.selectedOptions?.[0]?.textContent||"First Term";}
-function ptaTeacherIsFormMaster(){const c=window.activeTeacherConnection||{},signedInUid=window.firebaseTeacherUID||auth.currentUser?.uid||"";return (window.TEACHER_DASHBOARD_MODE||"")==="school-connected"&&!!signedInUid&&c.teacherUid===signedInUid&&["connected","approved","active"].includes(String(c.status||"").toLowerCase())&&(c.ptaFormMaster===true||String(c.assignedRole||"").trim().toLowerCase()==="form master")&&!!String(c.ptaFormMasterClass||"").trim();}
+function ptaTeacherIsFormMaster(){const c=window.activeTeacherConnection||{},signedInUid=window.firebaseTeacherUID||window.teacherFirebaseAuth?.currentUser?.uid||"";return (window.TEACHER_DASHBOARD_MODE||"")==="school-connected"&&!!signedInUid&&c.teacherUid===signedInUid&&["connected","approved","active"].includes(String(c.status||"").toLowerCase())&&(c.ptaFormMaster===true||String(c.assignedRole||"").trim().toLowerCase()==="form master")&&!!String(c.ptaFormMasterClass||"").trim();}
 window.openFormMasterPta=function(button){
  if(!ptaTeacherIsFormMaster()){alert("PTA Payments is available only to the teacher UID currently assigned as Form Master.");if(button)button.style.display="none";return;}
  showSection("dashboardView",button);
@@ -3037,7 +3037,7 @@ window.openFormMasterPta=function(button){
 };
 window.renderFormMasterPtaPayments=function(){
  const c=window.activeTeacherConnection||{};
- const signedInUid=window.firebaseTeacherUID||auth.currentUser?.uid||"";
+ const signedInUid=window.firebaseTeacherUID||window.teacherFirebaseAuth?.currentUser?.uid||"";
  const isMaster=(window.TEACHER_DASHBOARD_MODE||"")==="school-connected"&&!!signedInUid&&c.teacherUid===signedInUid&&["connected","approved","active"].includes(String(c.status||"").toLowerCase())&&(c.ptaFormMaster===true||String(c.assignedRole||c.role||"").trim().toLowerCase()==="form master")&&!!String(c.ptaFormMasterClass||c.assignedClass||"").trim();
  const nav=document.getElementById("formMasterPtaNav");
  if(nav){nav.style.display="flex";nav.disabled=!isMaster;nav.setAttribute("aria-disabled",String(!isMaster));nav.style.opacity=isMaster?"1":".55";nav.style.cursor=isMaster?"pointer":"not-allowed";}
