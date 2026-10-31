@@ -4758,9 +4758,16 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   document.getElementById('parentRegisterBack')?.addEventListener('click',()=>{showPanel(registerRoleChoice);subtitle.textContent='Choose the account you want to create';});
 
   async function routeSignedInUser(user){
-    // Check the user's own teacher profile first. This preserves existing teacher
-    // login under the current teacher-only Firestore rules, without requiring a
-    // read from the registrars collection.
+    // Check the Registrar profile first. A UID with both a legacy teacher
+    // document and a Registrar document must still reach the Registrar Portal.
+    const registrarSnap=await getDoc(doc(db,'registrars',user.uid));
+    if(registrarSnap.exists() && String(registrarSnap.data()?.role||'').trim().toLowerCase()==='registrar'){
+      try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
+      window.location.replace('registrar.html');
+      return 'registrar';
+    }
+
+    // If no Registrar profile exists, continue with the existing teacher route.
     const teacherSnap=await getDoc(doc(db,'teachers',user.uid));
     if(teacherSnap.exists()){
       const teacherData=teacherSnap.data()||{};
@@ -4773,15 +4780,6 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         throw new Error('This account is registered with the role "'+teacherData.role+'", not Teacher. Please contact the administrator.');
       }
       return 'teacher';
-    }
-
-    // Only check the registrar record if this account has no teacher profile.
-    // Registrar access still requires appropriate Firestore rules for registrars/{uid}.
-    const registrarSnap=await getDoc(doc(db,'registrars',user.uid));
-    if(registrarSnap.exists() && registrarSnap.data()?.role==='registrar'){
-      try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
-      window.location.replace('registrar.html');
-      return 'registrar';
     }
 
     const parentSnap=await getDoc(doc(db,'parents',user.uid));
