@@ -5523,38 +5523,10 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         localStorage.setItem('firebaseTeacherUID',user.uid);
         localStorage.setItem('firebaseTeacherDisplayName',user.displayName||'');
       }catch(storageError){console.warn('Teacher session could not be cached locally:',storageError);}
-      // A slow Firestore/profile request must never keep the whole dashboard hidden.
-      const waitFor = (promise, label, ms=8000) => Promise.race([
-        Promise.resolve().then(()=>promise),
-        new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+' timed out')),ms))
-      ]);
-      try{
-        const profile=await waitFor(ensureTeacherProfile(user),'Teacher profile loading',8000);
-        applyFirestoreTeacherProfile(profile,user);
-      }catch(err){
-        console.warn('Teacher profile sync delayed; opening dashboard with account details:',err);
-        applyFirestoreTeacherProfile({},user);
-      }
-      // Load the registrar connection, but do not let a slow student/school query
-      // hold the dashboard in its blank pending state.
-      try{
-        await waitFor(refreshTeacherSchoolConnection(),'School connection loading',9000);
-      }catch(err){
-        console.warn('School connection refresh did not finish before dashboard display:',err);
-        const status=document.getElementById('teacherSchoolConnectionStatus');
-        if(status){
-          status.textContent='Your dashboard is open. School information is still loading; use Refresh or check your connection if assignments do not appear.';
-          status.style.background='#fff7e6';status.style.color='#8a5a00';
-        }
-      }
-      try{
-        if(typeof window.loadStudentsFromFirestore==='function')
-          await waitFor(window.loadStudentsFromFirestore(),'Student records loading',6000);
-      }catch(err){console.warn('Student records will continue loading in the background:',err);}
-      try{if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();}
-      catch(err){console.warn('Teaching assignments could not be rendered yet:',err);}
-      window.teacherLoginDiagnostic?.('dashboard','Teacher verified; opening dashboard');
-      gate?.classList.add('auth-hidden');gate?.classList.add('auth-ready');
+      // Open the teacher dashboard immediately after the teacher role is verified.
+      // Profile, school connection and student queries must never hold the login gate open.
+      gate?.classList.add('auth-hidden');
+      gate?.classList.add('auth-ready');
       let activeSection='dashboardView';
       try{activeSection=sessionStorage.getItem('teacherActiveSection')||'dashboardView';}catch(_e){}
       const validSections=['dashboardView','lessonsView','caExamView','studentsView','attendanceView','gpsAttendanceView','profileView','assignmentView','myClassesView','myTimetableView','examTimetableView','academicSessionView','settingsView','subscriptionView','holidayView'];
@@ -5576,8 +5548,37 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         window.__restoringTeacherSection=false;
         document.documentElement.classList.remove('teacher-auth-pending');
         window.__teacherDashboardReady = true;
-        window.teacherLoginDiagnostic?.('dashboard','Dashboard opened successfully');
+        window.teacherLoginDiagnostic?.('dashboard','Dashboard opened successfully; loading school data');
       }
+
+      // Background setup starts only after the dashboard is visible.
+      const waitFor = (promise, label, ms=8000) => Promise.race([
+        Promise.resolve().then(()=>promise),
+        new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+' timed out')),ms))
+      ]);
+      try{
+        const profile=await waitFor(ensureTeacherProfile(user),'Teacher profile loading',8000);
+        applyFirestoreTeacherProfile(profile,user);
+      }catch(err){
+        console.warn('Teacher profile sync delayed; dashboard remains open:',err);
+        try{applyFirestoreTeacherProfile({},user);}catch(profileRenderError){console.warn('Fallback teacher profile display failed:',profileRenderError);}
+      }
+      try{
+        await waitFor(refreshTeacherSchoolConnection(),'School connection loading',9000);
+      }catch(err){
+        console.warn('School connection refresh did not finish; dashboard remains open:',err);
+        const status=document.getElementById('teacherSchoolConnectionStatus');
+        if(status){
+          status.textContent='Dashboard is open. School information is still loading; use Refresh or check your connection if assignments do not appear.';
+          status.style.background='#fff7e6';status.style.color='#8a5a00';
+        }
+      }
+      try{
+        if(typeof window.loadStudentsFromFirestore==='function')
+          await waitFor(window.loadStudentsFromFirestore(),'Student records loading',6000);
+      }catch(err){console.warn('Student records will continue loading in the background:',err);}
+      try{if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();}
+      catch(err){console.warn('Teaching assignments could not be rendered yet:',err);}
     }else{
       activeTeacherConnection=null;window.activeTeacherConnection=null;
       window.firebaseTeacherUID=null;window.firebaseTeacherUser=null;
