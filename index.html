@@ -4884,13 +4884,20 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
 
   window.firebaseTeacherLogout=async function(){
     try{
+      // Clear this tab's dashboard state, then end the Firebase session.
       try{sessionStorage.removeItem('teacherActiveSection');}catch(_e){}
-      try{localStorage.removeItem('firebaseTeacherUID');localStorage.removeItem('firebaseTeacherDisplayName');}catch(_e){}
-      document.documentElement.classList.remove('teacher-auth-pending');
-      gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');
-      showPanel(loginForm);if(subtitle)subtitle.textContent='Sign in to continue';
-      clearMessage();await signOut(auth);
-    }catch(err){message(friendlyError(err));}
+      try{sessionStorage.removeItem('myENoticeLoginIntent');}catch(_e){}
+      try{
+        localStorage.removeItem('firebaseTeacherUID');
+        localStorage.removeItem('firebaseTeacherDisplayName');
+      }catch(_e){}
+      await signOut(auth);
+
+      // Always return to the canonical My E-Notice login page after logout.
+      window.location.replace('https://davidsggswilliams89-code.github.io/myenoticeapp/');
+    }catch(err){
+      message(friendlyError(err));
+    }
   };
 
   async function ensureTeacherProfile(user){
