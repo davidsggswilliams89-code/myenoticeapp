@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#006b5b">
+
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#087f5b"><title>Subscription Admin Portal | MySchoolBook</title>
 <style>
@@ -105,4 +108,13 @@ async function renewSub(id){const s=subscriptions.find(x=>x.id===id);if(!s)retur
 document.addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b)return;const id=b.dataset.id,action=b.dataset.action;if(action==='details'){const r=requests.find(x=>x.id===id);if(r)showDetails(r)}if(action==='approve')approveRequest(id);if(action==='reject')rejectRequest(id);if(action==='revoke')revokeSub(id);if(action==='renew')renewSub(id)});
 $('manualForm').addEventListener('submit',async e=>{e.preventDefault();const classes=[...$('manualClasses').querySelectorAll('input:checked')].map(x=>x.value);if(!classes.length){toast('Select at least one class.');return}if(!confirm('Confirm the bank transfer has been verified and activate this subscription for one year?'))return;const btn=e.submitter;btn.disabled=true;try{await activate({teacherUid:$('mUid').value.trim(),teacherEmail:$('mEmail').value.trim(),teacherName:$('mName').value.trim(),subject:$('mSubject').value.trim(),classes,amount:$('mAmount').value,paymentReference:$('mReference').value.trim(),notes:$('mNotes').value.trim()});toast('Subscription activated for one year.');e.target.reset();$('mAmount').value='1000';$('manualClasses').querySelectorAll('input').forEach(x=>x.checked=false);await loadData();go('active')}catch(err){toast('Activation failed: '+(err.code||err.message))}finally{btn.disabled=false}});
 const settingsKeys=['bankName','accountName','accountNumber','whatsappNumber','annualPrice'];function loadSettings(){const s=JSON.parse(localStorage.getItem('myschoolbookSubscriptionPaymentSettings')||'{}');const defaults={bankName:'OPay Mobile Banking',accountName:'Abubakar Yahaya',accountNumber:'8133839892',whatsappNumber:'2348133839892',annualPrice:'1000'};settingsKeys.forEach(k=>{$(k).value=s[k]!==undefined?s[k]:defaults[k]})}function getSettings(){return Object.fromEntries(settingsKeys.map(k=>[k,$(k).value.trim()]))}$('settingsForm').addEventListener('submit',e=>{e.preventDefault();localStorage.setItem('myschoolbookSubscriptionPaymentSettings',JSON.stringify(getSettings()));$('settingsMessage').textContent='Payment settings saved in this browser only.';$('settingsMessage').className='notice success';$('settingsMessage').classList.remove('hidden')});$('copyPaymentDetails').addEventListener('click',async()=>{const s=getSettings();const text=`Subscription payment details\nBank: ${s.bankName||'Not set'}\nAccount name: ${s.accountName||'Not set'}\nAccount number: ${s.accountNumber||'Not set'}\nPrice: ${money(s.annualPrice||1000)} per subject / year\nAfter payment, send the transfer receipt on WhatsApp: ${s.whatsappNumber||'Not set'}`;try{await navigator.clipboard.writeText(text);toast('Payment instructions copied.')}catch{prompt('Copy payment instructions:',text)}});loadSettings();
-</script></body></html>
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("./service-worker.js", { scope: "./" })
+      .catch(function (error) { console.warn("App offline support could not be registered:", error); });
+  });
+}
+</script>
+</body></html>

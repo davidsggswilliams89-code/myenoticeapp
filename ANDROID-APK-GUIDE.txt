@@ -1,0 +1,57 @@
+MY E-NOTICE APP — ANDROID / PWA PREPARATION PACKAGE
+
+This package prepares the existing website for PWABuilder packaging.
+The original portal HTML files and Firebase application logic have been retained.
+PWA additions:
+- manifest.webmanifest
+- service-worker.js
+- offline.html
+- icon-192.png and icon-512.png (temporary app icon)
+- PWA manifest and service-worker registration added to HTML pages
+- .nojekyll for GitHub Pages
+
+IMPORTANT
+1. Upload the CONTENTS of this ZIP to the ROOT of the existing GitHub repository
+   (the same level where index.html currently lives). Do not upload the containing
+   folder as a nested folder.
+2. Replace existing files when GitHub asks. Keep all existing filenames.
+3. Wait for GitHub Pages to publish, then visit:
+   https://davidsggswilliams89-code.github.io/myenoticeapp/manifest.webmanifest
+   It should display the app manifest, not a 404 page.
+4. Also open:
+   https://davidsggswilliams89-code.github.io/myenoticeapp/service-worker.js
+   It should display JavaScript, not a 404 page.
+5. Then open https://www.pwabuilder.com/ and enter:
+   https://davidsggswilliams89-code.github.io/myenoticeapp/
+6. Run the PWA checks. Choose Package for stores > Android > Generate Package.
+   For direct sharing, select the Other Android option if offered, then download
+   the signed APK/package provided by PWABuilder. If you choose Google Play,
+   follow its signing and Digital Asset Links instructions.
+7. Keep the signing keystore and passwords private and backed up. Never share them
+   with the APK recipients.
+
+APP DETAILS
+Name: My E-Notice App
+Short name: E-Notice
+Package ID suggestion: com.myschoolbook.enotice
+Start URL: ./index.html
+Display: Standalone
+Theme: #006b5b
+
+LIMITATIONS / TESTING
+- This is a PWA preparation ZIP, not the APK itself.
+- Firebase Authentication, Firestore, GPS, and other cloud features still need an
+  internet connection and the same existing Firebase configuration/rules.
+- The service worker caches the app shell and visited HTML pages for quicker
+  repeat loading; it does not make Firebase data or login work offline.
+- curriculum.html is intentionally excluded from service-worker caching because
+  it is approximately 19 MB.
+- The generated app uses the live GitHub Pages website. Website updates may appear
+  inside installed apps when users are online.
+- This preparation does not test authenticated Firebase operations or change
+  Firestore rules.
+- Replace the temporary icon with your approved final school app logo before
+  generating the final APK if you want the official logo on the Android launcher.
+
+If PWABuilder reports an issue, send a screenshot of the report card before changing
+any Firebase or application code.

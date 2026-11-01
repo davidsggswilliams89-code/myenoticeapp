@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#006b5b">
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Parent & Guardian Portal · my e-notice app</title>
@@ -151,5 +154,14 @@ $('schoolPicker').addEventListener('change',e=>{if(e.target.value){showParentHom
   }
 });
 onAuthStateChanged(auth,async user=>{if(!user){location.replace('index.html');return}currentUser=user;try{const p=await getDoc(doc(db,'parents',user.uid));if(!p.exists()||p.data().role!=='parent'){await signOut(auth);location.replace('index.html');return}profile=p.data();const parentName=profile.fullName||user.displayName||'Parent';$('profileName').textContent=parentName;$('parentNameInput').value=parentName;$('welcome').textContent=`Welcome, ${parentName}`;$('registeredPhone').value=profile.phone||'';renderProfileImage(profile.profileImage||'',parentName);await loadConnections()}catch(e){$('connectionStatus').textContent='Could not load parent profile. Check Firestore permissions.';console.error(e)}});
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("./service-worker.js", { scope: "./" })
+      .catch(function (error) { console.warn("App offline support could not be registered:", error); });
+  });
+}
 </script>
 </body></html>

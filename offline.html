@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#006b5b">
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#006b5b">
+<title>My E-Notice App — Offline</title>
+<style>
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f4f7fb;color:#10233f;font-family:Arial,sans-serif;padding:24px;box-sizing:border-box}
+main{max-width:440px;background:#fff;border:1px solid #dfe7ef;border-radius:18px;padding:28px;text-align:center}
+h1{color:#006b5b}p{line-height:1.6;color:#526171}button{background:#006b5b;color:#fff;border:0;border-radius:9px;padding:12px 20px;font-size:16px}
+</style></head><body><main><h1>My E-Notice App</h1><p>You are currently offline. Reconnect to the internet to sign in and use Firebase-powered school services.</p><button onclick="location.reload()">Try again</button></main>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("./service-worker.js", { scope: "./" })
+      .catch(function (error) { console.warn("App offline support could not be registered:", error); });
+  });
+}
+</script>
+</body></html>

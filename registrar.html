@@ -1,6 +1,9 @@
 <!doctype html>
 <html lang="en">
 <head>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#006b5b">
+
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>my e-notice app | Headmaster Office</title>
 <style>
@@ -1297,5 +1300,14 @@ onAuthStateChanged(auth,async u=>{
     await load(u);
   }catch(e){msg(err(e),"error");setTimeout(()=>window.location.replace("index.html"),1800)}
 });
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("./service-worker.js", { scope: "./" })
+      .catch(function (error) { console.warn("App offline support could not be registered:", error); });
+  });
+}
 </script>
 </body></html>

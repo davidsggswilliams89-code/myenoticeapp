@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#006b5b">
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <script>window.TEACHER_DASHBOARD_MODE = "independent";</script>
@@ -3790,6 +3793,15 @@ function printDocument(content){
 }
 </style>
 
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("./service-worker.js", { scope: "./" })
+      .catch(function (error) { console.warn("App offline support could not be registered:", error); });
+  });
+}
+</script>
 </body></html>`);
  w.document.close();w.focus();setTimeout(()=>w.print(),250);
 }
