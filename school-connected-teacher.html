@@ -4905,9 +4905,8 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     try{sessionStorage.removeItem('teacherActiveSection');}catch(_e){}
     busy(loginForm,true);
     try{
-      const credential=await signInWithEmailAndPassword(auth,document.getElementById('authEmail').value.trim(),document.getElementById('authPassword').value);
-      const role=await routeSignedInUser(credential.user);
-      if(role==='teacher') message('Login successful. Opening your dashboard…','success');
+      await signInWithEmailAndPassword(auth,document.getElementById('authEmail').value.trim(),document.getElementById('authPassword').value);
+      message('Login successful. Opening your dashboard…','success');
     }catch(err){message(friendlyError(err));}
     finally{busy(loginForm,false);}
   });
@@ -4979,7 +4978,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       try{sessionStorage.removeItem('teacherActiveSection');}catch(_e){}
       try{localStorage.removeItem('firebaseTeacherUID');localStorage.removeItem('firebaseTeacherDisplayName');}catch(_e){}
       await signOut(auth);
-      window.location.replace('index.html');
+      window.location.replace('https://davidsggswilliams89-code.github.io/myenoticeapp/');
     }catch(err){message(friendlyError(err));}
   };
 
@@ -5392,22 +5391,43 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         return;
       }
       window.firebaseTeacherUID=user.uid;window.firebaseTeacherUser=user;
-      localStorage.setItem('firebaseTeacherUID',user.uid);
-      localStorage.setItem('firebaseTeacherDisplayName',user.displayName||'');
-      try{const profile=await ensureTeacherProfile(user);applyFirestoreTeacherProfile(profile,user);}
-      catch(err){console.error('Teacher profile sync failed:',err);applyFirestoreTeacherProfile({},user);}
-      // Resolve this account's registrar connection before loading students or assignments.
-      await refreshTeacherSchoolConnection();
-      try{if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();}
-      catch(err){console.error('Student Firebase query failed during login:',err);}
-      if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
+      try{
+        localStorage.setItem('firebaseTeacherUID',user.uid);
+        localStorage.setItem('firebaseTeacherDisplayName',user.displayName||'');
+      }catch(_e){}
+      // Open the dashboard immediately after the account role is verified.
+      // Profile, school connection and student data are refreshed in the background
+      // so their network latency does not hold the user at the login screen.
       gate?.classList.add('auth-hidden');gate?.classList.add('auth-ready');
       let activeSection='dashboardView';try{activeSection=sessionStorage.getItem('teacherActiveSection')||'dashboardView';}catch(_e){}
       const validSections=['dashboardView','lessonsView','caExamView','studentsView','attendanceView','gpsAttendanceView','profileView','assignmentView','myClassesView','myTimetableView','examTimetableView','academicSessionView','settingsView','subscriptionView','holidayView'];
       if(!validSections.includes(activeSection))activeSection='dashboardView';
-      window.__restoringTeacherSection=true;if(typeof window.showSection==='function')window.showSection(activeSection,null);
+      window.__restoringTeacherSection=true;
+      if(typeof window.showSection==='function')window.showSection(activeSection,null);
+      window.__restoringTeacherSection=false;
+      document.documentElement.classList.remove('teacher-auth-pending');
       if(activeSection==='profileView'&&typeof window.loadTeacherProfile==='function')window.loadTeacherProfile();
-      window.__restoringTeacherSection=false;document.documentElement.classList.remove('teacher-auth-pending');
+
+      // Do not block dashboard entry on Firestore profile/connection/student reads.
+      (async()=>{
+        const profileTask=ensureTeacherProfile(user).then(profile=>{
+          if(auth.currentUser?.uid===user.uid)applyFirestoreTeacherProfile(profile,user);
+        }).catch(err=>{
+          console.error('Teacher profile sync failed:',err);
+          if(auth.currentUser?.uid===user.uid)applyFirestoreTeacherProfile({},user);
+        });
+        const connectionTask=refreshTeacherSchoolConnection().catch(err=>{
+          console.error('Teacher school connection refresh failed:',err);
+        });
+        await Promise.allSettled([profileTask,connectionTask]);
+        if(auth.currentUser?.uid!==user.uid)return;
+        try{
+          if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
+        }catch(err){console.error('Student Firebase query failed after dashboard opened:',err);}
+        if(auth.currentUser?.uid===user.uid && typeof window.loadTeachingAssignments==='function'){
+          try{await window.loadTeachingAssignments();}catch(err){console.error('Teaching assignments failed to load:',err);}
+        }
+      })();
     }else{
       activeTeacherConnection=null;window.activeTeacherConnection=null;
       window.firebaseTeacherUID=null;window.firebaseTeacherUser=null;
