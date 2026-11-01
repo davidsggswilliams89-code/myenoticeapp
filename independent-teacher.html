@@ -5049,7 +5049,13 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   const auth = getAuth(app);
   const db = getFirestore(app);
   window.firebaseFirestoreFns = { collection, doc, getDoc, getDocs, addDoc, setDoc, deleteDoc, serverTimestamp, query, where, updateDoc };
-  try { await setPersistence(auth, browserLocalPersistence); } catch(err) { console.error("Firebase auth persistence setup failed:", err); }
+  // Keep the signed-in Firebase session across browser/app restarts (TikTok-style).
+  // This stores Firebase's managed auth session, never the user's password.
+  try {
+    await setPersistence(auth, browserLocalPersistence);
+  } catch(err) {
+    console.error("Firebase auth persistence setup failed:", err);
+  }
   window.firebaseApp = app;
   window.teacherFirebaseAuth = auth;
   window.teacherFirestore = db;
@@ -5130,9 +5136,10 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     try{sessionStorage.removeItem('teacherActiveSection');}catch(_e){}
     busy(loginForm,true);
     try{
-      const credential=await signInWithEmailAndPassword(auth,document.getElementById('authEmail').value.trim(),document.getElementById('authPassword').value);
-      const role=await routeSignedInUser(credential.user);
-      if(role==='teacher') message('Login successful. Opening your dashboard…','success');
+      // The auth-state listener performs role validation and opens the dashboard.
+      // Do not route here as well: that would duplicate Firestore role reads.
+      await signInWithEmailAndPassword(auth,document.getElementById('authEmail').value.trim(),document.getElementById('authPassword').value);
+      message('Login successful. Opening your dashboard…','success');
     }catch(err){message(friendlyError(err));}
     finally{busy(loginForm,false);}
   });
@@ -5793,45 +5800,87 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   };
 
   let authInitialized=false;
+  let authRestoreSequence=0;
   onAuthStateChanged(auth,async user=>{
+    const restoreSequence=++authRestoreSequence;
+    const isCurrentRestore=()=>restoreSequence===authRestoreSequence && auth.currentUser?.uid===user?.uid;
     if(user){
       document.documentElement.classList.add('teacher-auth-pending');
-      // Never carry connection or school records from the previously signed-in account.
       activeTeacherConnection=null;window.activeTeacherConnection=null;
       window.firebaseTeacherUID=user.uid;window.firebaseTeacherUser=user;
       window.dispatchEvent(new Event('teacherAccountContextChanged'));
+
+      // Firebase is the source of truth. Validate the account role before
+      // revealing any teacher data, then show the dashboard without waiting
+      // for secondary profile/student/timetable queries.
       try{
         const role=await routeSignedInUser(user);
         if(role==='registrar')return;
+        if(!isCurrentRestore())return;
       }catch(err){
+        if(!isCurrentRestore())return;
         console.error('Account role check failed:',err);
         window.firebaseTeacherUID=null;
         gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');
         showPanel(loginForm);message(friendlyError(err));
         document.documentElement.classList.remove('teacher-auth-pending');
+        authInitialized=true;
         return;
       }
+
       window.firebaseTeacherUID=user.uid;window.firebaseTeacherUser=user;
-      localStorage.setItem('firebaseTeacherUID',user.uid);
-      localStorage.setItem('firebaseTeacherDisplayName',user.displayName||'');
-      try{const profile=await ensureTeacherProfile(user);applyFirestoreTeacherProfile(profile,user);}
-      catch(err){console.error('Teacher profile sync failed:',err);applyFirestoreTeacherProfile({},user);}
-      // Resolve this account's registrar connection before loading students or assignments.
-      await refreshTeacherSchoolConnection();
-      if((window.TEACHER_DASHBOARD_MODE||'independent')==='independent'){
-        setupPersonalExamTimetableForm();
-        await loadPersonalExamTimetable();
-      }
-      try{if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();}
-      catch(err){console.error('Student Firebase query failed during login:',err);}
-      if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
-      gate?.classList.add('auth-hidden');gate?.classList.add('auth-ready');
-      let activeSection='dashboardView';try{activeSection=sessionStorage.getItem('teacherActiveSection')||'dashboardView';}catch(_e){}
+      try{
+        localStorage.setItem('firebaseTeacherUID',user.uid);
+        localStorage.setItem('firebaseTeacherDisplayName',user.displayName||'');
+      }catch(_e){}
+
+      let activeSection='dashboardView';
+      try{activeSection=sessionStorage.getItem('teacherActiveSection')||'dashboardView';}catch(_e){}
       const validSections=['dashboardView','lessonsView','caExamView','studentsView','attendanceView','profileView','assignmentView','myClassesView','myTimetableView','examTimetableView','academicSessionView','settingsView','subscriptionView','holidayView'];
       if(!validSections.includes(activeSection))activeSection='dashboardView';
-      window.__restoringTeacherSection=true;if(typeof window.showSection==='function')window.showSection(activeSection,null);
-      if(activeSection==='profileView'&&typeof window.loadTeacherProfile==='function')window.loadTeacherProfile();
-      window.__restoringTeacherSection=false;document.documentElement.classList.remove('teacher-auth-pending');
+
+      gate?.classList.add('auth-hidden');gate?.classList.add('auth-ready');
+      window.__restoringTeacherSection=true;
+      if(typeof window.showSection==='function')window.showSection(activeSection,null);
+      window.__restoringTeacherSection=false;
+      document.documentElement.classList.remove('teacher-auth-pending');
+      authInitialized=true;
+
+      // Load supporting data after the dashboard is visible. This keeps
+      // persistent-login startup responsive while Firebase data refreshes.
+      (async()=>{
+        try{
+          const profile=await ensureTeacherProfile(user);
+          if(!isCurrentRestore())return;
+          applyFirestoreTeacherProfile(profile,user);
+        }catch(err){
+          console.error('Teacher profile sync failed:',err);
+          if(isCurrentRestore())applyFirestoreTeacherProfile({},user);
+        }
+
+        try{
+          await refreshTeacherSchoolConnection();
+          if(!isCurrentRestore())return;
+        }catch(err){console.error('Teacher school connection refresh failed:',err);}
+
+        if((window.TEACHER_DASHBOARD_MODE||'independent')==='independent'){
+          try{
+            setupPersonalExamTimetableForm();
+            await loadPersonalExamTimetable();
+          }catch(err){console.error('Personal exam timetable load failed:',err);}
+        }
+        if(!isCurrentRestore())return;
+        try{
+          if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
+        }catch(err){console.error('Student Firebase query failed:',err);}
+        if(!isCurrentRestore())return;
+        try{
+          if(typeof window.loadTeachingAssignments==='function')await window.loadTeachingAssignments();
+        }catch(err){console.error('Teaching assignment refresh failed:',err);}
+        if(activeSection==='profileView' && typeof window.loadTeacherProfile==='function' && isCurrentRestore()){
+          try{await window.loadTeacherProfile();}catch(err){console.error('Teacher profile display refresh failed:',err);}
+        }
+      })();
     }else{
       activeTeacherConnection=null;window.activeTeacherConnection=null;
       window.firebaseTeacherUID=null;window.firebaseTeacherUser=null;
@@ -5842,7 +5891,8 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       window.dispatchEvent(new Event('teacherAccountContextChanged'));
       document.documentElement.classList.remove('teacher-auth-pending');
       showPanel(loginForm);if(subtitle)subtitle.textContent='Sign in to continue';
-      if(!authInitialized){gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');authInitialized=true;}
+      gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');
+      authInitialized=true;
     }
   });
 </script>
