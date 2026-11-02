@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="manifest" href="./manifest.webmanifest">
-<meta name="theme-color" content="#006b5b">
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <script>window.TEACHER_DASHBOARD_MODE = "school-connected";</script>
@@ -1296,13 +1293,14 @@ table{max-width:100%}
 /* Prevent refresh flicker while Firebase restores an already-signed-in teacher session. */
 html.teacher-auth-pending .topnav-header,
 html.teacher-auth-pending .main{visibility:hidden !important;}
-/* Keep a visible recovery screen while Firebase restores/verifies the teacher.
-   Hiding both the dashboard and the auth gate produced a completely blank page
-   whenever the Firebase callback was delayed or blocked. */
-html.teacher-auth-pending #firebaseAuthGate{
-  display:flex !important;
-  visibility:visible !important;
+html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
+html.teacher-auth-pending body::before{
+  content:"Checking your account and preparing your dashboard…";
+  position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;
+  padding:24px;text-align:center;background:#f7faf9;color:#176b45;
+  font:700 15px/1.5 Arial,sans-serif;
 }
+
 #firebaseAuthGate{position:fixed;inset:0;z-index:10000;background:linear-gradient(135deg,#eef8f5,#f4f7fb);display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto;visibility:visible}
 #firebaseAuthGate.auth-ready{visibility:visible}
 #firebaseAuthGate.auth-hidden{display:none}
@@ -1584,90 +1582,8 @@ html.teacher-auth-pending #firebaseAuthGate{
 @media(max-width:600px){#formMasterPtaSection{padding:13px!important}#formMasterPtaSection>div:first-child{align-items:flex-start}#formMasterPtaSection table{font-size:12px}#formMasterPtaSection th,#formMasterPtaSection td{padding:8px 6px}#formMasterPtaSection button{max-width:100%}}
 </style>
 
-
-<style id="teacher-login-diagnostics-style">
-#teacherLoginDiagnostics{margin-top:16px;border:1px solid #d8e2e8;border-radius:12px;background:#f8fafc;padding:12px;color:#344054;font-size:12px}
-#teacherLoginDiagnostics h4{margin:0 0 7px;color:#17324d;font-size:13px}
-#teacherLoginDiagnostics .diag-status{font-weight:800;color:#075c51;margin-bottom:7px}
-#teacherLoginDiagnostics ol{margin:0;padding-left:19px;display:grid;gap:5px}
-#teacherLoginDiagnostics li{line-height:1.4}
-#teacherLoginDiagnostics .diag-error{margin-top:9px;padding:9px;border-radius:8px;background:#fff0f2;color:#b42318;white-space:pre-wrap;overflow-wrap:anywhere}
-#teacherLoginDiagnostics .diag-actions{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
-#teacherLoginDiagnostics button{border:1px solid #cbd5e1;background:#fff;border-radius:7px;padding:7px 9px;color:#344054;font-weight:700;font-size:11px}
-#teacherLoginDiagnostics .diag-hint{color:#667085;margin-top:7px;line-height:1.45}
-</style>
-
 </head>
 <body>
-
-<script id="teacher-login-diagnostic-engine">
-(function(){
-  const labels = {
-    firebase:'teacherDiagFirebase', login:'teacherDiagLogin',
-    role:'teacherDiagRole', dashboard:'teacherDiagDashboard'
-  };
-  const state = {firebase:'Waiting',login:'Not started',role:'Not started',dashboard:'Not opened',error:''};
-  function clean(value){return String(value||'').replace(/\\s+/g,' ').trim().slice(0,900);}
-  window.teacherLoginDiagnostic = function(key,status,detail){
-    if(key && labels[key]){
-      state[key] = clean(status);
-      const node=document.getElementById(labels[key]);
-      if(node) node.textContent = node.textContent.split(':')[0]+': '+state[key];
-    }
-    if(detail===null){
-      state.error='';
-      const box=document.getElementById('teacherDiagError');
-      if(box){box.style.display='none';box.textContent='';}
-    }else if(detail){
-      state.error=clean(detail);
-      const box=document.getElementById('teacherDiagError');
-      if(box){box.style.display='block';box.textContent='Reason: '+state.error;}
-    }
-    const statusNode=document.getElementById('teacherDiagStatus');
-    if(statusNode)statusNode.textContent=detail?'Action needed — see the reason below.':(status||'Checking login…');
-  };
-  window.teacherLoginDiagnosticSnapshot=function(){
-    return ['My e-Notice Teacher Login Diagnostic',
-      'Firebase: '+state.firebase,'Login: '+state.login,
-      'Teacher account check: '+state.role,'Dashboard: '+state.dashboard,
-      'Reason: '+(state.error||'No error reported'),
-      'Page: '+location.href,'Time: '+new Date().toISOString()].join('\\n');
-  };
-  document.addEventListener('submit',function(e){
-    if(e.target && e.target.id==='teacherLoginForm' && !window.__teacherFirebaseModuleReady){
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      window.teacherLoginDiagnostic('firebase','Firebase login module has not initialized',
-        'The Firebase JavaScript module did not finish loading. Check the internet connection or whether gstatic.com/firebasejs modules are blocked. This is a page startup problem, not proof that the email or password is wrong.');
-      const msg=document.getElementById('authMessage');
-      if(msg){msg.textContent='Login is not ready because the Firebase sign-in module has not loaded. Please check your connection and reload. See the diagnostic section below.';msg.className='auth-message error';}
-    }
-  },true);
-  document.addEventListener('click',function(e){
-    if(e.target && e.target.id==='teacherDiagRetry') location.reload();
-    if(e.target && e.target.id==='teacherDiagCopy'){
-      const value=window.teacherLoginDiagnosticSnapshot();
-      if(navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(value).then(()=>{e.target.textContent='COPIED';}).catch(()=>{window.prompt('Copy diagnostic details:',value);});
-      }else window.prompt('Copy diagnostic details:',value);
-    }
-  });
-  window.addEventListener('error',function(e){
-    const message=(e&&e.message)||'A script failed to load';
-    const where=(e&&e.filename?(' File: '+e.filename):'')+(e&&e.lineno?(' Line: '+e.lineno):'');
-    window.teacherLoginDiagnostic('dashboard','Page script error',message+where);
-  });
-  window.addEventListener('unhandledrejection',function(e){
-    const reason=e&&e.reason;
-    window.teacherLoginDiagnostic('dashboard','Firebase/background operation failed',
-      reason&&(reason.message||reason)||'An asynchronous operation was rejected');
-  });
-  window.addEventListener('unhandledrejection',function(e){
-    const reason=e&&e.reason;window.teacherLoginDiagnostic('dashboard','Unexpected background error',reason&&(reason.message||reason));
-  });
-})();
-</script>
-
 <div id="teacherDashboardModeBadge" role="status" style="position:fixed;right:10px;bottom:10px;z-index:9998;padding:7px 10px;border-radius:999px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font:700 10px/1.2 Arial,sans-serif;box-shadow:0 2px 8px #00000012;pointer-events:none" aria-live="polite"></div>
 <script>
   /* Mark an existing Firebase session as pending before the dashboard paints.
@@ -1686,23 +1602,6 @@ html.teacher-auth-pending #firebaseAuthGate{
       <p id="authSubtitle">Sign in to continue</p>
     </div>
     <div id="authMessage" class="auth-message"></div>
-    <section id="teacherLoginDiagnostics" aria-live="polite">
-      <h4>Login / Dashboard Diagnostic</h4>
-      <div class="diag-status" id="teacherDiagStatus">Waiting for login service…</div>
-      <ol>
-        <li id="teacherDiagFirebase">Firebase service: waiting</li>
-        <li id="teacherDiagLogin">Login: not started</li>
-        <li id="teacherDiagRole">Teacher account check: not started</li>
-        <li id="teacherDiagDashboard">Dashboard: not opened</li>
-      </ol>
-      <div class="diag-error" id="teacherDiagError" style="display:none"></div>
-      <div class="diag-actions">
-        <button type="button" id="teacherDiagCopy">COPY DIAGNOSTIC DETAILS</button>
-        <button type="button" id="teacherDiagRetry">RELOAD PAGE</button>
-      </div>
-      <div class="diag-hint">If the page becomes blank or login fails, this section will show the step that stopped and the error returned. It does not bypass account or school permissions.</div>
-    </section>
-
 
     <form id="teacherLoginForm" class="auth-form">
       <h3>Login</h3>
@@ -3044,7 +2943,7 @@ function renderStudents(){
 
 function ptaTeacherEscape(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;", "'":"&#39;"}[c]));}
 function ptaTeacherTermLabel(){const sel=document.getElementById("teacherPtaTerm");return sel?.selectedOptions?.[0]?.textContent||"First Term";}
-function ptaTeacherIsFormMaster(){const c=window.activeTeacherConnection||{},signedInUid=window.firebaseTeacherUID||window.teacherFirebaseAuth?.currentUser?.uid||"";return (window.TEACHER_DASHBOARD_MODE||"")==="school-connected"&&!!signedInUid&&c.teacherUid===signedInUid&&["connected","approved","active"].includes(String(c.status||"").toLowerCase())&&(c.ptaFormMaster===true||String(c.assignedRole||"").trim().toLowerCase()==="form master")&&!!String(c.ptaFormMasterClass||"").trim();}
+function ptaTeacherIsFormMaster(){const c=window.activeTeacherConnection||{},signedInUid=window.firebaseTeacherUID||auth.currentUser?.uid||"";return (window.TEACHER_DASHBOARD_MODE||"")==="school-connected"&&!!signedInUid&&c.teacherUid===signedInUid&&["connected","approved","active"].includes(String(c.status||"").toLowerCase())&&(c.ptaFormMaster===true||String(c.assignedRole||"").trim().toLowerCase()==="form master")&&!!String(c.ptaFormMasterClass||"").trim();}
 window.openFormMasterPta=function(button){
  if(!ptaTeacherIsFormMaster()){alert("PTA Payments is available only to the teacher UID currently assigned as Form Master.");if(button)button.style.display="none";return;}
  showSection("dashboardView",button);
@@ -3054,7 +2953,7 @@ window.openFormMasterPta=function(button){
 };
 window.renderFormMasterPtaPayments=function(){
  const c=window.activeTeacherConnection||{};
- const signedInUid=window.firebaseTeacherUID||window.teacherFirebaseAuth?.currentUser?.uid||"";
+ const signedInUid=window.firebaseTeacherUID||auth.currentUser?.uid||"";
  const isMaster=(window.TEACHER_DASHBOARD_MODE||"")==="school-connected"&&!!signedInUid&&c.teacherUid===signedInUid&&["connected","approved","active"].includes(String(c.status||"").toLowerCase())&&(c.ptaFormMaster===true||String(c.assignedRole||c.role||"").trim().toLowerCase()==="form master")&&!!String(c.ptaFormMasterClass||c.assignedClass||"").trim();
  const nav=document.getElementById("formMasterPtaNav");
  if(nav){nav.style.display="flex";nav.disabled=!isMaster;nav.setAttribute("aria-disabled",String(!isMaster));nav.style.opacity=isMaster?"1":".55";nav.style.cursor=isMaster?"pointer":"not-allowed";}
@@ -3744,15 +3643,6 @@ function printDocument(content){
 
 
 
-
-<script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./service-worker.js", { scope: "./" })
-      .catch(function (error) { console.warn("App offline support could not be registered:", error); });
-  });
-}
-</script>
 </body></html>`);
  w.document.close();w.focus();setTimeout(()=>w.print(),250);
 }
@@ -4935,18 +4825,11 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   const auth = getAuth(app);
   const db = getFirestore(app);
   window.firebaseFirestoreFns = { collection, doc, getDoc, getDocs, addDoc, setDoc, deleteDoc, serverTimestamp, query, where, updateDoc, onSnapshot };
-  // Publish the Firebase services before optional persistence setup. Waiting for
-  // persistence here can leave the login form uninitialized on slow/blocked storage.
+  try { await setPersistence(auth, browserLocalPersistence); } catch(err) { console.error("Firebase auth persistence setup failed:", err); }
   window.firebaseApp = app;
   window.teacherFirebaseAuth = auth;
   window.teacherFirestore = db;
   window.firebaseTeacherUID = null;
-  window.__teacherFirebaseModuleReady = true;
-  window.teacherLoginDiagnostic?.('firebase','Firebase modules loaded; preparing sign-in');
-  // Firebase Auth uses browserLocal persistence by default in supported browsers.
-  // Do not call setPersistence here: racing it against onAuthStateChanged can
-  // delay the initial auth-state callback on some mobile browsers/storage modes.
-  window.teacherLoginDiagnostic?.('firebase','Ready — using Firebase default browser persistence');
 
   const gate=document.getElementById('firebaseAuthGate');
   const loginForm=document.getElementById('teacherLoginForm');
@@ -4989,7 +4872,6 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   document.getElementById('registrarRegisterBack')?.addEventListener('click',()=>{showPanel(registerRoleChoice);subtitle.textContent='Choose the account you want to create';});
 
   async function routeSignedInUser(user){
-    window.teacherLoginDiagnostic?.('role','Checking teacher profile in Firestore');
     // Check the user's own teacher profile first. This preserves existing teacher
     // login under the current teacher-only Firestore rules, without requiring a
     // read from the registrars collection.
@@ -5004,7 +4886,6 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         await signOut(auth);
         throw new Error('This account is registered with the role "'+teacherData.role+'", not Teacher. Please contact the administrator.');
       }
-      window.teacherLoginDiagnostic?.('role','Teacher profile found and role accepted');
       return 'teacher';
     }
 
@@ -5025,9 +4906,8 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     try{sessionStorage.removeItem('teacherActiveSection');}catch(_e){}
     busy(loginForm,true);
     try{
-      const credential=await signInWithEmailAndPassword(auth,document.getElementById('authEmail').value.trim(),document.getElementById('authPassword').value);
-      const role=await routeSignedInUser(credential.user);
-      if(role==='teacher') message('Login successful. Opening your dashboard…','success');
+      await signInWithEmailAndPassword(auth,document.getElementById('authEmail').value.trim(),document.getElementById('authPassword').value);
+      message('Login successful. Opening your dashboard…','success');
     }catch(err){message(friendlyError(err));}
     finally{busy(loginForm,false);}
   });
@@ -5144,17 +5024,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     const classes=record?.assignedClasses?.length?record.assignedClasses:(record?.assignedClass?[record.assignedClass]:[]);
     const subjects=record?.assignedSubjects||[];
     if(!record||!['connected','approved','active'].includes(String(record.status||'').toLowerCase())){const p=document.createElement('p');p.textContent='Your registrar-assigned classes and subjects will appear here after your school connection is approved.';p.style.cssText='padding:16px;background:#f8fafc;border-radius:10px;color:#475569';box.append(p);return;}
-    const heading=document.createElement('p');heading.textContent=`School: ${record.schoolName||'Connected school'} · Role: ${record.assignedRole||'Teacher'}`;heading.style.cssText='padding:12px;background:#ecfdf5;border-radius:10px;color:#166534;font-weight:700';box.append(heading);
-    const responsibilities=Array.isArray(record.assignedResponsibilities)?record.assignedResponsibilities.filter(x=>String(x||'').trim()):[];
-    if(responsibilities.length){
-      const dutyCard=document.createElement('section');dutyCard.style.cssText='border:1px solid #cfe4d7;border-radius:12px;padding:14px;margin:10px 0;background:#f7fcf8';
-      const dutyTitle=document.createElement('h3');dutyTitle.textContent='My Additional School Responsibilities';dutyTitle.style.cssText='margin:0 0 10px;color:#14532d;font-size:16px';dutyCard.append(dutyTitle);
-      const dutyList=document.createElement('div');dutyList.style.cssText='display:flex;gap:8px;flex-wrap:wrap';
-      responsibilities.forEach(duty=>{const tag=document.createElement('span');tag.textContent=duty;tag.style.cssText='padding:7px 10px;background:#e5f5eb;border:1px solid #cce8d5;border-radius:20px;font-size:13px;font-weight:700;color:#166534';dutyList.append(tag)});
-      dutyCard.append(dutyList);box.append(dutyCard);
-    }else{
-      const noDuty=document.createElement('p');noDuty.textContent='No additional school responsibilities have been assigned to you yet.';noDuty.style.cssText='padding:12px;background:#f8fafc;border-radius:10px;color:#64748b';box.append(noDuty);
-    }
+    const heading=document.createElement('p');heading.textContent=`School: ${record.schoolName||'Connected school'} · Role: ${record.assignedRole||'Not assigned'}`;heading.style.cssText='padding:12px;background:#ecfdf5;border-radius:10px;color:#166534;font-weight:700';box.append(heading);
     if(!classes.length||!subjects.length){const p=document.createElement('p');p.textContent='The registrar has not assigned both classes and subjects yet.';box.append(p);}
     const pairs=Array.isArray(record.assignedTeachingAssignments)?record.assignedTeachingAssignments:[];
     if(pairs.length){
@@ -5176,7 +5046,6 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         if(!snap.exists())return;
         const latest={id:snap.id,...snap.data()};
         activeTeacherConnection=latest;window.activeTeacherConnection=latest;
-        renderTeacherAssignments(latest);
         if(typeof window.loadStudentsFromFirestore==="function")await window.loadStudentsFromFirestore();
         if(typeof window.renderFormMasterPtaPayments==="function")window.renderFormMasterPtaPayments();
       },err=>console.warn("Live Form Master assignment updates unavailable:",err));
@@ -5192,7 +5061,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         const schoolInput=document.getElementById('teacherSchool');if(schoolInput)schoolInput.readOnly=false;
         showTeacherConnectionStatus('Not connected to a school yet. Enter the School ID above to send a request.');
         window.dispatchEvent(new Event('teacherAccountContextChanged'));
-        if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
+        if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}
         if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
       if(typeof window.renderFormMasterPtaPayments==='function')window.renderFormMasterPtaPayments();
         if(typeof window.loadDashboardTeacherSubjects==='function')window.loadDashboardTeacherSubjects();
@@ -5206,7 +5075,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         activeTeacherConnection=null;window.activeTeacherConnection=null;
         renderTeacherAssignments(null);
         window.dispatchEvent(new Event('teacherAccountContextChanged'));
-        if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
+        if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}
         if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
         if(typeof window.loadDashboardTeacherSubjects==='function')window.loadDashboardTeacherSubjects();
         const latest=records[0];
@@ -5221,7 +5090,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         activeTeacherConnection=null;window.activeTeacherConnection=null;
         renderTeacherAssignments(null);
         window.dispatchEvent(new Event('teacherAccountContextChanged'));
-        if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
+        if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}
         showTeacherConnectionStatus('This dashboard requires an approved school connection. Ask the registrar to approve your account.','error');
         return;
       }
@@ -5230,7 +5099,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       renderTeacherAssignments(r);
       window.dispatchEvent(new Event('teacherAccountContextChanged'));
       if(typeof window.applyAssignedClassFilters==='function'&&teacherIsSchoolConnected())window.applyAssignedClassFilters();
-      if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
+      if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}
       if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
       if(typeof window.loadDashboardTeacherSubjects==='function')window.loadDashboardTeacherSubjects();
       const schoolInput=document.getElementById('teacherSchool');
@@ -5244,14 +5113,14 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       else if(r.status==='deactivated')showTeacherConnectionStatus(`Your connection to ${r.schoolName||'the school'} has been deactivated. Contact the registrar or request a new connection.`,'error');
       else if(r.status==='rejected')showTeacherConnectionStatus(`Your request to ${r.schoolName||'the school'} was not approved. You may submit a new request if appropriate.`,'error');
       else showTeacherConnectionStatus('No active school connection. Enter a School ID to request connection.');
-      if(typeof window.loadTeacherAcademicSession==='function')await window.loadTeacherAcademicSession();
+      if(typeof window.loadTeacherAcademicSession==='function'){Promise.resolve().then(()=>window.loadTeacherAcademicSession()).catch(err=>console.error('Background academic-session load failed:',err));}
     }catch(e){
       console.error('Teacher connection lookup failed:',e);
       const mode=window.TEACHER_DASHBOARD_MODE||"independent";
       if(mode==="independent"){
         activeTeacherConnection=null;window.activeTeacherConnection=null;
         renderTeacherAssignments(null);
-        if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
+        if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}
         showTeacherConnectionStatus('Independent mode is active. School connection status could not be refreshed; your own records remain separate.','error');
         return;
       }
@@ -5271,11 +5140,11 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
               activeTeacherConnection=member;window.activeTeacherConnection=member;renderTeacherAssignments(member);
               window.dispatchEvent(new Event('teacherAccountContextChanged'));
               if(typeof window.applyAssignedClassFilters==='function')window.applyAssignedClassFilters();
-              if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
+              if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}
               if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
               if(typeof window.loadDashboardTeacherSubjects==='function')window.loadDashboardTeacherSubjects();
               showTeacherConnectionStatus('Connected to '+(member.schoolName||'your school')+'. Connection loaded from school membership.','success');
-              if(typeof window.loadTeacherAcademicSession==='function')await window.loadTeacherAcademicSession();
+              if(typeof window.loadTeacherAcademicSession==='function'){Promise.resolve().then(()=>window.loadTeacherAcademicSession()).catch(err=>console.error('Background academic-session load failed:',err));}
               return;
             }
           }
@@ -5286,7 +5155,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       if(typeof window.refreshStudentViews==='function')window.refreshStudentViews();
       if(typeof window.renderAttendance==='function')window.renderAttendance();
       showTeacherConnectionStatus('Could not verify the school connection: '+(e?.code||e?.message||'Firestore access denied')+'. School records remain locked until the connection can be verified.','error');
-      if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
+      if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}
     }
   }
   function teacherHasPair(record,entry){
@@ -5490,18 +5359,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   document.getElementById('requestSchoolConnection')?.addEventListener('click',requestTeacherSchoolConnection);
   document.getElementById('refreshSchoolConnection')?.addEventListener('click',refreshTeacherSchoolConnection);
   window.refreshTeacherSchoolConnection=refreshTeacherSchoolConnection;
-  // This is a nonessential first-render call. If its UI code throws, it must
-  // not abort the Firebase module before onAuthStateChanged() is registered.
-  try {
-    renderTeacherAssignments(null);
-  } catch (startupRenderError) {
-    console.error('Initial teacher assignments render failed:', startupRenderError);
-    window.teacherLoginDiagnostic?.(
-      'dashboard',
-      'Initial dashboard component failed',
-      (startupRenderError && startupRenderError.message) || startupRenderError
-    );
-  }
+  renderTeacherAssignments(null);
 
   window.saveTeacherProfileToFirestore=async function(data){
     const user=auth.currentUser;
@@ -5516,7 +5374,6 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
 
   let authInitialized=false;
   onAuthStateChanged(auth,async user=>{
-    window.__teacherAuthStateSeen = true;
     if(user){
       document.documentElement.classList.add('teacher-auth-pending');
       // Never carry connection or school records from the previously signed-in account.
@@ -5524,12 +5381,8 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       window.firebaseTeacherUID=user.uid;window.firebaseTeacherUser=user;
       window.dispatchEvent(new Event('teacherAccountContextChanged'));
       try{
-        const role=await Promise.race([
-          routeSignedInUser(user),
-          new Promise((_,reject)=>setTimeout(()=>reject(new Error('Account verification timed out. Please check your internet connection and Firestore Rules, then sign in again.')),10000))
-        ]);
+        const role=await routeSignedInUser(user);
         if(role==='registrar')return;
-        window.teacherLoginDiagnostic?.('role','Teacher account verified');
       }catch(err){
         console.error('Account role check failed:',err);
         window.firebaseTeacherUID=null;
@@ -5539,72 +5392,22 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         return;
       }
       window.firebaseTeacherUID=user.uid;window.firebaseTeacherUser=user;
-      try{
-        localStorage.setItem('firebaseTeacherUID',user.uid);
-        localStorage.setItem('firebaseTeacherDisplayName',user.displayName||'');
-      }catch(storageError){console.warn('Teacher session could not be cached locally:',storageError);}
-      // Open the teacher dashboard immediately after the teacher role is verified.
-      // Profile, school connection and student queries must never hold the login gate open.
-      gate?.classList.add('auth-hidden');
-      gate?.classList.add('auth-ready');
-      // showLoginFallback() uses inline display:flex; remove that override on
-      // successful authentication so the .auth-hidden class can hide the gate.
-      if(gate){
-        gate.style.removeProperty('display');
-        gate.style.removeProperty('visibility');
-      }
-      let activeSection='dashboardView';
-      try{activeSection=sessionStorage.getItem('teacherActiveSection')||'dashboardView';}catch(_e){}
+      localStorage.setItem('firebaseTeacherUID',user.uid);
+      localStorage.setItem('firebaseTeacherDisplayName',user.displayName||'');
+      try{const profile=await ensureTeacherProfile(user);applyFirestoreTeacherProfile(profile,user);}
+      catch(err){console.error('Teacher profile sync failed:',err);applyFirestoreTeacherProfile({},user);}
+      // Resolve this account's registrar connection before loading students or assignments.
+      await refreshTeacherSchoolConnection();
+      try{if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}}
+      catch(err){console.error('Student Firebase query failed during login:',err);}
+      if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
+      gate?.classList.add('auth-hidden');gate?.classList.add('auth-ready');
+      let activeSection='dashboardView';try{activeSection=sessionStorage.getItem('teacherActiveSection')||'dashboardView';}catch(_e){}
       const validSections=['dashboardView','lessonsView','caExamView','studentsView','attendanceView','gpsAttendanceView','profileView','assignmentView','myClassesView','myTimetableView','examTimetableView','academicSessionView','settingsView','subscriptionView','holidayView'];
       if(!validSections.includes(activeSection))activeSection='dashboardView';
-      window.__restoringTeacherSection=true;
-      try{
-        if(typeof window.showSection==='function')window.showSection(activeSection,null);
-        else{
-          const dashboard=document.getElementById('dashboardView');
-          if(dashboard)dashboard.style.display='block';
-        }
-        if(activeSection==='profileView'&&typeof window.loadTeacherProfile==='function')window.loadTeacherProfile();
-      }catch(renderError){
-        console.error('Dashboard section rendering failed; showing the main dashboard:',renderError);
-        document.querySelectorAll('.section-view').forEach(el=>el.style.display='none');
-        const dashboard=document.getElementById('dashboardView');
-        if(dashboard)dashboard.style.display='block';
-      }finally{
-        window.__restoringTeacherSection=false;
-        document.documentElement.classList.remove('teacher-auth-pending');
-        window.__teacherDashboardReady = true;
-        window.teacherLoginDiagnostic?.('dashboard','Dashboard opened successfully; loading school data',null);
-      }
-
-      // Background setup starts only after the dashboard is visible.
-      const waitFor = (promise, label, ms=8000) => Promise.race([
-        Promise.resolve().then(()=>promise),
-        new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+' timed out')),ms))
-      ]);
-      try{
-        const profile=await waitFor(ensureTeacherProfile(user),'Teacher profile loading',8000);
-        applyFirestoreTeacherProfile(profile,user);
-      }catch(err){
-        console.warn('Teacher profile sync delayed; dashboard remains open:',err);
-        try{applyFirestoreTeacherProfile({},user);}catch(profileRenderError){console.warn('Fallback teacher profile display failed:',profileRenderError);}
-      }
-      try{
-        await waitFor(refreshTeacherSchoolConnection(),'School connection loading',9000);
-      }catch(err){
-        console.warn('School connection refresh did not finish; dashboard remains open:',err);
-        const status=document.getElementById('teacherSchoolConnectionStatus');
-        if(status){
-          status.textContent='Dashboard is open. School information is still loading; use Refresh or check your connection if assignments do not appear.';
-          status.style.background='#fff7e6';status.style.color='#8a5a00';
-        }
-      }
-      try{
-        if(typeof window.loadStudentsFromFirestore==='function')
-          await waitFor(window.loadStudentsFromFirestore(),'Student records loading',6000);
-      }catch(err){console.warn('Student records will continue loading in the background:',err);}
-      try{if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();}
-      catch(err){console.warn('Teaching assignments could not be rendered yet:',err);}
+      window.__restoringTeacherSection=true;if(typeof window.showSection==='function')window.showSection(activeSection,null);
+      if(activeSection==='profileView'&&typeof window.loadTeacherProfile==='function')window.loadTeacherProfile();
+      window.__restoringTeacherSection=false;document.documentElement.classList.remove('teacher-auth-pending');
     }else{
       activeTeacherConnection=null;window.activeTeacherConnection=null;
       window.firebaseTeacherUID=null;window.firebaseTeacherUser=null;
@@ -6306,63 +6109,13 @@ onAuthStateChanged(ptaAuth,user=>{ptaUser=user;if(!user)return;const refresh=()=
 const ptaObserver=new MutationObserver(()=>{if(ptaUser&&window.activeTeacherConnection){ptaConnection=window.activeTeacherConnection;window.renderFormMasterPtaPayments?.();}});
 ptaObserver.observe(document.body,{childList:true,subtree:true});
 </script>
-
-<script id="teacher-dashboard-blank-screen-guard">
-/* Fail-safe: a failed/blocked Firebase module must show a usable login screen,
-   never a blank page. It does not bypass authentication or grant dashboard access. */
-(function(){
-  function showLoginFallback(reason){
-    document.documentElement.classList.remove('teacher-auth-pending');
-    const gate=document.getElementById('firebaseAuthGate');
-    const form=document.getElementById('teacherLoginForm');
-    if(gate){
-      gate.classList.remove('auth-hidden');
-      gate.classList.add('auth-ready');
-      gate.style.display='flex';
-      gate.style.visibility='visible';
-    }
-    if(form)form.style.display='block';
-    const message=document.getElementById('authMessage');
-    if(message){
-      message.textContent=reason;
-      message.className='auth-message error';
-    }
-    window.teacherLoginDiagnostic?.('dashboard','Startup blocked',reason);
-    console.error('[My e-Notice] Authentication startup fallback:',reason);
-  }
-  window.setTimeout(function(){
-    if(!window.__teacherFirebaseModuleReady){
-      showLoginFallback('The login service could not start. Check your internet connection, then refresh this page. If the problem continues, check that Firebase module access is not blocked by your browser.');
-      return;
-    }
-    if(!window.__teacherAuthStateSeen){
-      const snapshot=window.teacherLoginDiagnosticSnapshot?.()||'';
-      const hasSpecificError=/Reason: (?!No error reported)/.test(snapshot);
-      if(!hasSpecificError){
-        showLoginFallback('Firebase loaded, but the authentication-state callback did not start. The page will now report any JavaScript startup error instead of assuming this is a storage problem.');
-      }
-    }
-  },10000);
-
-  // Recovery for an authenticated page that remains hidden after the auth
-  // callback has started. This never bypasses account verification: it
-  // reveals the login gate and lets the user retry instead of leaving a blank page.
-  window.setTimeout(function(){
-    if(document.documentElement.classList.contains('teacher-auth-pending') &&
-       !window.__teacherDashboardReady){
-      showLoginFallback('The teacher dashboard did not finish opening. Your session was not bypassed. Please sign in again; if it repeats, check the Firebase connection and account permissions.');
-    }
-  },18000);
-  window.addEventListener('error',function(e){
-    if(!window.__teacherFirebaseModuleReady){
-      showLoginFallback('A page script failed to load. Refresh the page; if this continues, check the browser console for the script error.');
-    }
+<script id="pwa-service-worker-registration">
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("./service-worker.js", { scope: "./" })
+      .catch(function (error) { console.warn("App offline support could not be registered:", error); });
   });
-  window.addEventListener('unhandledrejection',function(e){
-    console.error('[My e-Notice] Unhandled page promise:',e.reason);
-  });
-})();
+}
 </script>
-
 </body>
 </html>
