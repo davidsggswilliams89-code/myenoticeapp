@@ -1294,13 +1294,6 @@ table{max-width:100%}
 html.teacher-auth-pending .topnav-header,
 html.teacher-auth-pending .main{visibility:hidden !important;}
 html.teacher-auth-pending #firebaseAuthGate{display:none !important;}
-html.teacher-auth-pending body::before{
-  content:"Checking your account and preparing your dashboard…";
-  position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;
-  padding:24px;text-align:center;background:#f7faf9;color:#176b45;
-  font:700 15px/1.5 Arial,sans-serif;
-}
-
 #firebaseAuthGate{position:fixed;inset:0;z-index:10000;background:linear-gradient(135deg,#eef8f5,#f4f7fb);display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto;visibility:visible}
 #firebaseAuthGate.auth-ready{visibility:visible}
 #firebaseAuthGate.auth-hidden{display:none}
@@ -1577,11 +1570,6 @@ html.teacher-auth-pending body::before{
 @media(max-width:360px){#gpsAttendanceView .gps-grid{grid-template-columns:1fr}#gpsAttendanceView .gps-actions{grid-template-columns:1fr}}
 </style>
 
-
-<style>
-@media(max-width:600px){#formMasterPtaSection{padding:13px!important}#formMasterPtaSection>div:first-child{align-items:flex-start}#formMasterPtaSection table{font-size:12px}#formMasterPtaSection th,#formMasterPtaSection td{padding:8px 6px}#formMasterPtaSection button{max-width:100%}}
-</style>
-
 </head>
 <body>
 <div id="teacherDashboardModeBadge" role="status" style="position:fixed;right:10px;bottom:10px;z-index:9998;padding:7px 10px;border-radius:999px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font:700 10px/1.2 Arial,sans-serif;box-shadow:0 2px 8px #00000012;pointer-events:none" aria-live="polite"></div>
@@ -1683,7 +1671,7 @@ html.teacher-auth-pending body::before{
     <span class="navicon">🗓️</span>
     <span>Academic Session</span>
   </button>
-  <button class="topnav-item" id="formMasterPtaNav" style="display:none" type="button" aria-disabled="true" onclick="window.openFormMasterPta(this)">
+  <button class="topnav-item" id="formMasterPtaNav" style="display:none" onclick="window.location.href='pta-payment.html'">
     <span class="navicon">💳</span>
     <span>PTA Payments</span>
   </button>
@@ -1751,27 +1739,6 @@ html.teacher-auth-pending body::before{
 
 
 
-
-<section id="formMasterPtaSection" class="teacher-section-card" style="display:none;margin:18px 0;padding:18px;border:1px solid var(--line,#dce6df);border-radius:16px;background:#fff">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
-    <div><h2 style="margin:0 0 5px">💳 PTA Payments</h2><p id="teacherPtaSummary" style="margin:0;color:#65736a">Loading Form Master assignment…</p></div>
-    <button type="button" class="topnav-item" style="border:1px solid #dce6df;border-radius:9px;padding:9px 12px" onclick="window.closeFormMasterPta()">← Back to Dashboard</button>
-  </div>
-  <div id="teacherPtaNotice" role="status" style="margin:14px 0;padding:12px;border-radius:10px;background:#eef6ff;color:#194b75">Checking Form Master assignment…</div>
-  <div id="teacherPtaDashboard" style="display:none">
-    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0">
-      <div style="padding:15px;border:1px solid #e0eee7;border-radius:12px;background:#f5faf7"><span style="color:#66756f;font-size:13px">Students in assigned class</span><strong id="teacherPtaTotal" style="display:block;font-size:26px">0</strong></div>
-      <div style="padding:15px;border:1px solid #e0eee7;border-radius:12px;background:#f5faf7"><span style="color:#66756f;font-size:13px">Payment received</span><strong id="teacherPtaPaid" style="display:block;font-size:26px">0</strong></div>
-      <div style="padding:15px;border:1px solid #e0eee7;border-radius:12px;background:#f5faf7"><span style="color:#66756f;font-size:13px">Outstanding</span><strong id="teacherPtaOutstanding" style="display:block;font-size:26px">0</strong></div>
-    </div>
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0">
-      <label for="teacherPtaTerm">Term</label><select id="teacherPtaTerm" style="padding:10px;border:1px solid #cfdad4;border-radius:9px"><option value="firstTerm">First Term</option><option value="secondTerm">Second Term</option><option value="thirdTerm">Third Term</option></select>
-      <input id="teacherPtaSearch" type="search" placeholder="Search student or admission no." style="flex:1;min-width:180px;padding:10px;border:1px solid #cfdad4;border-radius:9px">
-      <button type="button" id="teacherPtaRefresh" class="primary" style="padding:10px 14px">Refresh</button>
-    </div>
-    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:680px"><thead><tr><th>#</th><th>Student</th><th>Admission No.</th><th>Class</th><th>Guardian phone</th><th>Payment</th><th>Action</th></tr></thead><tbody id="teacherPtaStudentsBody"><tr><td colspan="7">Loading students…</td></tr></tbody></table></div>
-  </div>
-</section>
 </div>
 
 <div id="lessonsView" class="section-view" style="display:none">
@@ -2952,15 +2919,50 @@ window.openFormMasterPta=function(button){
  if(typeof window.renderFormMasterPtaPayments==="function")window.renderFormMasterPtaPayments();
 };
 window.renderFormMasterPtaPayments=function(){
- const c=window.activeTeacherConnection||{};
- const signedInUid=window.firebaseTeacherUID||auth.currentUser?.uid||"";
- const isMaster=(window.TEACHER_DASHBOARD_MODE||"")==="school-connected"&&!!signedInUid&&c.teacherUid===signedInUid&&["connected","approved","active"].includes(String(c.status||"").toLowerCase())&&(c.ptaFormMaster===true||String(c.assignedRole||c.role||"").trim().toLowerCase()==="form master")&&!!String(c.ptaFormMasterClass||c.assignedClass||"").trim();
- const nav=document.getElementById("formMasterPtaNav");
- if(nav){nav.style.display="flex";nav.disabled=!isMaster;nav.setAttribute("aria-disabled",String(!isMaster));nav.style.opacity=isMaster?"1":".55";nav.style.cursor=isMaster?"pointer":"not-allowed";}
- const section=document.getElementById("formMasterPtaSection");
- if(section&&!isMaster)section.style.display="none";
- const summary=document.getElementById("teacherPtaSummary");
- if(summary)summary.textContent=isMaster?((c.schoolName||"Connected school")+" · Form Master for "+String(c.ptaFormMasterClass||c.assignedClass||"")+" · ₦200 per term"):"PTA Payments is available only to the assigned Form Master.";
+ const isMaster=ptaTeacherIsFormMaster(),nav=document.getElementById("formMasterPtaNav");
+ if(nav)nav.style.display=isMaster?"flex":"none";
+ // PTA Payments is managed by the dedicated pta-payment.html page.
+ // Do not render a duplicate payment register inside this teacher dashboard.
+ return;
+ const c=window.activeTeacherConnection||{},ptaClass=String(c.ptaFormMasterClass||"").trim(),classes=ptaClass?[ptaClass]:(typeof teacherAssignedClasses==="function"?teacherAssignedClasses():[]),termKey=document.getElementById("teacherPtaTerm")?.value||"firstTerm";
+ const summary=document.getElementById("ptaTeacherSummary");if(summary)summary.textContent=`${c.schoolName||"Connected school"} · Form Master for ${ptaClass}`;
+ const allowed=new Set(classes);const allRecords=students.map((s,index)=>({s,index,info:studentInfo(s)})).filter(x=>allowed.has(x.info.className||""));
+ const paid=allRecords.filter(x=>String(x.s[8]?.ptaPayments?.[termKey]?.status||"").toLowerCase()==="paid").length;
+ const totalEl=document.getElementById("ptaTotalStudents"),paidEl=document.getElementById("ptaPaidStudents"),pendingEl=document.getElementById("ptaPendingStudents"),paidAmountEl=document.getElementById("ptaPaidAmount"),pendingAmountEl=document.getElementById("ptaPendingAmount");
+ if(totalEl)totalEl.textContent=allRecords.length;if(paidEl)paidEl.textContent=paid;if(pendingEl)pendingEl.textContent=allRecords.length-paid;if(paidAmountEl)paidAmountEl.textContent="₦"+(paid*200).toLocaleString()+" collected";if(pendingAmountEl)pendingAmountEl.textContent="₦"+((allRecords.length-paid)*200).toLocaleString()+" remaining";
+ const search=String(document.getElementById("teacherPtaSearch")?.value||"").trim().toLowerCase();const records=allRecords.filter(x=>!search||[x.s[1],x.s[0],x.info.phone].some(v=>String(v||"").toLowerCase().includes(search)));
+ if(message)message.textContent=`${c.assignedClass||classes.join(", ")||"Assigned class"} · ${allRecords.length} student(s) · ${paid} paid · ${allRecords.length-paid} outstanding · ${ptaTeacherTermLabel()}.`;
+ body.replaceChildren();if(!records.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=5;td.className="pta-empty";td.textContent=allRecords.length?("No students match “"+search+"”.") : "No students are loaded for your assigned class. Ask the registrar to check your class assignment.";tr.append(td);body.append(tr);return;}
+ records.forEach((x,n)=>{
+  const s=x.s,info=x.info,payment=s[8]?.ptaPayments?.[termKey]||{},isPaid=String(payment.status||"").toLowerCase()==="paid",tr=document.createElement("tr");
+  const photo=info.photo?`<img class="pta-student-photo" src="${ptaTeacherEscape(info.photo)}" alt="${ptaTeacherEscape(s[1]||"Student")} photo">`:'<span class="pta-student-photo" aria-label="No photo">👤</span>';
+  const phone=String(info.phone||"").trim(),tel=phone.replace(/[^\d+]/g,"");
+  const snTd=document.createElement("td");snTd.textContent=String(n+1);tr.append(snTd);
+  const studentTd=document.createElement("td");studentTd.innerHTML=`<div class="pta-student-cell">${photo}<div><span class="pta-student-name">${ptaTeacherEscape(s[1]||"Student")}</span><small class="pta-student-sub">${ptaTeacherEscape(info.className||ptaClass)}</small></div></div>`;tr.append(studentTd);
+  const admissionTd=document.createElement("td");admissionTd.textContent=String(s[0]||"—");tr.append(admissionTd);
+  const contactTd=document.createElement("td");contactTd.innerHTML=phone?`<a class="pta-call-link" href="tel:${ptaTeacherEscape(tel)}">☎ Call guardian</a><small class="pta-student-sub">${ptaTeacherEscape(phone)}</small>`:'<span style="color:#9ca39e">No guardian number</span>';tr.append(contactTd);
+  const actionTd=document.createElement("td");
+  if(isPaid){const badge=document.createElement("span");badge.className="pta-paid-badge";badge.textContent="✓ PAID";actionTd.append(badge);const meta=document.createElement("small");meta.className="pta-paid-meta";meta.textContent="₦200 · "+(payment.markedAt?.toDate?payment.markedAt.toDate().toLocaleDateString():payment.markedAtText||"Confirmed");actionTd.append(meta)}
+  else{const btn=document.createElement("button");btn.type="button";btn.className="pta-mark-btn";btn.textContent="MARK AS PAID · ₦200";btn.addEventListener("click",async()=>{
+    if(!confirm(`Confirm that you received the full ₦200 PTA payment for ${s[1]||"this student"} (${ptaTeacherTermLabel()})?`))return;
+    const db=window.teacherFirestore,fns=window.firebaseFirestoreFns,uid=window.firebaseTeacherUID,conn=window.activeTeacherConnection,sid=s[8]?.schoolStudentId;
+    if(!db||!fns||!uid||!conn?.schoolId||!sid){alert("The official student record or school connection is unavailable. Please refresh and try again.");return}
+    if(!ptaTeacherIsFormMaster()){alert("Only the assigned Form Master can mark PTA payments as paid.");return}
+    btn.disabled=true;btn.textContent="Saving…";
+    try{
+      const ref=fns.doc(db,"schools",conn.schoolId,"students",sid),fresh=await fns.getDoc(ref);
+      if(!fresh.exists())throw new Error("Official student record was not found.");
+      const data=fresh.data()||{},current=data.ptaPayments||{};
+      if(String(current[termKey]?.status||"").toLowerCase()==="paid")throw new Error("This student's PTA payment is already marked paid for this term.");
+      const termRecord={status:"paid",amount:200,term:ptaTeacherTermLabel(),markedByTeacherUid:uid,markedByTeacherName:window.firebaseTeacherUser?.displayName||"Form Master",markedAt:fns.serverTimestamp(),markedAtText:new Date().toISOString().slice(0,10)};
+      await fns.updateDoc(ref,{["ptaPayments."+termKey]:termRecord,updatedAt:fns.serverTimestamp(),updatedByTeacherUid:uid});
+      if(!s[8].ptaPayments)s[8].ptaPayments={};s[8].ptaPayments[termKey]={...termRecord,markedAtText:termRecord.markedAtText};
+      if(message)message.textContent=`Payment recorded for ${s[1]||"student"}. Registrar and linked parent can now see the ${ptaTeacherTermLabel()} status.`;
+      window.renderFormMasterPtaPayments();
+    }catch(e){console.error("PTA payment mark failed",e);alert("Could not mark payment as paid: "+(e.message||"Check Firebase rules and connection."));btn.disabled=false;btn.textContent="MARK AS PAID · ₦200"}
+  });actionTd.append(btn)}
+  tr.append(actionTd);body.append(tr);
+ });
 };
 document.getElementById("teacherPtaTerm")?.addEventListener("change",()=>window.renderFormMasterPtaPayments());
 document.getElementById("teacherPtaSearch")?.addEventListener("input",()=>window.renderFormMasterPtaPayments());
@@ -3627,24 +3629,17 @@ function printResults(){
    </table>`);
 }
 function printDocument(content){
- const w=window.open("","_blank","width=900,height=700");
- w.document.write(`<html><head><title>Print</title><style>@page{size:A4;margin:15mm}body{font-family:Arial;margin:0;color:#111;line-height:1.45}h1{text-align:center;font-size:20px}h2{font-size:17px;border-bottom:1px solid #333;padding-bottom:5px;break-after:avoid}p{font-size:13px;margin:7px 0 12px}.print-meta{break-inside:avoid}.print-meta{display:grid;grid-template-columns:1fr 1fr;border:1px solid #333}.print-meta div{padding:8px;border-bottom:1px solid #333}.print-meta div:nth-child(odd){border-right:1px solid #333}.print-meta div:nth-last-child(-n+2){border-bottom:0}table{width:100%;border-collapse:collapse}th,td{border:1px solid #555;padding:7px;font-size:12px;text-align:left}th{background:#eee}</style></head><body>${content}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-</body></html>`);
- w.document.close();w.focus();setTimeout(()=>w.print(),250);
+  // Protect the dashboard if the mobile browser blocks the print popup.
+  const w = window.open("", "_blank", "width=900,height=700");
+  if (!w) {
+    alert("Please allow pop-ups for printing, then try again.");
+    return;
+  }
+  w.document.open();
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Print</title><style>@page{size:A4;margin:15mm}body{font-family:Arial,sans-serif;margin:0;color:#111;line-height:1.45}h1{text-align:center;font-size:20px}h2{font-size:17px;border-bottom:1px solid #333;padding-bottom:5px;break-after:avoid}p{font-size:13px;margin:7px 0 12px}.print-meta{break-inside:avoid;display:grid;grid-template-columns:1fr 1fr;border:1px solid #333}.print-meta div{padding:8px;border-bottom:1px solid #333}.print-meta div:nth-child(odd){border-right:1px solid #333}.print-meta div:nth-last-child(-n+2){border-bottom:0}table{width:100%;border-collapse:collapse}th,td{border:1px solid #555;padding:7px;font-size:12px;text-align:left}th{background:#eee}</style></head><body>${content}</body></html>`);
+  w.document.close();
+  w.focus();
+  setTimeout(() => { try { w.print(); } catch (err) { console.error("Print failed:", err); } }, 400);
 }
 renderCurriculum();renderStudents();renderResults();
 </script>
@@ -4906,8 +4901,9 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     try{sessionStorage.removeItem('teacherActiveSection');}catch(_e){}
     busy(loginForm,true);
     try{
-      await signInWithEmailAndPassword(auth,document.getElementById('authEmail').value.trim(),document.getElementById('authPassword').value);
-      message('Login successful. Opening your dashboard…','success');
+      const credential=await signInWithEmailAndPassword(auth,document.getElementById('authEmail').value.trim(),document.getElementById('authPassword').value);
+      const role=await routeSignedInUser(credential.user);
+      if(role==='teacher') message('Login successful. Opening your dashboard…','success');
     }catch(err){message(friendlyError(err));}
     finally{busy(loginForm,false);}
   });
@@ -5061,7 +5057,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         const schoolInput=document.getElementById('teacherSchool');if(schoolInput)schoolInput.readOnly=false;
         showTeacherConnectionStatus('Not connected to a school yet. Enter the School ID above to send a request.');
         window.dispatchEvent(new Event('teacherAccountContextChanged'));
-        if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}
+        if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
         if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
       if(typeof window.renderFormMasterPtaPayments==='function')window.renderFormMasterPtaPayments();
         if(typeof window.loadDashboardTeacherSubjects==='function')window.loadDashboardTeacherSubjects();
@@ -5075,7 +5071,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         activeTeacherConnection=null;window.activeTeacherConnection=null;
         renderTeacherAssignments(null);
         window.dispatchEvent(new Event('teacherAccountContextChanged'));
-        if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}
+        if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
         if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
         if(typeof window.loadDashboardTeacherSubjects==='function')window.loadDashboardTeacherSubjects();
         const latest=records[0];
@@ -5090,7 +5086,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
         activeTeacherConnection=null;window.activeTeacherConnection=null;
         renderTeacherAssignments(null);
         window.dispatchEvent(new Event('teacherAccountContextChanged'));
-        if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}
+        if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
         showTeacherConnectionStatus('This dashboard requires an approved school connection. Ask the registrar to approve your account.','error');
         return;
       }
@@ -5099,7 +5095,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       renderTeacherAssignments(r);
       window.dispatchEvent(new Event('teacherAccountContextChanged'));
       if(typeof window.applyAssignedClassFilters==='function'&&teacherIsSchoolConnected())window.applyAssignedClassFilters();
-      if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}
+      if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
       if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
       if(typeof window.loadDashboardTeacherSubjects==='function')window.loadDashboardTeacherSubjects();
       const schoolInput=document.getElementById('teacherSchool');
@@ -5113,14 +5109,14 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       else if(r.status==='deactivated')showTeacherConnectionStatus(`Your connection to ${r.schoolName||'the school'} has been deactivated. Contact the registrar or request a new connection.`,'error');
       else if(r.status==='rejected')showTeacherConnectionStatus(`Your request to ${r.schoolName||'the school'} was not approved. You may submit a new request if appropriate.`,'error');
       else showTeacherConnectionStatus('No active school connection. Enter a School ID to request connection.');
-      if(typeof window.loadTeacherAcademicSession==='function'){Promise.resolve().then(()=>window.loadTeacherAcademicSession()).catch(err=>console.error('Background academic-session load failed:',err));}
+      if(typeof window.loadTeacherAcademicSession==='function')await window.loadTeacherAcademicSession();
     }catch(e){
       console.error('Teacher connection lookup failed:',e);
       const mode=window.TEACHER_DASHBOARD_MODE||"independent";
       if(mode==="independent"){
         activeTeacherConnection=null;window.activeTeacherConnection=null;
         renderTeacherAssignments(null);
-        if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}
+        if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
         showTeacherConnectionStatus('Independent mode is active. School connection status could not be refreshed; your own records remain separate.','error');
         return;
       }
@@ -5140,11 +5136,11 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
               activeTeacherConnection=member;window.activeTeacherConnection=member;renderTeacherAssignments(member);
               window.dispatchEvent(new Event('teacherAccountContextChanged'));
               if(typeof window.applyAssignedClassFilters==='function')window.applyAssignedClassFilters();
-              if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}
+              if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
               if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
               if(typeof window.loadDashboardTeacherSubjects==='function')window.loadDashboardTeacherSubjects();
               showTeacherConnectionStatus('Connected to '+(member.schoolName||'your school')+'. Connection loaded from school membership.','success');
-              if(typeof window.loadTeacherAcademicSession==='function'){Promise.resolve().then(()=>window.loadTeacherAcademicSession()).catch(err=>console.error('Background academic-session load failed:',err));}
+              if(typeof window.loadTeacherAcademicSession==='function')await window.loadTeacherAcademicSession();
               return;
             }
           }
@@ -5155,7 +5151,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       if(typeof window.refreshStudentViews==='function')window.refreshStudentViews();
       if(typeof window.renderAttendance==='function')window.renderAttendance();
       showTeacherConnectionStatus('Could not verify the school connection: '+(e?.code||e?.message||'Firestore access denied')+'. School records remain locked until the connection can be verified.','error');
-      if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}
+      if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();
     }
   }
   function teacherHasPair(record,entry){
@@ -5398,7 +5394,7 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       catch(err){console.error('Teacher profile sync failed:',err);applyFirestoreTeacherProfile({},user);}
       // Resolve this account's registrar connection before loading students or assignments.
       await refreshTeacherSchoolConnection();
-      try{if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}}
+      try{if(typeof window.loadStudentsFromFirestore==='function')await window.loadStudentsFromFirestore();}
       catch(err){console.error('Student Firebase query failed during login:',err);}
       if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
       gate?.classList.add('auth-hidden');gate?.classList.add('auth-ready');
@@ -6042,80 +6038,6 @@ body.lessons-active #lessonSubscriptionToggle{
   document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"&&gpsSessionId)gpsStatus("teacherGpsStatus","This page is in the background. Your phone/browser may pause location updates.","warn");});
   window.addEventListener("pagehide",()=>{if(gpsWatchId!==null&&navigator.geolocation)navigator.geolocation.clearWatch(gpsWatchId);});
 })();
-</script>
-
-<script type="module">
-import {initializeApp,getApps} from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
-import {getAuth,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
-import {getFirestore,doc,getDoc,getDocs,collection,query,where,updateDoc,serverTimestamp} from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
-const ptaConfig={apiKey:'AIzaSyAyqE3tESdUlDPtAdmEa8pYsviiX2J8ltM',authDomain:'myschoolbook-4d23d.firebaseapp.com',projectId:'myschoolbook-4d23d',storageBucket:'myschoolbook-4d23d.firebasestorage.app',messagingSenderId:'60153250746',appId:'1:60153250746:web:a3342f87235e6a3c515383'};
-const ptaApp=getApps().length?getApps()[0]:initializeApp(ptaConfig),ptaAuth=getAuth(ptaApp),ptaDb=getFirestore(ptaApp);
-let ptaUser=null,ptaConnection=null,ptaStudents=[];
-const pta$=id=>document.getElementById(id),ptaNorm=v=>String(v||'').trim().toLowerCase();
-const ptaEsc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function ptaNotice(message,error=false){const el=pta$('teacherPtaNotice');if(!el)return;el.style.display='block';el.style.background=error?'#fff0ef':'#eef6ff';el.style.color=error?'#9b2019':'#194b75';el.textContent=message;}
-function ptaIsAssigned(c=window.activeTeacherConnection||ptaConnection){
- const uid=window.firebaseTeacherUID||ptaUser?.uid||'';
- return !!uid&&!!c&&c.teacherUid===uid&&['connected','approved','active'].includes(ptaNorm(c.status))&&(c.ptaFormMaster===true||ptaNorm(c.assignedRole)==='form master'||ptaNorm(c.role)==='form master')&&!!String(c.ptaFormMasterClass||c.assignedClass||'').trim();
-}
-window.openFormMasterPta=async function(button){
- if(!ptaIsAssigned()){ptaNotice('PTA Payments is available only to the teacher currently assigned as Form Master.',true);return;}
- if(typeof window.showSection==='function')window.showSection('dashboardView',button);
- const section=pta$('formMasterPtaSection');if(section)section.style.display='block';
- await ptaLoadStudents();
- setTimeout(()=>section?.scrollIntoView({behavior:'smooth',block:'start'}),80);
-};
-window.closeFormMasterPta=function(){const section=pta$('formMasterPtaSection');if(section)section.style.display='none';if(typeof window.showSection==='function')window.showSection('dashboardView');window.scrollTo({top:0,behavior:'smooth'});};
-async function ptaLoadStudents(){
- if(!ptaIsAssigned()){ptaNotice('Your Form Master assignment is not active. Ask the registrar to assign you.',true);return;}
- const c=window.activeTeacherConnection||ptaConnection||{},assignedClass=String(c.ptaFormMasterClass||c.assignedClass||'').trim();
- if(!c.schoolId||!assignedClass){ptaNotice('Your school ID or assigned class is missing. Ask the registrar to check your assignment.',true);return;}
- ptaNotice('Loading students for '+assignedClass+'…');
- try{
-  const snap=await getDocs(query(collection(ptaDb,'schools',c.schoolId,'students'),where('className','==',assignedClass)));
-  ptaStudents=snap.docs.map(d=>{const x=d.data()||{};return{id:d.id,name:x.name||x.studentName||x.fullName||'Unnamed student',admission:x.admissionNumber||x.admissionNo||'',className:x.className||'',phone:x.parentPhone||x.parentGuardianPhone||x.phone||'',photo:x.photo||x.studentPhoto||'',ptaPayments:x.ptaPayments||{}};});
-  pta$('teacherPtaDashboard').style.display='block';pta$('teacherPtaNotice').style.display='none';ptaRender();
- }catch(e){console.error('PTA payments load failed',e);ptaNotice('Could not load students ('+(e.code||'error')+'): '+(e.message||'Check Firestore permissions and the assigned class.'),true);}
-}
-function ptaRender(){
- const c=window.activeTeacherConnection||ptaConnection||{},assignedClass=String(c.ptaFormMasterClass||c.assignedClass||'').trim(),term=pta$('teacherPtaTerm').value,search=ptaNorm(pta$('teacherPtaSearch').value);
- const list=ptaStudents.filter(s=>ptaNorm(s.className)===ptaNorm(assignedClass)&&(!search||ptaNorm(s.name).includes(search)||ptaNorm(s.admission).includes(search)));
- const paid=list.filter(s=>ptaNorm(s.ptaPayments?.[term]?.status)==='paid').length;
- pta$('teacherPtaTotal').textContent=list.length;pta$('teacherPtaPaid').textContent=paid;pta$('teacherPtaOutstanding').textContent=list.length-paid;
- const body=pta$('teacherPtaStudentsBody');body.replaceChildren();
- if(!list.length){body.innerHTML='<tr><td colspan="7" style="padding:20px;text-align:center;color:#66756f">No students found for your assigned class.</td></tr>';return;}
- list.forEach((s,i)=>{const payment=s.ptaPayments?.[term]||{},isPaid=ptaNorm(payment.status)==='paid',tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td>${s.photo?`<img src="${ptaEsc(s.photo)}" alt="" style="width:36px;height:40px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:7px">`:''}<b>${ptaEsc(s.name)}</b></td><td>${ptaEsc(s.admission||'—')}</td><td>${ptaEsc(s.className||'—')}</td><td>${s.phone?`<a href="tel:${ptaEsc(String(s.phone).replace(/[^\\d+]/g,''))}">${ptaEsc(s.phone)}</a>`:'—'}</td><td><span style="display:inline-block;padding:5px 9px;border-radius:99px;font-size:11px;font-weight:800;background:${isPaid?'#dcfce7':'#fff1d6'};color:${isPaid?'#166534':'#8a4b08'}">${isPaid?'PAID':'NOT PAID'}</span>${isPaid?`<div style="font-size:12px;color:#66756f">₦${Number(payment.amount||200)}${payment.markedAtText?' · '+ptaEsc(payment.markedAtText):''}</div>`:''}</td><td>${isPaid?'<span style="color:#66756f">Recorded</span>':`<button type="button" class="primary" data-pta-id="${ptaEsc(s.id)}" style="padding:8px 10px">Mark ₦200 paid</button>`}</td>`;
-  const btn=tr.querySelector('[data-pta-id]');if(btn)btn.addEventListener('click',()=>ptaMarkPaid(s,btn));body.append(tr);
- });
-}
-async function ptaMarkPaid(student,button){
- if(!ptaIsAssigned()){alert('Only the assigned Form Master can record PTA payments.');return;}
- const term=pta$('teacherPtaTerm').value,termName=pta$('teacherPtaTerm').selectedOptions[0].textContent;
- if(!confirm(`Confirm that you received ₦200 PTA payment from ${student.name} for ${termName}?`))return;
- button.disabled=true;button.textContent='Saving…';
- try{
-  const c=window.activeTeacherConnection||ptaConnection||{},ref=doc(ptaDb,'schools',c.schoolId,'students',student.id),snap=await getDoc(ref);
-  if(!snap.exists())throw Error('Student record no longer exists.');
-  const data=snap.data()||{},payments=data.ptaPayments||{};
-  if(ptaNorm(payments[term]?.status)==='paid')throw Error('This payment has already been recorded.');
-  const record={status:'paid',amount:200,term:termName,markedByTeacherUid:ptaUser.uid,markedByTeacherName:ptaUser.displayName||c.teacherName||'Form Master',markedAt:serverTimestamp(),markedAtText:new Date().toISOString().slice(0,10)};
-  await updateDoc(ref,{['ptaPayments.'+term]:record,updatedAt:serverTimestamp(),updatedByTeacherUid:ptaUser.uid});
-  student.ptaPayments={...payments,[term]:{...record,markedAtText:record.markedAtText}};
-  ptaNotice('Payment recorded for '+student.name+'.');ptaRender();
- }catch(e){console.error(e);alert('Could not save payment: '+(e.message||'Check internet connection and Firestore rules.'));button.disabled=false;button.textContent='Mark ₦200 paid';}
-}
-pta$('teacherPtaTerm')?.addEventListener('change',ptaRender);pta$('teacherPtaSearch')?.addEventListener('input',ptaRender);pta$('teacherPtaRefresh')?.addEventListener('click',ptaLoadStudents);
-onAuthStateChanged(ptaAuth,user=>{ptaUser=user;if(!user)return;const refresh=()=>{ptaConnection=window.activeTeacherConnection||ptaConnection;if(window.activeTeacherConnection){window.renderFormMasterPtaPayments?.();} };refresh();setTimeout(refresh,1200);setTimeout(refresh,3500);});
-const ptaObserver=new MutationObserver(()=>{if(ptaUser&&window.activeTeacherConnection){ptaConnection=window.activeTeacherConnection;window.renderFormMasterPtaPayments?.();}});
-ptaObserver.observe(document.body,{childList:true,subtree:true});
-</script>
-<script id="pwa-service-worker-registration">
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./service-worker.js", { scope: "./" })
-      .catch(function (error) { console.warn("App offline support could not be registered:", error); });
-  });
-}
 </script>
 </body>
 </html>
