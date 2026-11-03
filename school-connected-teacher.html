@@ -5287,9 +5287,18 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
   };
 
   let authInitialized=false;
+  let teacherAuthWatchdog=null;
   onAuthStateChanged(auth,async user=>{
     if(user){
       document.documentElement.classList.add('teacher-auth-pending');
+      // Fail-safe: never leave the teacher trapped on the account-check screen forever.
+      clearTimeout(teacherAuthWatchdog);
+      teacherAuthWatchdog=setTimeout(()=>{
+        document.documentElement.classList.remove('teacher-auth-pending');
+        gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');
+        message('Account verification is taking longer than expected. Check your internet connection and refresh the page.','error');
+      },20000);
+      try{
       // Never carry connection or school records from the previously signed-in account.
       activeTeacherConnection=null;window.activeTeacherConnection=null;
       window.firebaseTeacherUID=user.uid;window.firebaseTeacherUser=user;
@@ -5310,19 +5319,30 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
       localStorage.setItem('firebaseTeacherDisplayName',user.displayName||'');
       try{const profile=await ensureTeacherProfile(user);applyFirestoreTeacherProfile(profile,user);}
       catch(err){console.error('Teacher profile sync failed:',err);applyFirestoreTeacherProfile({},user);}
-      // Resolve this account's registrar connection before loading students or assignments.
-      await refreshTeacherSchoolConnection();
-      try{if(typeof window.loadStudentsFromFirestore==='function'){Promise.resolve().then(()=>window.loadStudentsFromFirestore()).catch(err=>console.error('Background student load failed:',err));}}
-      catch(err){console.error('Student Firebase query failed during login:',err);}
-      if(typeof window.loadTeachingAssignments==='function')window.loadTeachingAssignments();
+      // Open the dashboard as soon as account/profile verification succeeds.
+      // School connection and related Firestore queries continue in the background
+      // so a slow connection lookup cannot hold the entire page on the loading screen.
       gate?.classList.add('auth-hidden');gate?.classList.add('auth-ready');
       let activeSection='dashboardView';try{activeSection=sessionStorage.getItem('teacherActiveSection')||'dashboardView';}catch(_e){}
       const validSections=['dashboardView','lessonsView','caExamView','studentsView','attendanceView','profileView','assignmentView','myClassesView','myTimetableView','examTimetableView','academicSessionView','settingsView','subscriptionView','holidayView'];
       if(!validSections.includes(activeSection))activeSection='dashboardView';
       window.__restoringTeacherSection=true;if(typeof window.showSection==='function')window.showSection(activeSection,null);
       if(activeSection==='profileView'&&typeof window.loadTeacherProfile==='function')window.loadTeacherProfile();
-      window.__restoringTeacherSection=false;document.documentElement.classList.remove('teacher-auth-pending');
+      window.__restoringTeacherSection=false;
+      // Start school connection, assignments, and student data after the dashboard is visible.
+      Promise.resolve().then(()=>refreshTeacherSchoolConnection()).catch(err=>console.error('Background school connection refresh failed:',err));
+      document.documentElement.classList.remove('teacher-auth-pending');
+      }catch(startupError){
+        console.error('Teacher dashboard startup failed:',startupError);
+        gate?.classList.remove('auth-hidden');gate?.classList.add('auth-ready');
+        showPanel(loginForm);message(friendlyError(startupError)||'Could not prepare your dashboard. Please refresh and try again.');
+      }finally{
+        clearTimeout(teacherAuthWatchdog);
+        teacherAuthWatchdog=null;
+        document.documentElement.classList.remove('teacher-auth-pending');
+      }
     }else{
+      clearTimeout(teacherAuthWatchdog);teacherAuthWatchdog=null;
       activeTeacherConnection=null;window.activeTeacherConnection=null;
       window.firebaseTeacherUID=null;window.firebaseTeacherUser=null;
       students=[];
