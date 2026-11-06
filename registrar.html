@@ -254,7 +254,7 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 <body>
 
 <nav id="registrarNav" class="registrar-nav hidden" aria-label="Headmaster dashboard navigation">
-<button class="active" data-page="dashboard"><span>🏠</span>Dashboard</button><button data-page="classes"><span>🏫</span>Classes</button><button data-page="teachers"><span>👩‍🏫</span>Teachers</button><button data-page="students"><span>👥</span>Students</button><button data-page="payments"><span>💳</span>PTA Payments</button><button data-page="timetable"><span>📅</span>Timetable</button><button data-page="liveattendance"><span>✅</span>Live Class Check</button><button data-page="exams"><span>📝</span>Exam Timetable</button><button data-page="academic"><span>🗓️</span>Academic Session</button><button data-page="results"><span>📄</span>Results & Report Cards</button><button data-page="parents"><span>👨‍👩‍👧</span>Parent Requests</button><button type="button" id="signOut" class="nav-logout"><span>↪️</span>Logout</button>
+<button class="active" data-page="dashboard"><span>🏠</span>Dashboard</button><button data-page="classes"><span>🏫</span>Classes</button><button data-page="teachers"><span>👩‍🏫</span>Teachers</button><button data-page="students"><span>👥</span>Students</button><button data-page="payments"><span>💳</span>PTA Payments</button><button data-page="timetable"><span>📅</span>Timetable</button><button data-page="liveattendance"><span>✅</span>Live Class Check</button><button data-page="exams"><span>📝</span>Exam Timetable</button><button data-page="academic"><span>🗓️</span>Academic Session</button><button data-page="parents"><span>👨‍👩‍👧</span>Parent Requests</button><button type="button" id="signOut" class="nav-logout"><span>↪️</span>Logout</button>
 </nav>
 <main>
 <section class="hero"><h2>Welcome to the Headmaster Office</h2><p>Complete your school profile, add the official school photo, and manage your school information from one dashboard.</p></section>
@@ -408,22 +408,7 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 <form id="examTimetableForm"><div class="timetable-form"><div><label for="exDate">Examination date</label><input id="exDate" type="date" required></div><div><label for="exClass">Class</label><select id="exClass" required></select></div><div><label for="exSubject">Subject</label><select id="exSubject" required></select></div><div><label for="exStart">Start time</label><input id="exStart" type="time" required></div><div><label for="exEnd">End time</label><input id="exEnd" type="time" required></div><div><label for="exVenue">Examination venue</label><input id="exVenue" maxlength="100" required placeholder="e.g. Exam Hall / Primary 5 room"></div><div><label for="exTerm">Term</label><select id="exTerm" required><option>First Term</option><option>Second Term</option><option>Third Term</option></select></div><div><label for="exSession">Academic session</label><input id="exSession" maxlength="30" required value="2026/2027"></div><div><label for="exInvigilator">Assigned invigilator</label><select id="exInvigilator" required><option value="">Select invigilator</option></select></div><div><label for="exPaper">Exam / paper (optional)</label><input id="exPaper" maxlength="100" placeholder="e.g. Paper 1"></div><div class="wide"><label for="exNotes">Instructions / notes (optional)</label><input id="exNotes" maxlength="300" placeholder="Additional exam or invigilation instructions"></div></div><button class="primary" type="submit" id="saveExamEntry" style="margin-top:15px">Add Examination & Invigilator</button><p id="examTimetableStatus" class="table-message muted" aria-live="polite"></p></form>
 </section>
 <section class="card registrar-page-panel" data-page-panel="parents" id="parentRequestsCard" style="margin-top:18px"><h3>Parent / Guardian Connection Requests</h3><p class="muted">Verify each parent against the official student register. Approve only the children that match the parent’s registered phone number. A School ID alone never grants access.</p><div class="card" style="margin:12px 0;padding:14px;border:1px solid var(--line);border-radius:12px"><h3 style="margin:0 0 10px">Connected Parents</h3><div id="connectedParentsMessage" class="muted" style="margin:8px 0">Loading connected parents…</div><div id="connectedParentsList"></div></div><div id="parentRequestsMessage" class="muted" style="margin:10px 0">Loading parent requests…</div><div id="parentRequestsList"></div><button id="refreshParentRequests" type="button" class="secondary" style="margin-top:12px">Refresh parent requests</button></section>
-<section class="card registrar-page-panel" data-page-panel="results" id="registrarResultsCard" style="margin-top:18px;color:#000;background:#fff;border:1px solid #000">
-<h3>Result & Report Card</h3><p class="muted" style="color:#333">Enter and edit pupil scores, review results saved by the registrar, and generate individual or class-wide A4 report cards. Report cards are black and white and do not include a school logo.</p>
-<div class="timetable-form">
-<div><label for="rcClass">Class</label><select id="rcClass"><option value="">Select class</option></select></div>
-<div><label for="rcSession">Academic session</label><input id="rcSession" maxlength="30" placeholder="e.g. 2026/2027"></div>
-<div><label for="rcTerm">Term</label><select id="rcTerm"><option>First Term</option><option>Second Term</option><option>Third Term</option></select></div>
-<div><label for="rcStudent">Student</label><select id="rcStudent"><option value="">Select student</option></select></div>
-</div>
-<form id="rcScoreForm"><label for="rcSubject">Subject</label><select id="rcSubject" required><option value="">Select subject</option></select>
-<div class="timetable-form"><div><label for="rcCA">Continuous assessment (CA)</label><input id="rcCA" type="number" min="0" max="40" step="0.5" value="0" required></div><div><label for="rcExam">Examination score</label><input id="rcExam" type="number" min="0" max="60" step="0.5" value="0" required></div></div>
-<p id="rcTotalPreview" class="muted" style="color:#000">Total: 0/100 · Grade: F</p><label for="rcTeacherComment">Teacher's comment</label><input id="rcTeacherComment" maxlength="250" placeholder="Optional comment"><button id="rcSaveScore" class="primary" type="submit" style="background:#000;color:#fff">Save / Update Score</button><p id="rcScoreStatus" class="table-message" aria-live="polite"></p></form>
-<hr style="border:0;border-top:1px solid #000;margin:22px 0"><h4>Saved results for selected class / term</h4><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;color:#000"><thead><tr><th>Student</th><th>Subject</th><th>CA</th><th>Exam</th><th>Total</th><th>Grade</th><th>Action</th></tr></thead><tbody id="rcResultsBody"><tr><td colspan="7">Select a class, session and term.</td></tr></tbody></table></div>
-<div class="timetable-form" style="margin-top:18px"><div><label for="rcPrincipalComment">Principal / Headmaster comment</label><input id="rcPrincipalComment" maxlength="250" placeholder="Optional report-card comment"></div><div><label for="rcBorder">A4 border style (black & white)</label><select id="rcBorder"><option value="double">Double-line border</option><option value="solid">Single solid border</option><option value="dashed">Dashed border</option><option value="ornate">Inset double border</option></select></div><div><label for="rcSignature">Principal name / signature text</label><input id="rcSignature" maxlength="100" placeholder="Name or signature text"></div><div><label for="rcDate">Report date</label><input id="rcDate" type="date"></div></div>
-<button id="rcPreview" class="secondary" type="button" style="border-color:#000;color:#000">Preview selected student's report card</button> <button id="rcBulkPrint" class="primary" type="button" style="background:#000;color:#fff">Generate class PDF (all students)</button> <button id="rcRefresh" class="secondary" type="button" style="border-color:#000;color:#000">Refresh results</button><p id="rcBulkStatus" class="table-message" aria-live="polite"></p>
-<p class="muted" style="color:#333">Bulk export opens a print-ready document with one A4 report card per pupil. In the print dialog, choose “Save as PDF”.</p>
-</section>
+
 <section class="card registrar-page-panel" data-page-panel="academic" id="academicSessionCard" style="margin-top:18px">
 <h3>Academic Session &amp; Calendar</h3>
 <p class="muted">Publish academic-session information for teachers connected to this school. Saved details will appear in their Academic Session section.</p>
@@ -1272,7 +1257,7 @@ async function loadPtaPayments(){
 
 
 const REGISTRAR_PAGE_KEY="registrarPortalActivePage";
-const REGISTRAR_VALID_PAGES=["dashboard","classes","teachers","students","payments","timetable","liveattendance","exams","academic","parents","results"];
+const REGISTRAR_VALID_PAGES=["dashboard","classes","teachers","students","payments","timetable","liveattendance","exams","academic","parents"];
 function getSavedRegistrarPage(){
  const fromHash=String(window.location.hash||"").replace(/^#(?:page=)?/,"").trim();
  let saved="";
@@ -1295,7 +1280,7 @@ function showRegistrarPage(page,options={}){
  document.querySelectorAll(".dashboard-heading,.dashboard-stats").forEach(el=>el.classList.toggle("page-hidden",page!=="dashboard"));
  if(options.scroll!==false)window.scrollTo({top:0,behavior:options.smooth===false?"auto":"smooth"});
 }
-document.querySelectorAll("#registrarNav button[data-page]").forEach(btn=>btn.addEventListener("click",()=>{showRegistrarPage(btn.dataset.page);if(btn.dataset.page==="parents")loadParentRequests();if(btn.dataset.page==="results")rcLoadOptions();if(btn.dataset.page==="payments")loadPtaPayments();if(btn.dataset.page==="liveattendance")refreshLiveAttendance();}));
+document.querySelectorAll("#registrarNav button[data-page]").forEach(btn=>btn.addEventListener("click",()=>{showRegistrarPage(btn.dataset.page);if(btn.dataset.page==="parents")loadParentRequests();if(btn.dataset.page==="payments")loadPtaPayments();if(btn.dataset.page==="liveattendance")refreshLiveAttendance();}));
 window.addEventListener("hashchange",()=>{const page=String(window.location.hash||"").replace(/^#(?:page=)?/,"");if(REGISTRAR_VALID_PAGES.includes(page)){showRegistrarPage(page,{updateUrl:false,scroll:false});if(page==="liveattendance")refreshLiveAttendance();}});
 setInterval(()=>{if(activeRegistrarPage==="liveattendance"&&profile?.schoolId){renderLiveAttendanceUI();}},60000);
 
@@ -1313,65 +1298,6 @@ onAuthStateChanged(auth,async u=>{
     await load(u);
   }catch(e){msg(err(e),"error");setTimeout(()=>window.location.replace("index.html"),1800)}
 });
-
-// Registrar Result & Report Card module. Results are tenant-scoped under schools/{schoolId}/registrarResults.
-const rc$=id=>document.getElementById(id);
-let rcStudents=[],rcSubjects=[],rcRecords=[],rcEditingId=null;
-function rcGrade(total){return total>=70?'A':total>=60?'B':total>=50?'C':total>=45?'D':total>=40?'E':'F'}
-function rcRemark(total){return total>=70?'Excellent':total>=60?'Very Good':total>=50?'Good':total>=45?'Fair':total>=40?'Pass':'Needs Improvement'}
-function rcTotal(){const ca=Number(rc$('rcCA').value||0),exam=Number(rc$('rcExam').value||0);return ca+exam}
-function rcUpdatePreview(){const total=rcTotal();rc$('rcTotalPreview').textContent=`Total: ${total}/100 · Grade: ${rcGrade(total)} · ${rcRemark(total)}`}
-['rcCA','rcExam'].forEach(id=>rc$(id)?.addEventListener('input',rcUpdatePreview));
-function rcPopulateSelect(el,items,placeholder){const old=el.value;el.innerHTML='';const op=document.createElement('option');op.value='';op.textContent=placeholder;el.append(op);items.forEach(x=>{const o=document.createElement('option');o.value=x.value;o.textContent=x.label;el.append(o)});if(items.some(x=>x.value===old))el.value=old}
-function rcContext(){return {className:rc$('rcClass').value,academicSession:rc$('rcSession').value.trim()||profile?.academicSession||$('session')?.value||'',term:rc$('rcTerm').value}}
-async function rcLoadOptions(){
- if(!profile?.schoolId)return;
- try{
-  // Classes and subjects are managed on the existing school document,
-  // not inferred from students and not read from a nonexistent subjects subcollection.
-  const schoolSnap=await getDoc(doc(db,'schools',profile.schoolId));
-  if(!schoolSnap.exists())throw new Error('The current school record could not be found.');
-  const school=schoolSnap.data()||{};
-  const classList=Array.isArray(school.classNames)?school.classNames:
-    Array.isArray(school.enabledClasses)?school.enabledClasses:
-    (Array.isArray(activeSchoolClasses)?activeSchoolClasses:[]);
-  const subjectList=Array.isArray(school.subjects)?school.subjects:
-    (Array.isArray(activeSchoolSubjects)?activeSchoolSubjects:[]);
-  rcSubjects=[...new Set(subjectList.filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim()))]
-    .map(name=>({name,subject:name}));
-  rcPopulateSelect(rc$('rcClass'),[...new Set(classList.filter(x=>typeof x==='string'&&x.trim()))]
-    .map(x=>({value:x,label:x})),'Select class');
-  rcPopulateSelect(rc$('rcSubject'),rcSubjects.map(x=>({value:x.name,label:x.name})),'Select subject');
-  rc$('rcSession').value=school.academicSession||profile.academicSession||$('session')?.value||'';
-  rc$('rcTerm').value=school.currentTerm||school.academicCalendar?.currentTerm||'First Term';
-
-  // Official student register is the authoritative source for student records.
-  const st=await getDocs(collection(db,'schools',profile.schoolId,'students'));
-  rcStudents=st.docs.map(d=>({id:d.id,...d.data()}));
-  rcUpdateStudentOptions();
-  await rcRefresh();
- }catch(e){
-  console.error('Result/report card data loading failed:',e);
-  rc$('rcScoreStatus').textContent='Could not load school classes, subjects or official student records: '+err(e);
-  rc$('rcResultsBody').innerHTML='<tr><td colspan="7">Please check the school document fields (classNames, subjects, academicSession), official students collection, and Firestore read rules.</td></tr>';
- }
-}
-function rcUpdateStudentOptions(){
- const cls=rc$('rcClass')?.value||'';
- const pupils=rcStudents.filter(x=>(x.className||x.class||x.level||'')===cls)
-  .sort((a,b)=>String(a.name||a.fullName||'').localeCompare(String(b.name||b.fullName||'')));
- rcPopulateSelect(rc$('rcStudent'),pupils.map(x=>({value:x.id,label:(x.name||x.fullName||'Unnamed pupil')+' · '+(x.admissionNumber||x.id)})),'Select student');
-}
-rc$('rcClass')?.addEventListener('change',()=>{rcUpdateStudentOptions();rcRefresh()});['rcSession','rcTerm'].forEach(id=>rc$(id)?.addEventListener('change',rcRefresh));
-async function rcRefresh(){if(!profile?.schoolId||!rc$('rcClass').value)return;const c=rcContext();rc$('rcResultsBody').innerHTML='<tr><td colspan="7">Loading results…</td></tr>';try{const snap=await getDocs(query(collection(db,'schools',profile.schoolId,'registrarResults'),where('className','==',c.className),where('academicSession','==',c.academicSession),where('term','==',c.term)));rcRecords=snap.docs.map(d=>({id:d.id,...d.data()}));rcRenderRows()}catch(e){rc$('rcResultsBody').innerHTML='<tr><td colspan="7">Could not read results. Check Firestore rules for schools/{schoolId}/registrarResults. '+err(e)+'</td></tr>'}}
-function rcRenderRows(){const body=rc$('rcResultsBody');body.replaceChildren();if(!rcRecords.length){body.innerHTML='<tr><td colspan="7">No scores saved for this class, session and term yet.</td></tr>';return}rcRecords.forEach(r=>{const tr=document.createElement('tr');[r.studentName,r.subject,r.ca,r.exam,r.total,r.grade].forEach(v=>{const td=document.createElement('td');td.textContent=String(v??'');tr.append(td)});const td=document.createElement('td'),b=document.createElement('button');b.type='button';b.className='small-action';b.textContent='Edit';b.onclick=()=>{rcEditingId=r.id;rc$('rcStudent').value=r.studentId;rc$('rcSubject').value=r.subject;rc$('rcCA').value=r.ca;rc$('rcExam').value=r.exam;rc$('rcTeacherComment').value=r.teacherComment||'';rcUpdatePreview();rc$('rcScoreStatus').textContent='Editing '+r.studentName+' — '+r.subject};td.append(b);tr.append(td);body.append(tr)})}
-rc$('rcScoreForm')?.addEventListener('submit',async e=>{e.preventDefault();const c=rcContext(),student=rcStudents.find(x=>x.id===rc$('rcStudent').value),subject=rc$('rcSubject').value,ca=Number(rc$('rcCA').value),exam=Number(rc$('rcExam').value),total=ca+exam;if(!c.className||!c.academicSession||!student||!subject)return rc$('rcScoreStatus').textContent='Select class, session, pupil and subject.';if(ca<0||ca>40||exam<0||exam>60||total>100)return rc$('rcScoreStatus').textContent='CA must be 0–40 and exam 0–60 (maximum total 100).';const payload={schoolId:profile.schoolId,className:c.className,academicSession:c.academicSession,term:c.term,studentId:student.id,studentName:student.name||'',admissionNumber:student.admissionNumber||'',subject,ca,exam,total,grade:rcGrade(total),remark:rcRemark(total),teacherComment:rc$('rcTeacherComment').value.trim(),enteredBy:user.uid,updatedAt:serverTimestamp()};const btn=rc$('rcSaveScore');btn.disabled=true;try{if(rcEditingId){await updateDoc(doc(db,'schools',profile.schoolId,'registrarResults',rcEditingId),payload)}else{const dup=rcRecords.find(x=>x.studentId===student.id&&x.subject===subject);if(dup)throw new Error('A score already exists for this pupil and subject. Use Edit in the table to update it.');await addDoc(collection(db,'schools',profile.schoolId,'registrarResults'),{...payload,createdAt:serverTimestamp()})}rcEditingId=null;rc$('rcScoreStatus').textContent='Score saved successfully.';await rcRefresh()}catch(e){rc$('rcScoreStatus').textContent='Save failed: '+err(e)}finally{btn.disabled=false}});
-function rcCardHtml(student,records){const c=rcContext(),subjects=records.filter(r=>r.studentId===student.id),total=subjects.reduce((n,r)=>n+Number(r.total||0),0),avg=subjects.length?total/subjects.length:0;const border=rc$('rcBorder').value;const borderStyle=border==='double'?'double':border==='dashed'?'dashed':border==='ornate'?'double':'solid';const principal=rc$('rcPrincipalComment').value.trim(),signature=rc$('rcSignature').value.trim(),date=rc$('rcDate').value||new Date().toISOString().slice(0,10);return `<article class="report-card-print" style="--rc-border:${borderStyle}"><div class="report-card-inner"><header class="report-card-head"><h1>${esc(profile?.name||'School')}</h1><p>${esc(profile?.address||'')}</p><h2>STUDENT REPORT CARD</h2></header><div class="report-meta"><span><b>Name:</b> ${esc(student.name||'')}</span><span><b>Admission No.:</b> ${esc(student.admissionNumber||'')}</span><span><b>Class:</b> ${esc(c.className)}</span><span><b>Session:</b> ${esc(c.academicSession)}</span><span><b>Term:</b> ${esc(c.term)}</span></div><table class="report-table"><thead><tr><th>Subject</th><th>CA / 40</th><th>Exam / 60</th><th>Total / 100</th><th>Grade</th><th>Remark</th></tr></thead><tbody>${subjects.map(r=>`<tr><td>${esc(r.subject)}</td><td>${r.ca}</td><td>${r.exam}</td><td>${r.total}</td><td>${r.grade}</td><td>${esc(r.remark||rcRemark(r.total))}</td></tr>`).join('')}${Array.from({length:Math.max(0,5-subjects.length)},()=>'<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>').join('')}</tbody></table><div class="report-summary"><b>Subjects recorded:</b> ${subjects.length} &nbsp; <b>Total:</b> ${total} &nbsp; <b>Average:</b> ${avg.toFixed(1)}% &nbsp; <b>Overall:</b> ${rcGrade(avg)}</div><div class="report-comments"><p><b>Teacher's comment:</b> ${esc(subjects.map(x=>x.teacherComment).filter(Boolean).join(' · ')||'')}</p><p><b>Principal's comment:</b> ${esc(principal)}</p></div><div class="report-signatures"><div>Class Teacher<br><span>________________________</span></div><div>Principal / Headmaster<br><span>${esc(signature||'________________________')}</span></div></div><div class="report-date">Date: ${esc(date)}</div></div></article>`}
-function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-async function rcPrint(studentIds,bulk){const c=rcContext();if(!c.className||!c.academicSession)throw new Error('Select class and academic session first.');const students=rcStudents.filter(s=>s.className===c.className&&(bulk||s.id===rc$('rcStudent').value));if(!students.length)throw new Error(bulk?'No pupils found in selected class.':'Select a student first.');if(!rcRecords.length)await rcRefresh();const pages=students.map(s=>rcCardHtml(s,rcRecords));const win=window.open('','_blank');if(!win)throw new Error('Allow pop-ups for this site to print report cards.');win.document.write(`<!doctype html><html><head><title>Report Cards</title><style>@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box}body{margin:0;color:#000;font:11pt Arial,sans-serif}.report-card-print{height:277mm;page-break-after:always;border:5px var(--rc-border) #000;padding:6mm}.report-card-print:last-child{page-break-after:auto}.report-card-inner{height:100%;border:1px solid #000;padding:9mm;position:relative}.report-card-head{text-align:center;border-bottom:2px solid #000;padding-bottom:8mm}.report-card-head h1{font-size:20pt;margin:0 0 4mm}.report-card-head p{margin:0 0 5mm}.report-card-head h2{font-size:16pt;margin:0}.report-meta{display:grid;grid-template-columns:1fr 1fr;gap:5mm;margin:8mm 0}.report-table{width:100%;border-collapse:collapse}.report-table th,.report-table td{border:1px solid #000;padding:3mm;text-align:left;color:#000;background:#fff!important}.report-table th{text-align:center}.report-summary{margin-top:7mm;border:1px solid #000;padding:4mm}.report-comments{margin-top:8mm;line-height:1.7}.report-signatures{display:flex;justify-content:space-between;margin-top:18mm;text-align:center}.report-date{text-align:right;margin-top:10mm}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>${pages.join('')}<script>window.onload=()=>setTimeout(()=>window.print(),400)<\/script></body></html>`);win.document.close()}
-rc$('rcPreview')?.addEventListener('click',async()=>{try{await rcRefresh();await rcPrint([],false)}catch(e){rc$('rcBulkStatus').textContent=e.message||String(e)}});
-rc$('rcBulkPrint')?.addEventListener('click',async()=>{try{await rcRefresh();await rcPrint([],true);rc$('rcBulkStatus').textContent='Report cards opened for printing. Select Save as PDF in the print dialog.'}catch(e){rc$('rcBulkStatus').textContent=e.message||String(e)}});
-rc$('rcRefresh')?.addEventListener('click',rcRefresh);
 
 </script>
 </body></html>
