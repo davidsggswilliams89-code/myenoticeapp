@@ -461,7 +461,7 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 <div class="tablewrap"><table><thead><tr><th>Student</th><th>Admission No.</th><th>Class</th><th>Subject</th><th>Term</th><th>CA1</th><th>CA2</th><th>CA3</th><th>CA /30</th><th>Exam /70</th><th>Total /100</th><th>Grade</th><th>Teacher</th></tr></thead><tbody id="registrarResultsRows"><tr><td colspan="13">Choose filters and load results.</td></tr></tbody></table></div>
 </div></section>
 <section class="registrar-page-panel page-hidden" data-page-panel="reportcard" id="registrarReportCardPanel">
-<div class="card"><h2>📄 Report Card</h2><p>Report Card is a separate module. It will be connected to the central results database after the Results section is verified.</p></div>
+<div class="card"><h2>📄 School Report Cards</h2><p class="muted">View submitted results for each student. Select class and term to load report card records.</p><div class="timetable-form"><div><label for="regReportClass">Class</label><select id="regReportClass"><option value="">All classes</option></select></div><div><label for="regReportTerm">Term</label><select id="regReportTerm"><option value="">All terms</option><option>First Term</option><option>Second Term</option><option>Third Term</option></select></div><div><label for="regReportSession">Academic session</label><input id="regReportSession" placeholder="e.g. 2026/2027"></div></div><button class="primary" id="loadRegistrarReportCards" type="button">Load Report Cards</button><p id="registrarReportStatus" class="table-message muted"></p><div class="tablewrap"><table><thead><tr><th>Student</th><th>Admission No.</th><th>Class</th><th>Subject</th><th>Term</th><th>CA /30</th><th>Exam /70</th><th>Total /100</th><th>Grade</th></tr></thead><tbody id="registrarReportRows"><tr><td colspan="9">Select filters and load report cards.</td></tr></tbody></table></div></div>
 </section>
 </main><footer>my e-notice app · Headmaster Office</footer>
 <script type="module">
@@ -1343,14 +1343,14 @@ async function loadRegistrarResults(){
     if(!rec||typeof rec!=="object")return;
     // Registrar Results lists only results explicitly submitted by a teacher.
     if(rec.submitted!==true)return;
-    const bits=scope.split("__"),subject=bits[0]||"",term=bits[2]||"";
+    const bits=scope.split("__"),subject=String(rec.subject||bits[0]||""),term=String(rec.term||bits[2]||"");
     const clean=x=>String(x||"").replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
-    const subj=clean(subject), trm=clean(term);
+    const resultClass=String(rec.className||rec.class||cls);\n    if(regResultClass.value&&resultClass!==regResultClass.value)return;\n    const subj=clean(subject), trm=clean(term);
     if(regResultSubject.value&&subj.toLowerCase()!==regResultSubject.value.toLowerCase())return;
     if(regResultTerm.value&&trm.toLowerCase()!==regResultTerm.value.toLowerCase())return;
     if(regResultSession.value.trim()&&String(rec.session||st.session||"").trim()!==regResultSession.value.trim())return;
     const ca1=Number(rec.ca1||0),ca2=Number(rec.ca2||0),ca3=Number(rec.ca3||0),exam=Number(rec.exam||0),ca=ca1+ca2+ca3,total=ca+exam;
-    rows.push({name:st.name||st.fullName||st.studentName||"",adm:st.admissionNumber||st.admissionNo||"",cls,subj,trm,ca1,ca2,ca3,ca,exam,total,grade:regResultGrade(total),teacher:rec.submittedByTeacherName||rec.teacherName||rec.updatedByTeacherName||""});
+    rows.push({name:st.name||st.fullName||st.studentName||"",adm:st.admissionNumber||st.admissionNo||"",cls:resultClass,subj,trm,ca1,ca2,ca3,ca,exam,total,grade:regResultGrade(total),teacher:rec.submittedByTeacherName||rec.teacherName||rec.updatedByTeacherName||""});
    });
   });
   const classes=[...new Set(rows.map(x=>x.cls).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
@@ -1365,5 +1365,31 @@ async function loadRegistrarResults(){
 }
 document.getElementById("loadRegistrarResults")?.addEventListener("click",loadRegistrarResults);
 [regResultClass,regResultSubject,regResultTerm,regResultSession].forEach(el=>el?.addEventListener("change",()=>{}));
+document.querySelector('#registrarNav button[data-page="results"]')?.addEventListener("click",()=>setTimeout(loadRegistrarResults,0));
+
+const reportClass=document.getElementById("regReportClass"),reportTerm=document.getElementById("regReportTerm"),reportSession=document.getElementById("regReportSession"),reportRows=document.getElementById("registrarReportRows"),reportStatus=document.getElementById("registrarReportStatus");
+async function loadRegistrarReportCards(){
+ const sid=String(window.currentRegistrarSchoolId||profile?.schoolId||"").trim();
+ if(!sid){reportStatus.textContent="School ID is missing. Please reload the Registrar profile.";return;}
+ reportStatus.textContent="Loading report cards…";reportRows.innerHTML="";
+ try{
+  const snap=await getDocs(collection(db,"schools",sid,"students")),rows=[];
+  snap.forEach(d=>{const st=d.data()||{},cls=String(st.className||st.class||"");if(reportClass.value&&cls!==reportClass.value)return;
+   Object.entries(st.assessmentRecords||{}).forEach(([key,rec])=>{if(!rec||typeof rec!=="object"||rec.submitted!==true)return;
+    const bits=key.split("__"),subject=String(rec.subject||bits[0]||"").replace(/_/g," "),term=String(rec.term||bits[2]||"").replace(/_/g," ");
+    if(reportTerm.value&&term.toLowerCase()!==reportTerm.value.toLowerCase())return;
+    if(reportSession.value.trim()&&String(rec.session||st.session||"").trim()!==reportSession.value.trim())return;
+    const ca=Number(rec.ca1||0)+Number(rec.ca2||0)+Number(rec.ca3||0),exam=Number(rec.exam||0),total=ca+exam;
+    rows.push({student:st.name||st.fullName||st.studentName||"",adm:st.admissionNumber||st.admissionNo||"",cls:String(rec.className||cls),subject,term,ca,exam,total,grade:regResultGrade(total)});
+   });
+  });
+  const classes=[...new Set(rows.map(x=>x.cls).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+  const prev=reportClass.value;reportClass.innerHTML='<option value="">All classes</option>'+classes.map(x=>`<option>${regEsc(x)}</option>`).join("");reportClass.value=classes.includes(prev)?prev:"";
+  reportRows.innerHTML=rows.length?rows.map(x=>`<tr><td>${regEsc(x.student)}</td><td>${regEsc(x.adm)}</td><td>${regEsc(x.cls)}</td><td>${regEsc(x.subject)}</td><td>${regEsc(x.term)}</td><td>${x.ca}</td><td>${x.exam}</td><td><b>${x.total}</b></td><td>${x.grade}</td></tr>`).join(""):'<tr><td colspan="9">No submitted results match these filters.</td></tr>';
+  reportStatus.textContent=`Loaded ${rows.length} submitted result record(s).`;
+ }catch(err){console.error(err);reportStatus.textContent="Could not load report cards: "+(err?.message||err);}
+}
+document.getElementById("loadRegistrarReportCards")?.addEventListener("click",loadRegistrarReportCards);
+document.querySelector('#registrarNav button[data-page="reportcard"]')?.addEventListener("click",()=>setTimeout(loadRegistrarReportCards,0));
 </script>
 </body></html>
