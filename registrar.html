@@ -1324,8 +1324,45 @@ function rcUpdatePreview(){const total=rcTotal();rc$('rcTotalPreview').textConte
 ['rcCA','rcExam'].forEach(id=>rc$(id)?.addEventListener('input',rcUpdatePreview));
 function rcPopulateSelect(el,items,placeholder){const old=el.value;el.innerHTML='';const op=document.createElement('option');op.value='';op.textContent=placeholder;el.append(op);items.forEach(x=>{const o=document.createElement('option');o.value=x.value;o.textContent=x.label;el.append(o)});if(items.some(x=>x.value===old))el.value=old}
 function rcContext(){return {className:rc$('rcClass').value,academicSession:rc$('rcSession').value.trim()||profile?.academicSession||$('session')?.value||'',term:rc$('rcTerm').value}}
-async function rcLoadOptions(){if(!profile?.schoolId)return;try{const [st,sub]=await Promise.all([getDocs(collection(db,'schools',profile.schoolId,'students')),getDocs(collection(db,'schools',profile.schoolId,'subjects'))]);rcStudents=st.docs.map(d=>({id:d.id,...d.data()}));rcSubjects=sub.docs.map(d=>({id:d.id,...d.data()}));rcPopulateSelect(rc$('rcClass'),[...new Set(rcStudents.map(x=>x.className).filter(Boolean))].sort().map(x=>({value:x,label:x})),'Select class');rcPopulateSelect(rc$('rcSubject'),rcSubjects.map(x=>({value:x.name||x.subject||x.id,label:x.name||x.subject||x.id})),'Select subject');rc$('rcSession').value=rc$('rcSession').value||profile.academicSession||$('session')?.value||'';rcPopulateSelect(rc$('rcStudent'),rcStudents.filter(x=>x.className===rc$('rcClass').value).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''))).map(x=>({value:x.id,label:(x.name||'Unnamed pupil')+' · '+(x.admissionNumber||x.id)})),'Select student');await rcRefresh()}catch(e){rc$('rcScoreStatus').textContent='Could not load classes, students or subjects: '+err(e)}}
-rc$('rcClass')?.addEventListener('change',()=>{rcPopulateSelect(rc$('rcStudent'),rcStudents.filter(x=>x.className===rc$('rcClass').value).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''))).map(x=>({value:x.id,label:(x.name||'Unnamed pupil')+' · '+(x.admissionNumber||x.id)})),'Select student');rcRefresh()});['rcSession','rcTerm'].forEach(id=>rc$(id)?.addEventListener('change',rcRefresh));
+async function rcLoadOptions(){
+ if(!profile?.schoolId)return;
+ try{
+  // Classes and subjects are managed on the existing school document,
+  // not inferred from students and not read from a nonexistent subjects subcollection.
+  const schoolSnap=await getDoc(doc(db,'schools',profile.schoolId));
+  if(!schoolSnap.exists())throw new Error('The current school record could not be found.');
+  const school=schoolSnap.data()||{};
+  const classList=Array.isArray(school.classNames)?school.classNames:
+    Array.isArray(school.enabledClasses)?school.enabledClasses:
+    (Array.isArray(activeSchoolClasses)?activeSchoolClasses:[]);
+  const subjectList=Array.isArray(school.subjects)?school.subjects:
+    (Array.isArray(activeSchoolSubjects)?activeSchoolSubjects:[]);
+  rcSubjects=[...new Set(subjectList.filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim()))]
+    .map(name=>({name,subject:name}));
+  rcPopulateSelect(rc$('rcClass'),[...new Set(classList.filter(x=>typeof x==='string'&&x.trim()))]
+    .map(x=>({value:x,label:x})),'Select class');
+  rcPopulateSelect(rc$('rcSubject'),rcSubjects.map(x=>({value:x.name,label:x.name})),'Select subject');
+  rc$('rcSession').value=school.academicSession||profile.academicSession||$('session')?.value||'';
+  rc$('rcTerm').value=school.currentTerm||school.academicCalendar?.currentTerm||'First Term';
+
+  // Official student register is the authoritative source for student records.
+  const st=await getDocs(collection(db,'schools',profile.schoolId,'students'));
+  rcStudents=st.docs.map(d=>({id:d.id,...d.data()}));
+  rcUpdateStudentOptions();
+  await rcRefresh();
+ }catch(e){
+  console.error('Result/report card data loading failed:',e);
+  rc$('rcScoreStatus').textContent='Could not load school classes, subjects or official student records: '+err(e);
+  rc$('rcResultsBody').innerHTML='<tr><td colspan="7">Please check the school document fields (classNames, subjects, academicSession), official students collection, and Firestore read rules.</td></tr>';
+ }
+}
+function rcUpdateStudentOptions(){
+ const cls=rc$('rcClass')?.value||'';
+ const pupils=rcStudents.filter(x=>(x.className||x.class||x.level||'')===cls)
+  .sort((a,b)=>String(a.name||a.fullName||'').localeCompare(String(b.name||b.fullName||'')));
+ rcPopulateSelect(rc$('rcStudent'),pupils.map(x=>({value:x.id,label:(x.name||x.fullName||'Unnamed pupil')+' · '+(x.admissionNumber||x.id)})),'Select student');
+}
+rc$('rcClass')?.addEventListener('change',()=>{rcUpdateStudentOptions();rcRefresh()});['rcSession','rcTerm'].forEach(id=>rc$(id)?.addEventListener('change',rcRefresh));
 async function rcRefresh(){if(!profile?.schoolId||!rc$('rcClass').value)return;const c=rcContext();rc$('rcResultsBody').innerHTML='<tr><td colspan="7">Loading results…</td></tr>';try{const snap=await getDocs(query(collection(db,'schools',profile.schoolId,'registrarResults'),where('className','==',c.className),where('academicSession','==',c.academicSession),where('term','==',c.term)));rcRecords=snap.docs.map(d=>({id:d.id,...d.data()}));rcRenderRows()}catch(e){rc$('rcResultsBody').innerHTML='<tr><td colspan="7">Could not read results. Check Firestore rules for schools/{schoolId}/registrarResults. '+err(e)+'</td></tr>'}}
 function rcRenderRows(){const body=rc$('rcResultsBody');body.replaceChildren();if(!rcRecords.length){body.innerHTML='<tr><td colspan="7">No scores saved for this class, session and term yet.</td></tr>';return}rcRecords.forEach(r=>{const tr=document.createElement('tr');[r.studentName,r.subject,r.ca,r.exam,r.total,r.grade].forEach(v=>{const td=document.createElement('td');td.textContent=String(v??'');tr.append(td)});const td=document.createElement('td'),b=document.createElement('button');b.type='button';b.className='small-action';b.textContent='Edit';b.onclick=()=>{rcEditingId=r.id;rc$('rcStudent').value=r.studentId;rc$('rcSubject').value=r.subject;rc$('rcCA').value=r.ca;rc$('rcExam').value=r.exam;rc$('rcTeacherComment').value=r.teacherComment||'';rcUpdatePreview();rc$('rcScoreStatus').textContent='Editing '+r.studentName+' — '+r.subject};td.append(b);tr.append(td);body.append(tr)})}
 rc$('rcScoreForm')?.addEventListener('submit',async e=>{e.preventDefault();const c=rcContext(),student=rcStudents.find(x=>x.id===rc$('rcStudent').value),subject=rc$('rcSubject').value,ca=Number(rc$('rcCA').value),exam=Number(rc$('rcExam').value),total=ca+exam;if(!c.className||!c.academicSession||!student||!subject)return rc$('rcScoreStatus').textContent='Select class, session, pupil and subject.';if(ca<0||ca>40||exam<0||exam>60||total>100)return rc$('rcScoreStatus').textContent='CA must be 0–40 and exam 0–60 (maximum total 100).';const payload={schoolId:profile.schoolId,className:c.className,academicSession:c.academicSession,term:c.term,studentId:student.id,studentName:student.name||'',admissionNumber:student.admissionNumber||'',subject,ca,exam,total,grade:rcGrade(total),remark:rcRemark(total),teacherComment:rc$('rcTeacherComment').value.trim(),enteredBy:user.uid,updatedAt:serverTimestamp()};const btn=rc$('rcSaveScore');btn.disabled=true;try{if(rcEditingId){await updateDoc(doc(db,'schools',profile.schoolId,'registrarResults',rcEditingId),payload)}else{const dup=rcRecords.find(x=>x.studentId===student.id&&x.subject===subject);if(dup)throw new Error('A score already exists for this pupil and subject. Use Edit in the table to update it.');await addDoc(collection(db,'schools',profile.schoolId,'registrarResults'),{...payload,createdAt:serverTimestamp()})}rcEditingId=null;rc$('rcScoreStatus').textContent='Score saved successfully.';await rcRefresh()}catch(e){rc$('rcScoreStatus').textContent='Save failed: '+err(e)}finally{btn.disabled=false}});
