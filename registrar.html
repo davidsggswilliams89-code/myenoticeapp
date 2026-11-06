@@ -606,7 +606,8 @@ async function load(userObj){
   return;
  }
  profile={uid:userObj.uid,...snap.data()};
- let schoolId=String(profile.schoolId||"").trim();\n window.currentRegistrarSchoolId=schoolId;
+ let schoolId=String(profile.schoolId||"").trim();
+ window.currentRegistrarSchoolId=schoolId;
 
  // Recovery: older registrar profiles may not have been linked to the school
  // document created by this same registrar. Search only by the authenticated UID.
@@ -634,7 +635,8 @@ async function load(userObj){
    return;
   }
  }
- window.currentRegistrarSchoolId=schoolId;\n const ss=await getDoc(doc(db,"schools",schoolId));
+ window.currentRegistrarSchoolId=schoolId;
+ const ss=await getDoc(doc(db,"schools",schoolId));
  if(!ss.exists()){
   msg("Your registrar profile points to school ID "+schoolId+", but that school document could not be read or was not found. No replacement school was created. Please check the school document and Firestore read permissions.","error");
   view("setup");
@@ -1339,6 +1341,8 @@ async function loadRegistrarResults(){
    const records=st.assessmentRecords||{};
    Object.entries(records).forEach(([scope,rec])=>{
     if(!rec||typeof rec!=="object")return;
+    // Registrar Results lists only results explicitly submitted by a teacher.
+    if(rec.submitted!==true)return;
     const bits=scope.split("__"),subject=bits[0]||"",term=bits[2]||"";
     const clean=x=>String(x||"").replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
     const subj=clean(subject), trm=clean(term);
@@ -1346,7 +1350,7 @@ async function loadRegistrarResults(){
     if(regResultTerm.value&&trm.toLowerCase()!==regResultTerm.value.toLowerCase())return;
     if(regResultSession.value.trim()&&String(rec.session||st.session||"").trim()!==regResultSession.value.trim())return;
     const ca1=Number(rec.ca1||0),ca2=Number(rec.ca2||0),ca3=Number(rec.ca3||0),exam=Number(rec.exam||0),ca=ca1+ca2+ca3,total=ca+exam;
-    rows.push({name:st.name||st.fullName||st.studentName||"",adm:st.admissionNumber||st.admissionNo||"",cls,subj,trm,ca1,ca2,ca3,ca,exam,total,grade:regResultGrade(total),teacher:rec.teacherName||rec.updatedByTeacherName||""});
+    rows.push({name:st.name||st.fullName||st.studentName||"",adm:st.admissionNumber||st.admissionNo||"",cls,subj,trm,ca1,ca2,ca3,ca,exam,total,grade:regResultGrade(total),teacher:rec.submittedByTeacherName||rec.teacherName||rec.updatedByTeacherName||""});
    });
   });
   const classes=[...new Set(rows.map(x=>x.cls).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
@@ -1355,7 +1359,7 @@ async function loadRegistrarResults(){
   regResultClass.value=classes.includes(oldClass)?oldClass:"";
   const subjects=[...new Set(rows.map(x=>x.subj).filter(Boolean))].sort();
   const old=regResultSubject.value;regResultSubject.innerHTML='<option value="">All subjects</option>'+subjects.map(x=>`<option>${regEsc(x)}</option>`).join("");regResultSubject.value=subjects.includes(old)?old:"";
-  regResultRows.innerHTML=rows.length?rows.map(x=>`<tr><td>${regEsc(x.name)}</td><td>${regEsc(x.adm)}</td><td>${regEsc(x.cls)}</td><td>${regEsc(x.subj)}</td><td>${regEsc(x.trm)}</td><td>${x.ca1}</td><td>${x.ca2}</td><td>${x.ca3}</td><td>${x.ca}</td><td>${x.exam}</td><td><b>${x.total}</b></td><td>${x.grade}</td><td>${regEsc(x.teacher)}</td></tr>`).join(""):'<tr><td colspan="13">No results match the selected filters. Teacher scores are visible once saved to the central student record.</td></tr>';
+  regResultRows.innerHTML=rows.length?rows.map(x=>`<tr><td>${regEsc(x.name)}</td><td>${regEsc(x.adm)}</td><td>${regEsc(x.cls)}</td><td>${regEsc(x.subj)}</td><td>${regEsc(x.trm)}</td><td>${x.ca1}</td><td>${x.ca2}</td><td>${x.ca3}</td><td>${x.ca}</td><td>${x.exam}</td><td><b>${x.total}</b></td><td>${x.grade}</td><td>${regEsc(x.teacher)}</td></tr>`).join(""):'<tr><td colspan="13">No results match the selected filters. Teacher results appear here after the teacher submits them.</td></tr>';
   regResultStatus.textContent=`Loaded ${rows.length} result record(s) from this school only.`;
  }catch(e){console.error("Registrar results load failed",e);regResultStatus.textContent="Could not load results: "+(e?.message||e);}
 }

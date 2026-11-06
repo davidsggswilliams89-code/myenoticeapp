@@ -2217,7 +2217,7 @@ html.teacher-auth-pending body::before{
  <div class="modalbox">
   <div class="modalhead"><h3 id="modalTitle">Lesson</h3><button class="close" onclick="closeModal()">×</button></div>
   <div class="modalbody" id="modalBody"></div>
-  <div class="modalfoot"><button class="secondary" onclick="closeModal()">CLOSE</button><button id="lessonPrintBtn" class="secondary" style="display:none" onclick="printCurrentLesson()">PRINT</button><button id="assessmentSaveBtn" class="primary" style="display:none" onclick="saveAssessment()">SAVE</button><button id="assessmentPrintBtn" class="secondary" style="display:none" onclick="printAssessment()">PRINT</button><button id="resultSaveBtn" class="primary" style="display:none" onclick="saveResults()">SAVE</button><button id="resultPrintBtn" class="secondary" style="display:none" onclick="printResults()">PRINT</button><button id="studentResultPrintBtn" class="secondary" style="display:none" onclick="printStudentResult(currentStudentIndex)">PRINT</button><button id="genericSaveBtn" class="primary" onclick="saveModal()">SAVE</button></div>
+  <div class="modalfoot"><button class="secondary" onclick="closeModal()">CLOSE</button><button id="lessonPrintBtn" class="secondary" style="display:none" onclick="printCurrentLesson()">PRINT</button><button id="assessmentSaveBtn" class="primary" style="display:none" onclick="saveAssessment()">SAVE</button><button id="assessmentPrintBtn" class="secondary" style="display:none" onclick="printAssessment()">PRINT</button><button id="resultSaveBtn" class="primary" style="display:none" onclick="saveResults()">SAVE</button><button id="resultSubmitBtn" class="primary" style="display:none" onclick="submitResults()">SUBMIT</button><button id="resultPrintBtn" class="secondary" style="display:none" onclick="printResults()">PRINT</button><button id="studentResultPrintBtn" class="secondary" style="display:none" onclick="printStudentResult(currentStudentIndex)">PRINT</button><button id="genericSaveBtn" class="primary" onclick="saveModal()">SAVE</button></div>
  </div>
 </div>
 
@@ -2930,6 +2930,7 @@ function showModal(title,body){
  const assessmentSaveBtn=document.getElementById("assessmentSaveBtn");
  const assessmentPrintBtn=document.getElementById("assessmentPrintBtn");
  const resultSaveBtn=document.getElementById("resultSaveBtn");
+ const resultSubmitBtn=document.getElementById("resultSubmitBtn");
  const resultPrintBtn=document.getElementById("resultPrintBtn");
  const studentResultPrintBtn=document.getElementById("studentResultPrintBtn");
  const genericSaveBtn=document.getElementById("genericSaveBtn");
@@ -2937,6 +2938,7 @@ function showModal(title,body){
  if(assessmentSaveBtn) assessmentSaveBtn.style.display=isAssessment ? "inline-block" : "none";
  if(assessmentPrintBtn) assessmentPrintBtn.style.display=isAssessment ? "inline-block" : "none";
  if(resultSaveBtn) resultSaveBtn.style.display=isResults ? "inline-block" : "none";
+ if(resultSubmitBtn) resultSubmitBtn.style.display=isResults ? "inline-block" : "none";
  if(resultPrintBtn) resultPrintBtn.style.display=isResults ? "inline-block" : "none";
  if(studentResultPrintBtn) studentResultPrintBtn.style.display=isStudentResult ? "inline-block" : "none";
  if(genericSaveBtn) genericSaveBtn.style.display=(isResults || isStudentResult || isAssessment) ? "none" : "inline-block";
@@ -5631,6 +5633,62 @@ document.addEventListener("DOMContentLoaded",loadTeacherSettings);
     }catch(err){
       console.error("Results Firebase save failed:",err);
       alert("The results could not be saved to Firebase.\n\n"+(err?.message||"Unknown Firebase error")+"\n\nIf the error says permission-denied, publish the updated Firestore Rules that allow the connected teacher to update assessmentRecords only.");
+    }
+  };
+
+  // Submit the selected class/subject/term results to the Registrar's central
+  // school records. Saving alone does not mark results as submitted.
+  window.submitResults = async function(){
+    if(!caExamIsConnected()){
+      alert("Connect this teacher account to the school before submitting results.");
+      return;
+    }
+    const rows=caRows(),scopeKey=caExamScopeKey(),connection=window.activeTeacherConnection||{};
+    if(!rows.length){
+      alert("There are no student results in the selected class.");
+      return;
+    }
+    if(!confirm("Submit results for "+caExamSelectedSubject()+", "+caExamSelectedClass()+", "+caExamSelectedTerm()+" to the Registrar?"))return;
+    const teacherName=typeof teacherFullName==="function"?teacherFullName():"";
+    try{
+      for(const {s,index} of rows){
+        const vals=[
+          Math.max(0,Math.min(10,Number(document.getElementById(`r1_${index}`)?.value??caExamScore(s,3)))),
+          Math.max(0,Math.min(10,Number(document.getElementById(`r2_${index}`)?.value??caExamScore(s,4)))),
+          Math.max(0,Math.min(10,Number(document.getElementById(`r3_${index}`)?.value??caExamScore(s,5)))),
+          Math.max(0,Math.min(70,Number(document.getElementById(`rex_${index}`)?.value??caExamScore(s,6))))
+        ];
+        vals.forEach((v,j)=>caExamSetScore(s,j+3,v));
+        const sid=s[8]?.schoolStudentId;
+        const fns=window.firebaseFirestoreFns;
+        if(!sid||!connection.schoolId||!fns?.updateDoc||!fns?.doc||!fns?.serverTimestamp){
+          throw new Error("The official school student record or Firebase connection is unavailable.");
+        }
+        const ref=fns.doc(window.teacherFirestore,"schools",connection.schoolId,"students",sid);
+        await fns.updateDoc(ref,{
+          [`assessmentRecords.${scopeKey}.ca1`]:vals[0],
+          [`assessmentRecords.${scopeKey}.ca2`]:vals[1],
+          [`assessmentRecords.${scopeKey}.ca3`]:vals[2],
+          [`assessmentRecords.${scopeKey}.exam`]:vals[3],
+          [`assessmentRecords.${scopeKey}.submitted`]:true,
+          [`assessmentRecords.${scopeKey}.submittedAt`]:fns.serverTimestamp(),
+          [`assessmentRecords.${scopeKey}.submittedByTeacherUid`]:window.firebaseTeacherUID||"",
+          [`assessmentRecords.${scopeKey}.submittedByTeacherName`]:teacherName,
+          [`assessmentRecords.${scopeKey}.teacherName`]:teacherName,
+          [`assessmentRecords.${scopeKey}.subject`]:caExamSelectedSubject(),
+          [`assessmentRecords.${scopeKey}.className`]:caExamSelectedClass(),
+          [`assessmentRecords.${scopeKey}.term`]:caExamSelectedTerm(),
+          [`assessmentRecords.${scopeKey}.session`]:String(connection.academicSession||connection.session||""),
+          updatedAt:fns.serverTimestamp(),
+          updatedByTeacherUid:window.firebaseTeacherUID||""
+        });
+      }
+      if(typeof renderResults==="function")renderResults();
+      alert("Results submitted successfully. They are now available in the Registrar Results section for the selected subject, class and term.");
+      closeModal();
+    }catch(err){
+      console.error("Result submission failed:",err);
+      alert("The results could not be submitted to the Registrar.\n\n"+(err?.message||"Unknown Firebase error"));
     }
   };
 })();
