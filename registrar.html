@@ -1345,7 +1345,9 @@ async function loadRegistrarResults(){
     if(rec.submitted!==true)return;
     const bits=scope.split("__"),subject=String(rec.subject||bits[0]||""),term=String(rec.term||bits[2]||"");
     const clean=x=>String(x||"").replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
-    const resultClass=String(rec.className||rec.class||cls);\n    if(regResultClass.value&&resultClass!==regResultClass.value)return;\n    const subj=clean(subject), trm=clean(term);
+    const resultClass=String(rec.className||rec.class||cls);
+    if(regResultClass.value&&resultClass!==regResultClass.value)return;
+    const subj=clean(subject), trm=clean(term);
     if(regResultSubject.value&&subj.toLowerCase()!==regResultSubject.value.toLowerCase())return;
     if(regResultTerm.value&&trm.toLowerCase()!==regResultTerm.value.toLowerCase())return;
     if(regResultSession.value.trim()&&String(rec.session||st.session||"").trim()!==regResultSession.value.trim())return;
