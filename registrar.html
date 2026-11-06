@@ -254,7 +254,7 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 <body>
 
 <nav id="registrarNav" class="registrar-nav hidden" aria-label="Headmaster dashboard navigation">
-<button class="active" data-page="dashboard"><span>🏠</span>Dashboard</button><button data-page="classes"><span>🏫</span>Classes</button><button data-page="teachers"><span>👩‍🏫</span>Teachers</button><button data-page="students"><span>👥</span>Students</button><button data-page="payments"><span>💳</span>PTA Payments</button><button data-page="timetable"><span>📅</span>Timetable</button><button data-page="liveattendance"><span>✅</span>Live Class Check</button><button data-page="exams"><span>📝</span>Exam Timetable</button><button data-page="academic"><span>🗓️</span>Academic Session</button><button data-page="parents"><span>👨‍👩‍👧</span>Parent Requests</button><button type="button" id="signOut" class="nav-logout"><span>↪️</span>Logout</button>
+<button class="active" data-page="dashboard"><span>🏠</span>Dashboard</button><button data-page="classes"><span>🏫</span>Classes</button><button data-page="teachers"><span>👩‍🏫</span>Teachers</button><button data-page="students"><span>👥</span>Students</button><button data-page="payments"><span>💳</span>PTA Payments</button><button data-page="timetable"><span>📅</span>Timetable</button><button data-page="liveattendance"><span>✅</span>Live Class Check</button><button data-page="exams"><span>📝</span>Exam Timetable</button><button data-page="academic"><span>🗓️</span>Academic Session</button><button data-page="results"><span>📊</span>Results</button><button data-page="reportcard"><span>📄</span>Report Card</button><button data-page="parents"><span>👨‍👩‍👧</span>Parent Requests</button><button type="button" id="signOut" class="nav-logout"><span>↪️</span>Logout</button>
 </nav>
 <main>
 <section class="hero"><h2>Welcome to the Headmaster Office</h2><p>Complete your school profile, add the official school photo, and manage your school information from one dashboard.</p></section>
@@ -448,6 +448,21 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 </form>
 </section>
 </section>
+<section class="registrar-page-panel page-hidden" data-page-panel="results" id="registrarResultsPanel">
+<div class="card"><h2>📊 Central Results Database</h2><p class="muted">Results saved by connected teachers are stored in the school’s central student records. Filter records below.</p>
+<div class="timetable-form">
+<div><label for="regResultClass">Class</label><select id="regResultClass"><option value="">All classes</option></select></div>
+<div><label for="regResultSubject">Subject</label><select id="regResultSubject"><option value="">All subjects</option></select></div>
+<div><label for="regResultTerm">Term</label><select id="regResultTerm"><option value="">All terms</option><option>First Term</option><option>Second Term</option><option>Third Term</option></select></div>
+<div><label for="regResultSession">Academic session</label><input id="regResultSession" placeholder="e.g. 2026/2027"></div>
+</div>
+<button class="primary" id="loadRegistrarResults" type="button">Load Results</button>
+<p id="registrarResultsStatus" class="table-message muted" aria-live="polite"></p>
+<div class="tablewrap"><table><thead><tr><th>Student</th><th>Admission No.</th><th>Class</th><th>Subject</th><th>Term</th><th>CA1</th><th>CA2</th><th>CA3</th><th>CA /30</th><th>Exam /70</th><th>Total /100</th><th>Grade</th><th>Teacher</th></tr></thead><tbody id="registrarResultsRows"><tr><td colspan="13">Choose filters and load results.</td></tr></tbody></table></div>
+</div></section>
+<section class="registrar-page-panel page-hidden" data-page-panel="reportcard" id="registrarReportCardPanel">
+<div class="card"><h2>📄 Report Card</h2><p>Report Card is a separate module. It will be connected to the central results database after the Results section is verified.</p></div>
+</section>
 </main><footer>my e-notice app · Headmaster Office</footer>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
@@ -591,7 +606,7 @@ async function load(userObj){
   return;
  }
  profile={uid:userObj.uid,...snap.data()};
- let schoolId=String(profile.schoolId||"").trim();
+ let schoolId=String(profile.schoolId||"").trim();\n window.currentRegistrarSchoolId=schoolId;
 
  // Recovery: older registrar profiles may not have been linked to the school
  // document created by this same registrar. Search only by the authenticated UID.
@@ -619,7 +634,7 @@ async function load(userObj){
    return;
   }
  }
- const ss=await getDoc(doc(db,"schools",schoolId));
+ window.currentRegistrarSchoolId=schoolId;\n const ss=await getDoc(doc(db,"schools",schoolId));
  if(!ss.exists()){
   msg("Your registrar profile points to school ID "+schoolId+", but that school document could not be read or was not found. No replacement school was created. Please check the school document and Firestore read permissions.","error");
   view("setup");
@@ -1299,5 +1314,52 @@ onAuthStateChanged(auth,async u=>{
   }catch(e){msg(err(e),"error");setTimeout(()=>window.location.replace("index.html"),1800)}
 });
 
+
+
+// Registrar Results: read only the authenticated school's central student records.
+// Teacher portal saves assessmentRecords under schools/{schoolId}/students/{studentId}.
+const regResultClass=document.getElementById("regResultClass");
+const regResultSubject=document.getElementById("regResultSubject");
+const regResultTerm=document.getElementById("regResultTerm");
+const regResultSession=document.getElementById("regResultSession");
+const regResultRows=document.getElementById("registrarResultsRows");
+const regResultStatus=document.getElementById("registrarResultsStatus");
+function regResultGrade(total){return total>=80?"A":total>=70?"B":total>=60?"C":total>=50?"D":total>=40?"E":"F";}
+function regEsc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+async function loadRegistrarResults(){
+ const sid=String(window.currentRegistrarSchoolId||profile?.schoolId||"").trim();
+ if(!sid){regResultStatus.textContent="School ID is missing. Please reload the Registrar profile.";return;}
+ regResultStatus.textContent="Loading school results…";regResultRows.innerHTML="";
+ try{
+  const snap=await getDocs(collection(db,"schools",sid,"students"));
+  const rows=[];
+  snap.forEach(d=>{
+   const st=d.data()||{}, cls=String(st.className||st.class||"");
+   if(regResultClass.value&&cls!==regResultClass.value)return;
+   const records=st.assessmentRecords||{};
+   Object.entries(records).forEach(([scope,rec])=>{
+    if(!rec||typeof rec!=="object")return;
+    const bits=scope.split("__"),subject=bits[0]||"",term=bits[2]||"";
+    const clean=x=>String(x||"").replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
+    const subj=clean(subject), trm=clean(term);
+    if(regResultSubject.value&&subj.toLowerCase()!==regResultSubject.value.toLowerCase())return;
+    if(regResultTerm.value&&trm.toLowerCase()!==regResultTerm.value.toLowerCase())return;
+    if(regResultSession.value.trim()&&String(rec.session||st.session||"").trim()!==regResultSession.value.trim())return;
+    const ca1=Number(rec.ca1||0),ca2=Number(rec.ca2||0),ca3=Number(rec.ca3||0),exam=Number(rec.exam||0),ca=ca1+ca2+ca3,total=ca+exam;
+    rows.push({name:st.name||st.fullName||st.studentName||"",adm:st.admissionNumber||st.admissionNo||"",cls,subj,trm,ca1,ca2,ca3,ca,exam,total,grade:regResultGrade(total),teacher:rec.teacherName||rec.updatedByTeacherName||""});
+   });
+  });
+  const classes=[...new Set(rows.map(x=>x.cls).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+  const oldClass=regResultClass.value;
+  regResultClass.innerHTML='<option value="">All classes</option>'+classes.map(x=>`<option>${regEsc(x)}</option>`).join("");
+  regResultClass.value=classes.includes(oldClass)?oldClass:"";
+  const subjects=[...new Set(rows.map(x=>x.subj).filter(Boolean))].sort();
+  const old=regResultSubject.value;regResultSubject.innerHTML='<option value="">All subjects</option>'+subjects.map(x=>`<option>${regEsc(x)}</option>`).join("");regResultSubject.value=subjects.includes(old)?old:"";
+  regResultRows.innerHTML=rows.length?rows.map(x=>`<tr><td>${regEsc(x.name)}</td><td>${regEsc(x.adm)}</td><td>${regEsc(x.cls)}</td><td>${regEsc(x.subj)}</td><td>${regEsc(x.trm)}</td><td>${x.ca1}</td><td>${x.ca2}</td><td>${x.ca3}</td><td>${x.ca}</td><td>${x.exam}</td><td><b>${x.total}</b></td><td>${x.grade}</td><td>${regEsc(x.teacher)}</td></tr>`).join(""):'<tr><td colspan="13">No results match the selected filters. Teacher scores are visible once saved to the central student record.</td></tr>';
+  regResultStatus.textContent=`Loaded ${rows.length} result record(s) from this school only.`;
+ }catch(e){console.error("Registrar results load failed",e);regResultStatus.textContent="Could not load results: "+(e?.message||e);}
+}
+document.getElementById("loadRegistrarResults")?.addEventListener("click",loadRegistrarResults);
+[regResultClass,regResultSubject,regResultTerm,regResultSession].forEach(el=>el?.addEventListener("change",()=>{}));
 </script>
 </body></html>
