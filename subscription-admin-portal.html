@@ -81,6 +81,25 @@
  body.super-print-reportcards .super-report-sheet{page-break-after:always;break-after:page}
  @page{size:A4;margin:0}
 }
+
+/* Manage My Schools: use the full available portal width */
+#page-schools{width:100%;max-width:none;box-sizing:border-box}
+#page-schools .page-title,
+#page-schools .stats,
+#page-schools .panel{width:100%;max-width:none;box-sizing:border-box}
+#page-schools .panel{padding:16px}
+#page-schools #schoolsTable{width:100%;max-width:none;box-sizing:border-box}
+#page-schools #schoolsTable .table-wrap{width:100%;max-width:none;box-sizing:border-box;overflow-x:auto}
+#page-schools #schoolsTable table{width:100%;min-width:1050px;table-layout:auto}
+#page-schools #schoolsTable th,
+#page-schools #schoolsTable td{white-space:normal;vertical-align:top}
+#page-schools #schoolsTable td:last-child{min-width:230px}
+#page-schools #schoolsTable td:last-child .actions{display:flex;flex-wrap:wrap;gap:6px}
+@media(max-width:600px){
+ #page-schools .panel{padding:10px}
+ #page-schools #schoolsTable table{min-width:1000px}
+ #page-schools #schoolsTable .table-wrap{touch-action:pan-x}
+}
 </style>
 </head>
 <body>
@@ -99,7 +118,6 @@
  <div class="page-title"><div><h2>Manage My Schools</h2><p>All schools already registered in your system are listed here. Review school registration, activity, connected teachers and student totals. Deactivation blocks access only when your app and Firestore rules enforce the school status.</p></div><button class="btn secondary" id="refreshSchools" type="button">↻ Refresh schools</button></div>
  <div class="stats"><div class="stat"><div class="stat-top">Registered schools</div><strong id="schoolStatTotal">—</strong><small>All school records</small></div><div class="stat"><div class="stat-top">Active schools</div><strong id="schoolStatActive">—</strong><small>Currently active</small></div><div class="stat"><div class="stat-top">Registered students</div><strong id="schoolStatStudents">—</strong><small>Across schools</small></div><div class="stat"><div class="stat-top">Connected teachers</div><strong id="schoolStatTeachers">—</strong><small>Across schools</small></div></div>
  <div class="panel"><div class="filters"><input id="schoolSearch" placeholder="Search school name or school ID"><select id="schoolFilter"><option value="all">All schools</option><option value="active">Active</option><option value="inactive">Inactive</option><option value="archived">Archived</option></select></div><div id="schoolsTable" class="empty">Sign in to load registered schools.</div></div>
- <div class="security-box"><b>School deactivation notice:</b><br>Your school account has been deactivated due to inactivity. Please contact the administrator to reactivate your school and restore access.<br><b>Phone / WhatsApp:</b> <a href="https://wa.me/2348133839892" target="_blank" rel="noopener">+234 813 383 9892</a><br><b>Email:</b> <a href="mailto:badumakhan@gmail.com">badumakhan@gmail.com</a><p style="margin-bottom:0">This notice is shown here for reference. To enforce deactivation, school login and Firestore Security Rules must check the school document status.</p></div>
 </section>
 <section id="page-reportcards" class="page hidden">
  <div class="page-title"><div><h2>Private Report Card Printing</h2><p>Super Admin only — prepare and print physical report cards for registered schools.</p></div></div>
