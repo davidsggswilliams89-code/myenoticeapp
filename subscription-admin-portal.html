@@ -94,7 +94,25 @@
 #page-schools .filters select {
   min-height: 52px; padding: 14px 16px; border-radius: 14px;
 }
-#page-schools #schoolsTable { width: 100%; max-width: none; }
+#page-schools #schoolsTable {
+  width: 100%; max-width: none;
+  min-width: 0;
+  padding: 0;
+  text-align: left;
+}
+/* The schoolsTable element initially carries the generic .empty class.
+   Remove its default padding so the school list aligns with the search controls. */
+#page-schools #schoolsTable.empty {
+  padding: 0;
+  text-align: left;
+}
+#page-schools #schoolsTable .table-wrap {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+}
 #page-schools #schoolsTable .table-wrap {
   width: 100%; max-width: none; overflow-x: auto; overflow-y: visible;
   border: 1px solid #dce8e4; border-radius: 26px; background: #fff;
@@ -128,7 +146,7 @@
   #page-schools .filters { flex-direction: column; }
   #page-schools .filters input,
   #page-schools .filters select { width: 100%; min-width: 0; }
-  #page-schools #schoolsTable .table-wrap { border-radius: 20px; }
+  #page-schools #schoolsTable .table-wrap { width: 100%; max-width: 100%; margin: 0; border-radius: 20px; }
   #page-schools #schoolsTable table { min-width: 1050px; }
   #page-schools #schoolsTable thead th,
   #page-schools #schoolsTable tbody td { padding: 18px 20px; font-size: 14px; }
