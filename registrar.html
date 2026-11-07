@@ -581,7 +581,7 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 <button class="primary" id="loadRegistrarReportCards" type="button">Load Report Cards</button>
 <button class="primary" id="printRegistrarReportCards" type="button" disabled>Print A4 Report Cards</button>
 <p id="registrarReportStatus" class="table-message muted" aria-live="polite"></p>
-<div class="tablewrap registrar-results-scroll"><table class="registrar-results-table"><thead><tr><th>Student Name</th><th>Class</th><th>Subjects with submitted results</th><th>Position</th><th>Report Card</th></tr></thead><tbody id="registrarReportRows"><tr><td colspan="5">Select a class, term and session, then load report cards.</td></tr></tbody></table></div>
+<div class="tablewrap registrar-results-scroll"><table class="registrar-results-table"><thead><tr><th>Student Name</th><th>Class</th><th>Subjects</th><th>Aggregate</th><th>Percentage</th><th>Class Position</th><th>Report Card</th></tr></thead><tbody id="registrarReportRows"><tr><td colspan="7">Select a class, term and session, then load report cards.</td></tr></tbody></table></div>
 <div id="registrarReportPrintArea" class="registrar-report-print-area" aria-hidden="true"></div>
 </div>
 </section>
@@ -1524,22 +1524,38 @@ async function loadRegistrarReportCards(){
     if(reportTerm.value&&term.toLowerCase()!==reportTerm.value.toLowerCase())return;
     if(reportSession.value.trim()&&session!==reportSession.value.trim())return;
     const subject=String(rec.subject||bits[0]||"").replace(/_/g," ").trim();
-    const ca1=Number(rec.ca1||0),ca2=Number(rec.ca2||0),ca3=Number(rec.ca3||0),exam=Number(rec.exam||0);
+    const score0=v=>{const n=Number(v);return Number.isFinite(n)?Math.max(0,n):0;};
+    const ca1=score0(rec.ca1),ca2=score0(rec.ca2),ca3=score0(rec.ca3),exam=score0(rec.exam);
     const ca=ca1+ca2+ca3,total=ca+exam,grade=regResultGrade(total);
     subjects.push({subject,ca1,ca2,ca3,ca,exam,total,grade,remark:reportRemark(grade)});
    });
    if(subjects.length)students.push({id:d.id,name:st.name||st.fullName||st.studentName||"Student",cls,subjects});
   });
-  // Class position is based on average total across the subjects with submitted results.
-  students.forEach(s=>s.average=s.subjects.reduce((sum,x)=>sum+x.total,0)/s.subjects.length);
-  students.sort((a,b)=>b.average-a.average||String(a.name).localeCompare(String(b.name)));
-  students.forEach((s,i)=>s.position=i+1);
+  // Aggregate and rank strictly within each class: every recorded subject is out of 100.
+  // Missing CA/exam components are already treated as zero above.
+  const subjectCountByClass={};
+  students.forEach(s=>{
+    const key=s.cls||"";
+    subjectCountByClass[key]=Math.max(subjectCountByClass[key]||0,s.subjects.length);
+    s.aggregate=s.subjects.reduce((sum,x)=>sum+x.total,0);
+  });
+  const classGroups={};
+  students.forEach(s=>(classGroups[s.cls||""] ||= []).push(s));
+  Object.values(classGroups).forEach(group=>{
+    group.sort((a,b)=>b.aggregate-a.aggregate||String(a.name).localeCompare(String(b.name)));
+    group.forEach((s,i)=>{
+      s.position=i+1;
+      s.maxMarks=(subjectCountByClass[s.cls||""]||0)*100;
+      s.percentage=s.maxMarks?100*s.aggregate/s.maxMarks:0;
+    });
+  });
+  students.sort((a,b)=>String(a.cls).localeCompare(String(b.cls),undefined,{numeric:true})||a.position-b.position);
   registrarReportStudents=students;
   const classes=[...new Set(students.map(s=>s.cls).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
   const selected=reportClass.value;
   reportClass.innerHTML='<option value="">All classes</option>'+classes.map(x=>`<option value="${reportSafe(x)}">${reportSafe(x)}</option>`).join("");
   reportClass.value=classes.includes(selected)?selected:"";
-  reportRows.innerHTML=students.length?students.map(s=>`<tr><td>${reportSafe(s.name)}</td><td>${reportSafe(s.cls)}</td><td>${s.subjects.length}</td><td>${s.position} / ${students.length}</td><td><button type="button" class="primary" onclick="printOneRegistrarReportCard('${reportSafe(s.id)}')">Print A4</button></td></tr>`).join(""):'<tr><td colspan="5">No submitted results match these filters.</td></tr>';
+  reportRows.innerHTML=students.length?students.map(s=>`<tr><td>${reportSafe(s.name)}</td><td>${reportSafe(s.cls)}</td><td>${s.subjects.length}</td><td>${s.aggregate} / ${s.maxMarks}</td><td>${s.percentage.toFixed(2)}%</td><td>${s.position} / ${students.filter(x=>x.cls===s.cls).length}</td><td><button type="button" class="primary" onclick="printOneRegistrarReportCard('${reportSafe(s.id)}')">Print A4</button></td></tr>`).join(""):'<tr><td colspan="7">No submitted results match these filters.</td></tr>';
   reportPrintBtn.disabled=!students.length;
   reportStatus.textContent=`Loaded ${students.length} student report card(s).`;
  }catch(err){console.error("Report card load failed",err);reportStatus.textContent="Could not load report cards: "+(err?.message||err);}
@@ -1551,7 +1567,7 @@ function registrarReportMarkup(student){
  return `<article class="registrar-report-sheet"><h1 class="school-heading">${school}</h1><div class="report-title">STUDENT REPORT CARD</div>
  <div class="student-meta"><div><strong>Student Name:</strong> ${name}</div><div><strong>Class:</strong> ${cls}</div><div><strong>Term:</strong> ${term}</div><div><strong>Academic Session:</strong> ${session}</div></div>
  <table><thead><tr><th class="subject-col">Subject</th><th>1st C.A</th><th>2nd C.A</th><th>3rd C.A</th><th>C.A Total</th><th>Exam</th><th>Total</th><th>Grade</th><th>Remark</th></tr></thead><tbody>${body}</tbody></table>
- <div class="position-line">Class Position: ${student.position} out of ${registrarReportStudents.length} students</div>
+ <div class="position-line">Total Subjects: ${student.subjects.length} &nbsp; | &nbsp; Total Marks: ${student.aggregate} / ${student.maxMarks} &nbsp; | &nbsp; Percentage: ${student.percentage.toFixed(2)}%<br>Class Position: ${student.position} out of ${registrarReportStudents.filter(s=>s.cls===student.cls).length} students</div>
  <div class="remark-area">Headmaster’s Remark: <span class="remark-line"></span><br><span class="remark-line"></span><br>Other Remark: <span class="remark-line"></span></div>
  <div class="signature-row"><span>Headmaster’s Signature: __________________</span><span>Date: __________________</span></div></article>`;
 }
