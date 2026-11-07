@@ -81,26 +81,15 @@
  body.super-print-reportcards .super-report-sheet{page-break-after:always;break-after:page}
  @page{size:A4;margin:0}
 }
-
-/* Manage My Schools: use the full available portal width */
-#page-schools{width:100%;max-width:none;box-sizing:border-box}
-#page-schools .page-title,
-#page-schools .stats,
-#page-schools .panel{width:100%;max-width:none;box-sizing:border-box}
-#page-schools .panel{padding:16px}
-#page-schools #schoolsTable{width:100%;max-width:none;box-sizing:border-box}
-#page-schools #schoolsTable .table-wrap{width:100%;max-width:none;box-sizing:border-box;overflow-x:auto}
-#page-schools #schoolsTable table{width:100%;min-width:1050px;table-layout:auto}
-#page-schools #schoolsTable th,
-#page-schools #schoolsTable td{white-space:normal;vertical-align:top}
-#page-schools #schoolsTable td:last-child{min-width:230px}
-#page-schools #schoolsTable td:last-child .actions{display:flex;flex-wrap:wrap;gap:6px}
-@media(max-width:600px){
- #page-schools .panel{padding:10px}
- #page-schools #schoolsTable table{min-width:1000px}
- #page-schools #schoolsTable .table-wrap{touch-action:pan-x}
-}
 </style>
+
+/* Manage My Schools: widen only this section */
+#page-schools { width:100%; max-width:none; }
+#page-schools > .panel { width:100%; max-width:none; box-sizing:border-box; }
+#page-schools #schoolsTable { width:100%; max-width:none; }
+#page-schools .schools-table-wrap { width:100%; max-width:none; overflow-x:auto; }
+#page-schools #schoolsTable table { width:100%; min-width:980px; }
+
 </head>
 <body>
 <section id="loginView" class="login-wrap hidden"><form id="loginForm" class="login-card"><div class="brandmark">▣</div><h1>Subscription Admin</h1><p class="muted" style="margin-top:0">Manage lesson-note and lesson-plan subscriptions securely.</p><label for="email">Administrator email</label><input id="email" type="email" autocomplete="username" required placeholder="admin@example.com"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required placeholder="Enter password"><button id="loginBtn" class="btn primary full" type="submit">Sign in to Admin Portal</button><div id="loginMessage" class="notice hidden" role="status"></div><p class="muted" style="font-size:12px;margin:17px 0 0">Use an existing Firebase Authentication account that has been granted administrator access. This portal does not create admin accounts.</p></form></section>
