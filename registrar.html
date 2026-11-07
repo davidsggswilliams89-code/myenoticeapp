@@ -1274,7 +1274,7 @@ async function loadPtaPayments(){
 
 
 const REGISTRAR_PAGE_KEY="registrarPortalActivePage";
-const REGISTRAR_VALID_PAGES=["dashboard","classes","teachers","students","payments","timetable","liveattendance","exams","academic","parents"];
+const REGISTRAR_VALID_PAGES=["dashboard","classes","teachers","students","payments","timetable","liveattendance","exams","academic","results","reportcard","parents"];
 function getSavedRegistrarPage(){
  const fromHash=String(window.location.hash||"").replace(/^#(?:page=)?/,"").trim();
  let saved="";
