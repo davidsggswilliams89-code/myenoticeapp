@@ -81,15 +81,18 @@
  body.super-print-reportcards .super-report-sheet{page-break-after:always;break-after:page}
  @page{size:A4;margin:0}
 }
+
+/* Manage My Schools: full available width, scoped to this section */
+#page-schools { width: 100%; max-width: none; box-sizing: border-box; }
+#page-schools .page-title,
+#page-schools .stats,
+#page-schools > .panel,
+#page-schools #schoolsTable,
+#page-schools #schoolsTable .table-wrap { width: 100%; max-width: none; box-sizing: border-box; }
+#page-schools #schoolsTable table { width: 100%; min-width: 100%; }
+#page-schools .filters { width: 100%; box-sizing: border-box; }
+
 </style>
-
-/* Manage My Schools: widen only this section */
-#page-schools { width:100%; max-width:none; }
-#page-schools > .panel { width:100%; max-width:none; box-sizing:border-box; }
-#page-schools #schoolsTable { width:100%; max-width:none; }
-#page-schools .schools-table-wrap { width:100%; max-width:none; overflow-x:auto; }
-#page-schools #schoolsTable table { width:100%; min-width:980px; }
-
 </head>
 <body>
 <section id="loginView" class="login-wrap hidden"><form id="loginForm" class="login-card"><div class="brandmark">▣</div><h1>Subscription Admin</h1><p class="muted" style="margin-top:0">Manage lesson-note and lesson-plan subscriptions securely.</p><label for="email">Administrator email</label><input id="email" type="email" autocomplete="username" required placeholder="admin@example.com"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required placeholder="Enter password"><button id="loginBtn" class="btn primary full" type="submit">Sign in to Admin Portal</button><div id="loginMessage" class="notice hidden" role="status"></div><p class="muted" style="font-size:12px;margin:17px 0 0">Use an existing Firebase Authentication account that has been granted administrator access. This portal does not create admin accounts.</p></form></section>
@@ -104,7 +107,7 @@
 <div class="footer">MySchoolBook Subscription Administration · ₦1,000 per subject / year</div>
 
 <section id="page-schools" class="page hidden">
- <div class="page-title"><div><h2>Manage My Schools</h2><p>All schools already registered in your system are listed here. Review school registration, activity, connected teachers and student totals. Deactivation blocks access only when your app and Firestore rules enforce the school status.</p></div><button class="btn secondary" id="refreshSchools" type="button">↻ Refresh schools</button></div>
+ <div class="page-title"><div><h2>Manage My Schools</h2></div><button class="btn secondary" id="refreshSchools" type="button">↻ Refresh schools</button></div>
  <div class="stats"><div class="stat"><div class="stat-top">Registered schools</div><strong id="schoolStatTotal">—</strong><small>All school records</small></div><div class="stat"><div class="stat-top">Active schools</div><strong id="schoolStatActive">—</strong><small>Currently active</small></div><div class="stat"><div class="stat-top">Registered students</div><strong id="schoolStatStudents">—</strong><small>Across schools</small></div><div class="stat"><div class="stat-top">Connected teachers</div><strong id="schoolStatTeachers">—</strong><small>Across schools</small></div></div>
  <div class="panel"><div class="filters"><input id="schoolSearch" placeholder="Search school name or school ID"><select id="schoolFilter"><option value="all">All schools</option><option value="active">Active</option><option value="inactive">Inactive</option><option value="archived">Archived</option></select></div><div id="schoolsTable" class="empty">Sign in to load registered schools.</div></div>
 </section>
