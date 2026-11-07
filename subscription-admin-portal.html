@@ -82,71 +82,60 @@
  @page{size:A4;margin:0}
 }
 
-/* Manage My Schools: wide, readable school details table */
+/* Manage My Schools: full-width, spacious container styled to match the supplied reference */
+#page-schools { width: 100%; }
+#page-schools > .page-title { width: 100%; }
 #page-schools > .panel {
-  width: 100%;
-  max-width: none;
-  padding: 18px;
+  width: 100%; max-width: none; padding: 22px;
+  border-radius: 28px; overflow: hidden;
 }
-#page-schools #schoolsTable {
-  width: 100%;
-  max-width: none;
+#page-schools .filters { width: 100%; gap: 12px; margin-bottom: 18px; }
+#page-schools .filters input,
+#page-schools .filters select {
+  min-height: 52px; padding: 14px 16px; border-radius: 14px;
 }
+#page-schools #schoolsTable { width: 100%; max-width: none; }
 #page-schools #schoolsTable .table-wrap {
-  width: 100%;
-  max-width: none;
-  overflow-x: auto;
-  overflow-y: visible;
-  border-radius: 12px;
+  width: 100%; max-width: none; overflow-x: auto; overflow-y: visible;
+  border: 1px solid #dce8e4; border-radius: 26px; background: #fff;
+  scrollbar-width: thin;
 }
 #page-schools #schoolsTable table {
-  width: 100%;
-  min-width: 1200px;
-  table-layout: auto;
+  width: 100%; min-width: 1100px; table-layout: auto;
+  border-collapse: separate; border-spacing: 0;
 }
-#page-schools #schoolsTable th,
-#page-schools #schoolsTable td {
-  padding: 16px 20px;
-  font-size: 15px;
-  white-space: nowrap;
+#page-schools #schoolsTable thead th {
+  padding: 22px 24px; font-size: 14px; font-weight: 800;
+  letter-spacing: .35px; color: #647873; background: #f4f8f6;
+  border-bottom: 1px solid #e2ebe7; white-space: nowrap;
 }
-#page-schools #schoolsTable th {
-  font-size: 13px;
+#page-schools #schoolsTable tbody td {
+  padding: 22px 24px; font-size: 15px; vertical-align: middle;
+  border-bottom: 1px solid #edf2ef; white-space: nowrap;
 }
+#page-schools #schoolsTable tbody tr:last-child td { border-bottom: 0; }
 #page-schools #schoolsTable td:nth-child(2) {
-  min-width: 260px;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  min-width: 260px; white-space: normal; overflow-wrap: anywhere;
 }
-#page-schools #schoolsTable td:nth-child(3) {
-  min-width: 230px;
-}
-#page-schools #schoolsTable td:nth-child(8) {
-  min-width: 300px;
+#page-schools #schoolsTable td:nth-child(3) { min-width: 210px; }
+#page-schools #schoolsTable td:nth-child(8) { min-width: 300px; }
+#page-schools #schoolsTable .empty {
+  min-width: 0; padding: 36px 28px; text-align: left;
+  font-size: 18px; color: #263b36; white-space: normal;
 }
 @media (max-width: 600px) {
-  #page-schools > .panel {
-    padding: 10px;
-    margin-left: 0;
-    margin-right: 0;
-  }
-  #page-schools #schoolsTable table {
-    min-width: 1300px;
-  }
-  #page-schools #schoolsTable th,
-  #page-schools #schoolsTable td {
-    padding: 16px 22px;
-    font-size: 15px;
-  }
-  #page-schools #schoolsTable td:nth-child(2) {
-    min-width: 280px;
-  }
-  #page-schools #schoolsTable td:nth-child(3) {
-    min-width: 250px;
+  #page-schools > .panel { padding: 12px; border-radius: 22px; }
+  #page-schools .filters { flex-direction: column; }
+  #page-schools .filters input,
+  #page-schools .filters select { width: 100%; min-width: 0; }
+  #page-schools #schoolsTable .table-wrap { border-radius: 20px; }
+  #page-schools #schoolsTable table { min-width: 1050px; }
+  #page-schools #schoolsTable thead th,
+  #page-schools #schoolsTable tbody td { padding: 18px 20px; font-size: 14px; }
+  #page-schools #schoolsTable .empty {
+    min-width: 0; padding: 28px 20px; font-size: 16px;
   }
 }
-
-
 </style>
 </head>
 <body>
