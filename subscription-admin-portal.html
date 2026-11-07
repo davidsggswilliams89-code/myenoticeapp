@@ -96,7 +96,7 @@
 <div class="footer">MySchoolBook Subscription Administration · ₦1,000 per subject / year</div>
 
 <section id="page-schools" class="page hidden">
- <div class="page-title"><div><h2>Manage Registered Schools</h2><p>Review school registration, activity, teachers and student totals. Deactivation blocks access only when your app and Firestore rules enforce the school status.</p></div><button class="btn secondary" id="refreshSchools" type="button">↻ Refresh schools</button></div>
+ <div class="page-title"><div><h2>Manage My Schools</h2><p>All schools already registered in your system are listed here. Review school registration, activity, connected teachers and student totals. Deactivation blocks access only when your app and Firestore rules enforce the school status.</p></div><button class="btn secondary" id="refreshSchools" type="button">↻ Refresh schools</button></div>
  <div class="stats"><div class="stat"><div class="stat-top">Registered schools</div><strong id="schoolStatTotal">—</strong><small>All school records</small></div><div class="stat"><div class="stat-top">Active schools</div><strong id="schoolStatActive">—</strong><small>Currently active</small></div><div class="stat"><div class="stat-top">Registered students</div><strong id="schoolStatStudents">—</strong><small>Across schools</small></div><div class="stat"><div class="stat-top">Connected teachers</div><strong id="schoolStatTeachers">—</strong><small>Across schools</small></div></div>
  <div class="panel"><div class="filters"><input id="schoolSearch" placeholder="Search school name or school ID"><select id="schoolFilter"><option value="all">All schools</option><option value="active">Active</option><option value="inactive">Inactive</option><option value="archived">Archived</option></select></div><div id="schoolsTable" class="empty">Sign in to load registered schools.</div></div>
  <div class="security-box"><b>School deactivation notice:</b><br>Your school account has been deactivated due to inactivity. Please contact the administrator to reactivate your school and restore access.<br><b>Phone / WhatsApp:</b> <a href="https://wa.me/2348133839892" target="_blank" rel="noopener">+234 813 383 9892</a><br><b>Email:</b> <a href="mailto:badumakhan@gmail.com">badumakhan@gmail.com</a><p style="margin-bottom:0">This notice is shown here for reference. To enforce deactivation, school login and Firestore Security Rules must check the school document status.</p></div>
@@ -157,23 +157,95 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-action]');
 $('manualForm').addEventListener('submit',async e=>{e.preventDefault();const classes=[...$('manualClasses').querySelectorAll('input:checked')].map(x=>x.value);if(!classes.length){toast('Select at least one class.');return}if(!confirm('Confirm the bank transfer has been verified and activate this subscription for one year?'))return;const btn=e.submitter;btn.disabled=true;try{await activate({teacherUid:$('mUid').value.trim(),teacherEmail:$('mEmail').value.trim(),teacherName:$('mName').value.trim(),subject:$('mSubject').value.trim(),classes,amount:$('mAmount').value,paymentReference:$('mReference').value.trim(),notes:$('mNotes').value.trim()});toast('Subscription activated for one year.');e.target.reset();$('mAmount').value='1000';$('manualClasses').querySelectorAll('input').forEach(x=>x.checked=false);await loadData();go('active')}catch(err){toast('Activation failed: '+(err.code||err.message))}finally{btn.disabled=false}});
 const settingsKeys=['bankName','accountName','accountNumber','whatsappNumber','annualPrice'];function loadSettings(){const s=JSON.parse(localStorage.getItem('myschoolbookSubscriptionPaymentSettings')||'{}');const defaults={bankName:'OPay Mobile Banking',accountName:'Abubakar Yahaya',accountNumber:'8133839892',whatsappNumber:'2348133839892',annualPrice:'1000'};settingsKeys.forEach(k=>{$(k).value=s[k]!==undefined?s[k]:defaults[k]})}function getSettings(){return Object.fromEntries(settingsKeys.map(k=>[k,$(k).value.trim()]))}$('settingsForm').addEventListener('submit',e=>{e.preventDefault();localStorage.setItem('myschoolbookSubscriptionPaymentSettings',JSON.stringify(getSettings()));$('settingsMessage').textContent='Payment settings saved in this browser only.';$('settingsMessage').className='notice success';$('settingsMessage').classList.remove('hidden')});$('copyPaymentDetails').addEventListener('click',async()=>{const s=getSettings();const text=`Subscription payment details\nBank: ${s.bankName||'Not set'}\nAccount name: ${s.accountName||'Not set'}\nAccount number: ${s.accountNumber||'Not set'}\nPrice: ${money(s.annualPrice||1000)} per subject / year\nAfter payment, send the transfer receipt on WhatsApp: ${s.whatsappNumber||'Not set'}`;try{await navigator.clipboard.writeText(text);toast('Payment instructions copied.')}catch{prompt('Copy payment instructions:',text)}});loadSettings();
 
-// Super Admin school management. Counts are read from each school's students subcollection
-// and the global schoolTeachers collection using schoolId. Existing school records are retained.
+// Super Admin: Manage every school record already registered in Firestore.
+// Canonical school collection: schools/{schoolId}; students: schools/{schoolId}/students;
+// connected teacher links: schoolTeachers (schoolId + teacherUid/status).
 let managedSchools=[];
-const schoolStatus=s=>String(s.status||'active').toLowerCase();
-function schoolRows(){const q=$('schoolSearch').value.trim().toLowerCase(),f=$('schoolFilter').value;const list=managedSchools.filter(s=>{const hay=[s.schoolName,s.name,s.institutionName,s.id].join(' ').toLowerCase();return (!q||hay.includes(q))&&(f==='all'||schoolStatus(s)===f)});if(!list.length)return '<div class="empty">No schools match this filter.</div>';return `<div class="table-wrap"><table><thead><tr><th>School</th><th>School ID</th><th>Registered</th><th>Status</th><th>Teachers</th><th>Students</th><th>Actions</th></tr></thead><tbody>${list.map(s=>{const st=schoolStatus(s);return `<tr><td><b>${esc(s.schoolName||s.name||s.institutionName||'Unnamed school')}</b><div class="subline">${esc(s.email||s.schoolEmail||'')}</div></td><td>${esc(s.id)}</td><td>${dateText(s.createdAt||s.registrationDate||s.registeredAt)}</td><td>${badge(st==='active'?'active':st==='inactive'?'expired':'rejected')}</td><td>${Number(s._teacherCount||0).toLocaleString('en-NG')}</td><td>${Number(s._studentCount||0).toLocaleString('en-NG')}</td><td><div class="actions"><button class="btn secondary" data-school-action="view" data-school-id="${esc(s.id)}">View</button>${st==='active'?`<button class="btn warning" data-school-action="deactivate" data-school-id="${esc(s.id)}">Deactivate</button>`:`<button class="btn primary" data-school-action="activate" data-school-id="${esc(s.id)}">Activate</button>`}<button class="btn danger" data-school-action="archive" data-school-id="${esc(s.id)}">Archive</button><button class="btn danger" data-school-action="delete" data-school-id="${esc(s.id)}">Delete</button></div></td></tr>`}).join('')}</tbody></table></div>`}
-async function loadManagedSchools(){if(!currentAdmin)return;$('schoolsTable').innerHTML='<div class="empty">Loading schools and counts…</div>';try{const snap=await getDocs(collection(db,'schools'));managedSchools=snap.docs.map(d=>({id:d.id,...(d.data()||{})}));await Promise.all(managedSchools.map(async s=>{try{const students=await getDocs(collection(db,'schools',s.id,'students'));s._studentCount=students.size}catch(e){s._studentCount=Number(s.totalStudents||s.studentCount||0)}try{const teachers=await getDocs(query(collection(db,'schoolTeachers'),where('schoolId','==',s.id)));s._teacherCount=teachers.size}catch(e){s._teacherCount=Number(s.totalTeachers||s.teacherCount||s.connectedTeachersCount||0)}}));$('schoolStatTotal').textContent=managedSchools.length;$('schoolStatActive').textContent=managedSchools.filter(s=>schoolStatus(s)==='active').length;$('schoolStatStudents').textContent=managedSchools.reduce((n,s)=>n+Number(s._studentCount||0),0).toLocaleString('en-NG');$('schoolStatTeachers').textContent=managedSchools.reduce((n,s)=>n+Number(s._teacherCount||0),0).toLocaleString('en-NG');$('schoolsTable').innerHTML=schoolRows()}catch(e){console.error(e);$('schoolsTable').innerHTML=`<div class="empty">Could not load schools. Check Super Admin Firestore permissions: ${esc(e.code||e.message)}</div>`;toast('School list failed: '+(e.code||e.message))}}
-async function updateSchoolStatus(sid,status){const school=managedSchools.find(x=>x.id===sid);if(!school)return;const label=school.schoolName||school.name||sid;const action=status==='active'?'reactivate':status==='inactive'?'deactivate':'archive';if(!confirm(`Are you sure you want to ${action} ${label}?`))return;try{await updateDoc(doc(db,'schools',sid),{status,updatedAt:serverTimestamp(),statusUpdatedAt:serverTimestamp(),statusUpdatedBy:currentAdmin?.uid||''});toast(`School ${action}d.`);await loadManagedSchools()}catch(e){console.error(e);toast('Could not update school status: '+(e.code||e.message))}}
-async function deleteManagedSchool(sid){const school=managedSchools.find(x=>x.id===sid);if(!school)return;const label=school.schoolName||school.name||sid;const warning=`Firestore document deletion does NOT delete subcollections (students, results, etc.). Those records will remain orphaned. For safer handling, archive the school instead.
-
-To continue deleting only the school document, type DELETE below.`;const typed=prompt(warning);if(typed!=='DELETE')return;try{await deleteDoc(doc(db,'schools',sid));toast('School document deleted. Note: its subcollections were not deleted.');await loadManagedSchools()}catch(e){console.error(e);toast('Could not delete school: '+(e.code||e.message))}}
-$('refreshSchools').addEventListener('click',loadManagedSchools);$('schoolSearch').addEventListener('input',()=>$('schoolsTable').innerHTML=schoolRows());$('schoolFilter').addEventListener('change',()=>$('schoolsTable').innerHTML=schoolRows());
-document.addEventListener('click',e=>{const b=e.target.closest('[data-school-action]');if(!b)return;const sid=b.dataset.schoolId,act=b.dataset.schoolAction,school=managedSchools.find(x=>x.id===sid);if(act==='activate')updateSchoolStatus(sid,'active');if(act==='deactivate')updateSchoolStatus(sid,'inactive');if(act==='archive')updateSchoolStatus(sid,'archived');if(act==='delete')deleteManagedSchool(sid);if(act==='view'&&school)alert(`School: ${school.schoolName||school.name||school.institutionName||sid}
-School ID: ${sid}
-Registered: ${dateText(school.createdAt||school.registrationDate||school.registeredAt)}
-Status: ${schoolStatus(school)}
-Teachers: ${school._teacherCount||0}
-Students: ${school._studentCount||0}`)});
+const schoolStatus=s=>String(s.status||'active').trim().toLowerCase();
+const schoolNameOf=s=>s.schoolName||s.name||s.institutionName||s.school||'Unnamed school';
+function schoolRows(){
+ const q=$('schoolSearch').value.trim().toLowerCase(),f=$('schoolFilter').value;
+ const list=managedSchools.filter(s=>{
+  const hay=[schoolNameOf(s),s.id,s.schoolCode,s.email,s.schoolEmail].join(' ').toLowerCase();
+  const st=schoolStatus(s);
+  return (!q||hay.includes(q))&&(f==='all'||st===f);
+ });
+ if(!list.length)return `<div class="empty">${managedSchools.length?'No schools match your search/filter.':'No school documents were returned from the schools collection.'}</div>`;
+ return `<div class="table-wrap"><table><thead><tr><th>#</th><th>School name</th><th>School ID</th><th>Registration date</th><th>Status</th><th>Connected teachers</th><th>Registered students</th><th>Actions</th></tr></thead><tbody>${list.map((s,i)=>{
+  const st=schoolStatus(s),stLabel=st==='active'?'Active':st==='inactive'?'Inactive':st==='archived'?'Archived':st;
+  return `<tr><td>${i+1}</td><td><b>${esc(schoolNameOf(s))}</b><div class="subline">${esc(s.email||s.schoolEmail||s.ownerEmail||'')}</div></td><td><code>${esc(s.id)}</code></td><td>${dateText(s.createdAt||s.registrationDate||s.registeredAt)}</td><td><span class="status-pill ${st==='active'?'success':st==='inactive'?'warning':'muted'}">${esc(stLabel)}</span></td><td><b>${Number(s._teacherCount||0).toLocaleString('en-NG')}</b></td><td><b>${Number(s._studentCount||0).toLocaleString('en-NG')}</b></td><td><div class="actions"><button class="btn secondary" data-school-action="view" data-school-id="${esc(s.id)}">View</button>${st==='active'?`<button class="btn warning" data-school-action="deactivate" data-school-id="${esc(s.id)}">Deactivate</button>`:`<button class="btn primary" data-school-action="activate" data-school-id="${esc(s.id)}">Activate</button>`}<button class="btn secondary" data-school-action="archive" data-school-id="${esc(s.id)}">Archive</button><button class="btn danger" data-school-action="delete" data-school-id="${esc(s.id)}">Delete</button></div></td></tr>`;
+ }).join('')}</tbody></table></div>`;
+}
+async function countSchoolTeachers(schoolId,schoolData){
+ // Count school connection records for this exact school; tolerate legacy linkage fields.
+ let count=0;
+ try{
+  const snap=await getDocs(query(collection(db,'schoolTeachers'),where('schoolId','==',schoolId)));
+  const rows=snap.docs.map(d=>d.data()||{});
+  const connected=rows.filter(t=>{
+   const status=String(t.status||t.connectionStatus||'connected').toLowerCase();
+   return !['disconnected','removed','rejected','inactive','archived'].includes(status);
+  });
+  count=connected.length;
+ }catch(e){
+  console.warn('Could not count schoolTeachers records for',schoolId,e);
+  count=Number(schoolData.totalTeachers||schoolData.teacherCount||schoolData.connectedTeachersCount||schoolData.activatedTeachers||0);
+ }
+ return count;
+}
+async function loadManagedSchools(){
+ if(!currentAdmin)return;
+ $('schoolsTable').innerHTML='<div class="empty">Loading all registered schools, connected teachers and students…</div>';
+ try{
+  // Do not filter by createdBy or status: include every existing school document.
+  const snap=await getDocs(collection(db,'schools'));
+  managedSchools=snap.docs.map(d=>({id:d.id,...(d.data()||{})}));
+  await Promise.all(managedSchools.map(async s=>{
+   try{const students=await getDocs(collection(db,'schools',s.id,'students'));s._studentCount=students.size;}
+   catch(e){console.warn('Student count unavailable for school',s.id,e);s._studentCount=Number(s.totalStudents||s.studentCount||0);s._studentCountError=e.code||'read-denied';}
+   s._teacherCount=await countSchoolTeachers(s.id,s);
+  }));
+  managedSchools.sort((a,b)=>schoolNameOf(a).localeCompare(schoolNameOf(b)));
+  $('schoolStatTotal').textContent=managedSchools.length.toLocaleString('en-NG');
+  $('schoolStatActive').textContent=managedSchools.filter(s=>schoolStatus(s)==='active').length.toLocaleString('en-NG');
+  $('schoolStatStudents').textContent=managedSchools.reduce((n,s)=>n+Number(s._studentCount||0),0).toLocaleString('en-NG');
+  $('schoolStatTeachers').textContent=managedSchools.reduce((n,s)=>n+Number(s._teacherCount||0),0).toLocaleString('en-NG');
+  $('schoolsTable').innerHTML=schoolRows();
+ }catch(e){
+  console.error('Manage Schools failed:',e);
+  $('schoolsTable').innerHTML=`<div class="empty"><b>Unable to load your registered schools.</b><br>Firebase error: ${esc(e.code||e.message)}<br><br>This portal reads the <code>schools</code> collection. Confirm the signed-in Super Admin has permission to list/read school documents in Firestore Rules.</div>`;
+  toast('School list failed: '+(e.code||e.message));
+ }
+}
+async function updateSchoolStatus(sid,status){
+ const school=managedSchools.find(x=>x.id===sid);if(!school)return;
+ const label=schoolNameOf(school),action=status==='active'?'reactivate':status==='inactive'?'deactivate':'archive';
+ if(!confirm(`Are you sure you want to ${action} “${label}”?`))return;
+ try{
+  await updateDoc(doc(db,'schools',sid),{status,updatedAt:serverTimestamp(),statusUpdatedAt:serverTimestamp(),statusUpdatedBy:currentAdmin?.uid||''});
+  toast(`School ${action}d.`);await loadManagedSchools();
+ }catch(e){console.error(e);toast('Could not update school status: '+(e.code||e.message));}
+}
+async function deleteManagedSchool(sid){
+ const school=managedSchools.find(x=>x.id===sid);if(!school)return;
+ const label=schoolNameOf(school);
+ const warning=`You are deleting “${label}” (School ID: ${sid}).\n\nDeleting the school document does NOT delete its students, results, teacher links or other subcollections. Those records may remain orphaned. Archive is safer.\n\nTo delete only the school document, type DELETE below.`;
+ const typed=prompt(warning);if(typed!=='DELETE')return;
+ try{await deleteDoc(doc(db,'schools',sid));toast('School document deleted. Related subcollections were not deleted.');await loadManagedSchools();}
+ catch(e){console.error(e);toast('Could not delete school: '+(e.code||e.message));}
+}
+$('refreshSchools').addEventListener('click',loadManagedSchools);
+$('schoolSearch').addEventListener('input',()=>$('schoolsTable').innerHTML=schoolRows());
+$('schoolFilter').addEventListener('change',()=>$('schoolsTable').innerHTML=schoolRows());
+document.addEventListener('click',e=>{
+ const b=e.target.closest('[data-school-action]');if(!b)return;
+ const sid=b.dataset.schoolId,act=b.dataset.schoolAction,school=managedSchools.find(x=>x.id===sid);
+ if(act==='activate')updateSchoolStatus(sid,'active');
+ if(act==='deactivate')updateSchoolStatus(sid,'inactive');
+ if(act==='archive')updateSchoolStatus(sid,'archived');
+ if(act==='delete')deleteManagedSchool(sid);
+ if(act==='view'&&school)alert(`School: ${schoolNameOf(school)}\nSchool ID: ${sid}\nRegistration date: ${dateText(school.createdAt||school.registrationDate||school.registeredAt)}\nStatus: ${schoolStatus(school)}\nConnected teachers: ${school._teacherCount||0}\nRegistered students: ${school._studentCount||0}`);
+});
 
 // Private Super Admin report-card printing module. Uses the same Firebase project and
 // student assessmentRecords schema as Registrar; subscription/payment workflow is untouched.
