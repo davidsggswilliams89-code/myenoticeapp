@@ -249,6 +249,45 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 .staff-custom-role-row button{padding:7px 9px;font-size:11px;white-space:nowrap}
 @media(max-width:560px){.staff-responsibility-options{grid-template-columns:1fr}.staff-custom-role-row{flex-wrap:wrap}.staff-custom-role-row input{flex:1 1 140px}}
 
+
+/* Results tables stay inside their cards; swipe horizontally on mobile. */
+.results-horizontal-scroll,
+.results-table-container,
+.result-table-scroll,
+.report-card-table-scroll {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  box-sizing: border-box;
+}
+.results-horizontal-scroll table,
+.results-table-container table,
+.result-table-scroll table,
+.report-card-table-scroll table {
+  width: max-content;
+  min-width: 100%;
+  max-width: none;
+  white-space: nowrap;
+  border-collapse: collapse;
+}
+#resultsSection,
+#resultSection,
+#registrarResultsSection,
+#reportCardSection,
+#reportcardSection,
+.results-section,
+.report-card-section {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
 </style>
 </head>
 <body>
