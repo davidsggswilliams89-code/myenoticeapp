@@ -82,15 +82,26 @@
  @page{size:A4;margin:0}
 }
 
-/* Manage My Schools: full available width, scoped to this section */
-#page-schools { width: 100%; max-width: none; box-sizing: border-box; }
-#page-schools .page-title,
-#page-schools .stats,
+
+
+
+/* Manage My Schools data container: match the full-width report-card results area */
+#page-schools,
 #page-schools > .panel,
 #page-schools #schoolsTable,
-#page-schools #schoolsTable .table-wrap { width: 100%; max-width: none; box-sizing: border-box; }
-#page-schools #schoolsTable table { width: 100%; min-width: 100%; }
-#page-schools .filters { width: 100%; box-sizing: border-box; }
+#page-schools #schoolsTable .table-wrap {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+}
+#page-schools #schoolsTable .table-wrap {
+  display: block;
+  overflow-x: auto;
+}
+#page-schools #schoolsTable table {
+  width: 100%;
+  min-width: 760px;
+}
 
 </style>
 </head>
@@ -104,7 +115,7 @@
 <section id="page-active" class="page hidden"><div class="page-title"><div><h2>Active Subscriptions</h2><p>Every record grants access only to its specific subject and class list.</p></div><button class="btn secondary" id="refreshSubscriptions">↻ Refresh</button></div><div class="panel"><div class="filters"><input id="activeSearch" placeholder="Search teacher, email, subject or UID"><select id="activeStatus"><option value="all">All subscriptions</option><option value="active">Active</option><option value="expired">Expired</option><option value="revoked">Revoked</option></select></div><div id="subscriptionsTable" class="empty">Loading subscriptions…</div></div></section>
 <section id="page-manual" class="page hidden"><div class="page-title"><div><h2>Manual Activation</h2><p>Use this after independently confirming a teacher's bank transfer.</p></div></div><div class="panel"><h3>Activate a subscription</h3><div class="info-box">This creates a subscription record in Firebase. The Teacher Dashboard must check the matching subscription record before showing paid lesson plans and notes.</div><form id="manualForm"><div class="grid-form"><div><label for="mUid">Teacher Firebase UID *</label><input id="mUid" required placeholder="Exact Firebase user UID"></div><div><label for="mEmail">Teacher email (optional)</label><input id="mEmail" type="email" placeholder="teacher@example.com"></div><div><label for="mName">Teacher name (optional)</label><input id="mName" placeholder="Teacher's full name"></div><div><label for="mSubject">Subject *</label><input id="mSubject" required placeholder="e.g. Basic Science"></div><div class="field-full"><label>Classes covered by this subscription *</label><div class="class-options" id="manualClasses"><label class="class-chip"><input type="checkbox" value="Primary 1">Primary 1</label><label class="class-chip"><input type="checkbox" value="Primary 2">Primary 2</label><label class="class-chip"><input type="checkbox" value="Primary 3">Primary 3</label><label class="class-chip"><input type="checkbox" value="Primary 4">Primary 4</label><label class="class-chip"><input type="checkbox" value="Primary 5">Primary 5</label><label class="class-chip"><input type="checkbox" value="Primary 6">Primary 6</label></div></div><div><label for="mAmount">Amount received (₦) *</label><input id="mAmount" type="number" min="1000" step="100" value="1000" required></div><div><label for="mReference">Bank transaction reference (optional)</label><input id="mReference" placeholder="Bank transfer reference"></div><div class="field-full"><label for="mNotes">Admin note (optional)</label><textarea id="mNotes" rows="3" placeholder="Internal verification note; do not enter passwords or sensitive banking credentials."></textarea></div></div><button class="btn primary" type="submit" style="margin-top:18px">✓ Verify & activate subscription</button></form></div></section>
 <section id="page-settings" class="page hidden"><div class="page-title"><div><h2>Payment Settings</h2><p>Details to share with teachers after they initiate a WhatsApp subscription request.</p></div></div><div class="panel"><h3>Bank transfer instructions</h3><p class="muted">Set the account details that your team will send to teachers. These details are stored in this browser only and are not published to the teacher dashboard automatically.</p><form id="settingsForm"><label for="bankName">Bank name</label><input id="bankName" placeholder="e.g. Access Bank" value="OPay Mobile Banking"><label for="accountName">Account name</label><input id="accountName" placeholder="Account holder name" value="Abubakar Yahaya"><label for="accountNumber">Account number</label><input id="accountNumber" inputmode="numeric" maxlength="20" placeholder="Enter account number" value="8133839892"><label for="whatsappNumber">WhatsApp number (international format, digits only)</label><input id="whatsappNumber" inputmode="numeric" placeholder="e.g. 2348012345678" value="2348133839892"><label for="annualPrice">Price per subject per year (₦)</label><input id="annualPrice" type="number" min="1" value="1000" required><button class="btn primary" type="submit" style="margin-top:18px">Save settings on this device</button><button class="btn secondary" type="button" id="copyPaymentDetails" style="margin:18px 0 0 7px">Copy payment instructions</button></form><div id="settingsMessage" class="notice hidden"></div></div><div class="security-box"><b>Security reminder:</b> This standalone HTML uses Firebase Authentication and Firestore. Access control must also be enforced in Firestore Security Rules. Do not rely on hiding buttons in the browser as the only protection.</div></section>
-<div class="footer">MySchoolBook Subscription Administration · ₦1,000 per subject / year</div>
+<div class="footer"></div>
 
 <section id="page-schools" class="page hidden">
  <div class="page-title"><div><h2>Manage My Schools</h2></div><button class="btn secondary" id="refreshSchools" type="button">↻ Refresh schools</button></div>
