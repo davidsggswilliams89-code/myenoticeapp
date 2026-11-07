@@ -204,6 +204,69 @@
     min-width: 0; padding: 28px 20px; font-size: 16px;
   }
 }
+/* Subscription Requests: make the Teacher / Subject & classes table card fill the same width as the search controls */
+#page-requests .panel {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+#page-requests #requestsTable {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  box-sizing: border-box;
+}
+#page-requests #requestsTable.empty {
+  padding: 0;
+  text-align: left;
+}
+#page-requests #requestsTable .table-wrap {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  box-sizing: border-box;
+  overflow-x: auto;
+  overflow-y: visible;
+  border-radius: 20px;
+}
+#page-requests #requestsTable table {
+  width: 100%;
+  min-width: 900px;
+  table-layout: auto;
+}
+#page-requests #requestsTable th,
+#page-requests #requestsTable td {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  #page-requests .panel {
+    width: 100%;
+    max-width: 100%;
+  }
+  #page-requests #requestsTable,
+  #page-requests #requestsTable .table-wrap {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+  }
+  #page-requests #requestsTable .table-wrap {
+    border-radius: 18px;
+  }
+  #page-requests #requestsTable table {
+    min-width: 900px;
+  }
+  #page-requests #requestsTable th,
+  #page-requests #requestsTable td {
+    padding: 16px 18px;
+  }
+}
+
 </style>
 </head>
 <body>
