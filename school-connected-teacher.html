@@ -3719,46 +3719,81 @@ renderCurriculum();renderStudents();renderResults();
     const selectedClass=libraryClass?.value||'';
     const selectedTerm=libraryTerm?.value||'';
     const subjectOption=librarySubject?.selectedOptions?.[0];
-    const selectedSubjectId=librarySubject?.value||'';
-    const selectedSubject=subjectOption?.dataset?.subjectName
+    const selectedSubjectId=String(librarySubject?.value||'');
+    const selectedSubject=String(subjectOption?.dataset?.subjectName
       ||window.getSubjectName(selectedSubjectId)
       ||subjectOption?.textContent?.trim()
-      ||'';
+      ||'').trim();
     if(!selectedClass||!selectedTerm||!selectedSubject){
       alert('Please select a class, subject and term first.');
-      return;
-    }
-
-    // Ensure the current curriculum source is loaded before exporting.
-    try{
-      if(typeof loadCurriculumSource==='function' && !curriculumSourceLoaded){
-        await loadCurriculumSource();
-      }
-    }catch(sourceError){
-      console.error('Curriculum source load failed:',sourceError);
-      alert('The curriculum source could not be loaded. Please check the curriculum.html file and try again.');
       return;
     }
 
     const normalizeSubject=function(value){
       return String(value||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();
     };
-    const selectedRecord=(curriculumCatalog||[]).find(function(item){
-      if(item.className!==selectedClass || item.term!==selectedTerm) return false;
-      const recordId=String(item.subjectId||window.getSubjectId(item.subject||'')||'');
-      return (selectedSubjectId && recordId===String(selectedSubjectId))
-        || normalizeSubject(item.subject)===normalizeSubject(selectedSubject);
+
+    try{
+      // Always refresh the source before exporting so the PDF uses the curriculum.html
+      // file currently deployed beside this teacher dashboard.
+      if(window.SubjectSystem&&typeof window.SubjectSystem.load==='function'){
+        await window.SubjectSystem.load();
+        curriculumCatalog=window.SubjectSystem.records||curriculumCatalog||[];
+      }else if(typeof loadCurriculumSource==='function'){
+        await loadCurriculumSource();
+      }
+    }catch(sourceError){
+      console.error('Curriculum source load failed:',sourceError);
+      alert('The curriculum source could not be loaded. Please verify curriculum.html and try again.');
+      return;
+    }
+
+    const recordMatches=(curriculumCatalog||[]).filter(function(item){
+      return String(item.className||'').trim()===selectedClass
+        && String(item.term||'').trim()===selectedTerm
+        && normalizeSubject(item.subject||item.subjectName)===normalizeSubject(selectedSubject);
     });
+    const selectedRecord=recordMatches[0]||null;
     const selectedCurriculum=Array.isArray(selectedRecord?.curriculum)?selectedRecord.curriculum:[];
-    if(!selectedCurriculum.length){
-      alert('No curriculum weeks or periods were found for this exact class, subject and term. Please verify the curriculum source.');
+    if(!selectedRecord||!selectedCurriculum.length){
+      alert('No curriculum was found for '+selectedClass+' — '+selectedSubject+' — '+selectedTerm+'. Please check the curriculum source.');
+      return;
+    }
+
+    const lessonPlans=Array.isArray(selectedRecord.lessonPlans)?selectedRecord.lessonPlans:[];
+    const lessonNotes=Array.isArray(selectedRecord.lessonNotes)?selectedRecord.lessonNotes:[];
+    const periodRows=[];
+    selectedCurriculum.forEach(function(week,weekIndex){
+      const periods=Array.isArray(week.periods)?week.periods:[];
+      periods.forEach(function(period,periodIndex){
+        const weekNo=weekIndex+1;
+        const periodNo=periodIndex+1;
+        const plan=lessonPlans.find(function(x){return Number(x.week)===weekNo&&Number(x.period)===periodNo;});
+        const note=lessonNotes.find(function(x){return Number(x.week)===weekNo&&Number(x.period)===periodNo;});
+        periodRows.push({week:weekNo,period:periodNo,topic:week.topic||'',lesson:period.title||period.subtopic||'',plan:plan||null,note:note||null});
+      });
+    });
+
+    if(!periodRows.length){
+      alert('The selected curriculum has no teaching periods to compile.');
+      return;
+    }
+
+    // Do not silently produce empty or generic pages. Require a real lesson plan
+    // and a real lesson note for every period in the selected curriculum.
+    const missing=periodRows.filter(function(row){return !row.plan||!row.note;});
+    if(missing.length){
+      const details=missing.slice(0,8).map(function(row){
+        return 'Week '+row.week+', Period '+row.period+' ('+row.topic+')'+(!row.plan?' — lesson plan missing':'')+(!row.note?' — lesson note missing':'');
+      }).join('\n');
+      alert('Cannot compile a complete PDF because '+missing.length+' period(s) are missing a lesson plan or lesson note in curriculum.html.\n\n'+details+(missing.length>8?'\n…and '+(missing.length-8)+' more.':''));
       return;
     }
 
     const originalLessonSelection={...selectedLesson};
     const button=document.getElementById('downloadSelectedCurriculumBtn');
     const originalLabel=button?.textContent||'⬇ Download complete curriculum (A4 PDF)';
-    if(button){button.disabled=true;button.textContent='Preparing complete A4 PDF…';button.style.opacity='.75';}
+    if(button){button.disabled=true;button.textContent='Compiling every lesson…';button.style.opacity='.75';}
 
     let pdfRoot=null;
     try{
@@ -3769,19 +3804,17 @@ renderCurriculum();renderStudents();renderResults();
 
       pdfRoot=document.createElement('div');
       pdfRoot.id='teacherCurriculumPdfExport';
-      // Do not use position:fixed: html2canvas can capture only the viewport and
-      // produce a blank/one-page PDF for a long curriculum. Use a normal document
-      // flow container so the entire curriculum is rendered.
       pdfRoot.style.cssText='position:absolute;left:0;top:0;width:190mm;display:block;background:#fff;color:#17212b;z-index:999999;';
       pdfRoot.innerHTML='<style>'+
         '#teacherCurriculumPdfExport{font-family:Arial,Helvetica,sans-serif;font-size:11pt;line-height:1.45;color:#17212b;background:#fff}'+
         '#teacherCurriculumPdfExport *{box-sizing:border-box}'+
         '#teacherCurriculumPdfExport .pdf-lesson-document{display:block;width:100%;padding:0;margin:0;background:#fff;page-break-after:always;break-after:page;overflow:visible}'+
+        '#teacherCurriculumPdfExport .pdf-lesson-document:not(:first-child){page-break-before:always;break-before:page}'+
         '#teacherCurriculumPdfExport .pdf-lesson-document:last-child{page-break-after:auto;break-after:auto}'+
         '#teacherCurriculumPdfExport h1{font-size:19pt;text-align:center;color:#075c51;margin:0 0 5mm}'+
         '#teacherCurriculumPdfExport h2{font-size:14pt;color:#075c51;margin:6mm 0 2mm;border-bottom:1px solid #d8e2df;padding-bottom:2mm;page-break-after:avoid;break-after:avoid}'+
         '#teacherCurriculumPdfExport h3,#teacherCurriculumPdfExport h4{page-break-after:avoid;break-after:avoid}'+
-        '#teacherCurriculumPdfExport p,#teacherCurriculumPdfExport li{font-size:10.5pt;line-height:1.45;overflow-wrap:anywhere}'+
+        '#teacherCurriculumPdfExport p,#teacherCurriculumPdfExport li{font-size:10.5pt;line-height:1.45;overflow-wrap:anywhere;white-space:normal}'+
         '#teacherCurriculumPdfExport .meta{border:1px solid #cfded9;border-radius:2mm;padding:3mm;margin:4mm 0 5mm;display:grid;grid-template-columns:1fr 1fr;gap:2mm 5mm}'+
         '#teacherCurriculumPdfExport .meta-row{font-size:9.5pt;overflow-wrap:anywhere}'+
         '#teacherCurriculumPdfExport .meta-row strong{color:#075c51}'+
@@ -3791,93 +3824,46 @@ renderCurriculum();renderStudents();renderResults();
         '</style>';
       document.body.appendChild(pdfRoot);
 
-      let lessonCount=0;
-      let missingLessonRecords=0;
-      // Compile every available week and every period from the selected source,
-      // not only the currently opened period or filtered lesson-list results.
-      selectedCurriculum.forEach(function(week,weekIndex){
-        const periods=Array.isArray(week.periods)?week.periods:[];
-        periods.forEach(function(period,periodIndex){
-          selectedLesson={
-            topic:week.topic||'',
-            subtopic:period.title||'',
-            topicIndex:weekIndex,
-            periodIndex
-          };
-
-          const meta={...metaBase,week:weekIndex+1,period:periodIndex+1,topic:week.topic||'',lesson:period.title||''};
-          const planData=getActiveLessonData('Lesson Plan');
-          const noteData=getActiveLessonData('Lesson Note');
-
-          if(!planData || !noteData) missingLessonRecords++;
-
-          [
-            {kind:'LESSON PLAN',type:'Lesson Plan',data:planData},
-            {kind:'LESSON NOTE',type:'Lesson Note',data:noteData}
-          ].forEach(function(item){
-            const lessonHtml=curriculumDownloadLessonHtml(item.type,item.data||{},meta);
-            const lessonDoc=new DOMParser().parseFromString(lessonHtml,'text/html');
-            const page=document.createElement('section');
-            page.className='pdf-lesson-document';
-            page.innerHTML='<div style="font-size:9pt;color:#526171;text-align:center;margin:0 0 2mm;font-weight:700">'+item.kind+' · WEEK '+(weekIndex+1)+' · PERIOD '+(periodIndex+1)+'</div>'+(lessonDoc.body?lessonDoc.body.innerHTML:lessonHtml);
-            pdfRoot.appendChild(page);
-            lessonCount++;
-          });
+      let documentCount=0;
+      periodRows.forEach(function(row){
+        const meta={...metaBase,week:row.week,period:row.period,topic:row.topic,lesson:row.lesson};
+        [
+          {kind:'LESSON PLAN',type:'Lesson Plan',data:row.plan},
+          {kind:'LESSON NOTE',type:'Lesson Note',data:row.note}
+        ].forEach(function(item){
+          const lessonHtml=curriculumDownloadLessonHtml(item.type,item.data,meta);
+          const lessonDoc=new DOMParser().parseFromString(lessonHtml,'text/html');
+          const page=document.createElement('section');
+          page.className='pdf-lesson-document';
+          page.innerHTML='<div style="font-size:9pt;color:#526171;text-align:center;margin:0 0 2mm;font-weight:700">'+item.kind+' · WEEK '+row.week+' · PERIOD '+row.period+'</div>'+(lessonDoc.body?lessonDoc.body.innerHTML:'');
+          pdfRoot.appendChild(page);
+          documentCount++;
         });
       });
 
-      if(!lessonCount){
-        alert('No lesson periods were found in the selected curriculum.');
-        return;
-      }
-
-      // Let the browser finish layout before html2canvas captures the complete document.
-      await new Promise(function(resolve){
-        requestAnimationFrame(function(){requestAnimationFrame(resolve);});
-      });
-
+      await new Promise(function(resolve){requestAnimationFrame(function(){requestAnimationFrame(resolve);});});
       const filename=[school,teacher,selectedClass,selectedSubject,selectedTerm,'Complete Curriculum'].map(curriculumDownloadSafeName).join(' - ')+'.pdf';
       const options={
         margin:[10,10,12,10],
         filename:filename,
         image:{type:'jpeg',quality:0.98},
-        html2canvas:{
-          scale:1.5,
-          useCORS:true,
-          backgroundColor:'#ffffff',
-          scrollX:0,
-          scrollY:0,
-          windowWidth:Math.max(document.documentElement.clientWidth,pdfRoot.scrollWidth),
-          logging:false
-        },
+        html2canvas:{scale:1.35,useCORS:true,backgroundColor:'#ffffff',scrollX:0,scrollY:0,windowWidth:Math.max(document.documentElement.clientWidth,pdfRoot.scrollWidth),logging:false},
         jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
-        pagebreak:{
-          mode:['css','legacy'],
-          after:['.pdf-lesson-document'],
-          avoid:['.meta','h1','h2','h3']
-        }
+        pagebreak:{mode:['css','legacy'],before:'.pdf-lesson-document:not(:first-child)',after:'.pdf-lesson-document',avoid:['.meta','h1','h2','h3']}
       };
 
-      if(button)button.textContent='Generating all A4 pages…';
+      if(button)button.textContent='Rendering A4 PDF pages…';
       const worker=html2pdf().set(options).from(pdfRoot).toPdf();
       const pdf=await worker.get('pdf');
       const pageCount=pdf.internal.getNumberOfPages();
-
-      // Each lesson plan and lesson note starts on its own page; longer notes
-      // may continue to extra pages. Reject blank/truncated output before saving.
-      if(pageCount<lessonCount){
-        throw new Error('PDF page verification failed: expected at least '+lessonCount+' pages for '+lessonCount+' lesson documents, but generated '+pageCount+'.');
+      if(pageCount<documentCount){
+        throw new Error('PDF page verification failed. Expected at least '+documentCount+' pages for '+documentCount+' lesson documents, but received '+pageCount+'.');
       }
-
       pdf.save(filename);
-      const weekCount=selectedCurriculum.length;
-      const periodCount=selectedCurriculum.reduce(function(total,week){
-        return total+(Array.isArray(week.periods)?week.periods.length:0);
-      },0);
-      alert('Complete A4 PDF generated and verified: '+weekCount+' curriculum weeks, '+periodCount+' teaching periods, '+lessonCount+' lesson documents, '+pageCount+' PDF pages. School and teacher details are included; dates are excluded.');
+      alert('PDF compiled successfully: '+selectedCurriculum.length+' curriculum weeks, '+periodRows.length+' periods, '+documentCount+' lesson documents (lesson plans + lesson notes), '+pageCount+' A4 pages. School and teacher details are included; dates are excluded.');
     }catch(error){
-      console.error('Curriculum PDF download failed:',error);
-      alert('The complete PDF could not be verified or generated. No incomplete PDF was downloaded. Please check the browser console and curriculum source, then try again.');
+      console.error('Curriculum PDF compilation failed:',error);
+      alert('The complete A4 PDF could not be verified, so it was not downloaded. Please check the curriculum source and try again.\n\n'+(error?.message||''));
     }finally{
       if(pdfRoot&&pdfRoot.parentNode)pdfRoot.parentNode.removeChild(pdfRoot);
       selectedLesson=originalLessonSelection;
