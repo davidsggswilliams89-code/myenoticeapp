@@ -3719,81 +3719,46 @@ renderCurriculum();renderStudents();renderResults();
     const selectedClass=libraryClass?.value||'';
     const selectedTerm=libraryTerm?.value||'';
     const subjectOption=librarySubject?.selectedOptions?.[0];
-    const selectedSubjectId=String(librarySubject?.value||'');
-    const selectedSubject=String(subjectOption?.dataset?.subjectName
+    const selectedSubjectId=librarySubject?.value||'';
+    const selectedSubject=subjectOption?.dataset?.subjectName
       ||window.getSubjectName(selectedSubjectId)
       ||subjectOption?.textContent?.trim()
-      ||'').trim();
+      ||'';
     if(!selectedClass||!selectedTerm||!selectedSubject){
       alert('Please select a class, subject and term first.');
+      return;
+    }
+
+    // Ensure the current curriculum source is loaded before exporting.
+    try{
+      if(typeof loadCurriculumSource==='function' && !curriculumSourceLoaded){
+        await loadCurriculumSource();
+      }
+    }catch(sourceError){
+      console.error('Curriculum source load failed:',sourceError);
+      alert('The curriculum source could not be loaded. Please check the curriculum.html file and try again.');
       return;
     }
 
     const normalizeSubject=function(value){
       return String(value||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();
     };
-
-    try{
-      // Always refresh the source before exporting so the PDF uses the curriculum.html
-      // file currently deployed beside this teacher dashboard.
-      if(window.SubjectSystem&&typeof window.SubjectSystem.load==='function'){
-        await window.SubjectSystem.load();
-        curriculumCatalog=window.SubjectSystem.records||curriculumCatalog||[];
-      }else if(typeof loadCurriculumSource==='function'){
-        await loadCurriculumSource();
-      }
-    }catch(sourceError){
-      console.error('Curriculum source load failed:',sourceError);
-      alert('The curriculum source could not be loaded. Please verify curriculum.html and try again.');
-      return;
-    }
-
-    const recordMatches=(curriculumCatalog||[]).filter(function(item){
-      return String(item.className||'').trim()===selectedClass
-        && String(item.term||'').trim()===selectedTerm
-        && normalizeSubject(item.subject||item.subjectName)===normalizeSubject(selectedSubject);
+    const selectedRecord=(curriculumCatalog||[]).find(function(item){
+      if(item.className!==selectedClass || item.term!==selectedTerm) return false;
+      const recordId=String(item.subjectId||window.getSubjectId(item.subject||'')||'');
+      return (selectedSubjectId && recordId===String(selectedSubjectId))
+        || normalizeSubject(item.subject)===normalizeSubject(selectedSubject);
     });
-    const selectedRecord=recordMatches[0]||null;
     const selectedCurriculum=Array.isArray(selectedRecord?.curriculum)?selectedRecord.curriculum:[];
-    if(!selectedRecord||!selectedCurriculum.length){
-      alert('No curriculum was found for '+selectedClass+' — '+selectedSubject+' — '+selectedTerm+'. Please check the curriculum source.');
-      return;
-    }
-
-    const lessonPlans=Array.isArray(selectedRecord.lessonPlans)?selectedRecord.lessonPlans:[];
-    const lessonNotes=Array.isArray(selectedRecord.lessonNotes)?selectedRecord.lessonNotes:[];
-    const periodRows=[];
-    selectedCurriculum.forEach(function(week,weekIndex){
-      const periods=Array.isArray(week.periods)?week.periods:[];
-      periods.forEach(function(period,periodIndex){
-        const weekNo=weekIndex+1;
-        const periodNo=periodIndex+1;
-        const plan=lessonPlans.find(function(x){return Number(x.week)===weekNo&&Number(x.period)===periodNo;});
-        const note=lessonNotes.find(function(x){return Number(x.week)===weekNo&&Number(x.period)===periodNo;});
-        periodRows.push({week:weekNo,period:periodNo,topic:week.topic||'',lesson:period.title||period.subtopic||'',plan:plan||null,note:note||null});
-      });
-    });
-
-    if(!periodRows.length){
-      alert('The selected curriculum has no teaching periods to compile.');
-      return;
-    }
-
-    // Do not silently produce empty or generic pages. Require a real lesson plan
-    // and a real lesson note for every period in the selected curriculum.
-    const missing=periodRows.filter(function(row){return !row.plan||!row.note;});
-    if(missing.length){
-      const details=missing.slice(0,8).map(function(row){
-        return 'Week '+row.week+', Period '+row.period+' ('+row.topic+')'+(!row.plan?' — lesson plan missing':'')+(!row.note?' — lesson note missing':'');
-      }).join('\n');
-      alert('Cannot compile a complete PDF because '+missing.length+' period(s) are missing a lesson plan or lesson note in curriculum.html.\n\n'+details+(missing.length>8?'\n…and '+(missing.length-8)+' more.':''));
+    if(!selectedCurriculum.length){
+      alert('No curriculum weeks or periods were found for this exact class, subject and term. Please verify the curriculum source.');
       return;
     }
 
     const originalLessonSelection={...selectedLesson};
     const button=document.getElementById('downloadSelectedCurriculumBtn');
     const originalLabel=button?.textContent||'⬇ Download complete curriculum (A4 PDF)';
-    if(button){button.disabled=true;button.textContent='Compiling every lesson…';button.style.opacity='.75';}
+    if(button){button.disabled=true;button.textContent='Preparing complete A4 PDF…';button.style.opacity='.75';}
 
     let pdfRoot=null;
     try{
@@ -3804,17 +3769,19 @@ renderCurriculum();renderStudents();renderResults();
 
       pdfRoot=document.createElement('div');
       pdfRoot.id='teacherCurriculumPdfExport';
+      // Do not use position:fixed: html2canvas can capture only the viewport and
+      // produce a blank/one-page PDF for a long curriculum. Use a normal document
+      // flow container so the entire curriculum is rendered.
       pdfRoot.style.cssText='position:absolute;left:0;top:0;width:190mm;display:block;background:#fff;color:#17212b;z-index:999999;';
       pdfRoot.innerHTML='<style>'+
         '#teacherCurriculumPdfExport{font-family:Arial,Helvetica,sans-serif;font-size:11pt;line-height:1.45;color:#17212b;background:#fff}'+
         '#teacherCurriculumPdfExport *{box-sizing:border-box}'+
         '#teacherCurriculumPdfExport .pdf-lesson-document{display:block;width:100%;padding:0;margin:0;background:#fff;page-break-after:always;break-after:page;overflow:visible}'+
-        '#teacherCurriculumPdfExport .pdf-lesson-document:not(:first-child){page-break-before:always;break-before:page}'+
         '#teacherCurriculumPdfExport .pdf-lesson-document:last-child{page-break-after:auto;break-after:auto}'+
         '#teacherCurriculumPdfExport h1{font-size:19pt;text-align:center;color:#075c51;margin:0 0 5mm}'+
         '#teacherCurriculumPdfExport h2{font-size:14pt;color:#075c51;margin:6mm 0 2mm;border-bottom:1px solid #d8e2df;padding-bottom:2mm;page-break-after:avoid;break-after:avoid}'+
         '#teacherCurriculumPdfExport h3,#teacherCurriculumPdfExport h4{page-break-after:avoid;break-after:avoid}'+
-        '#teacherCurriculumPdfExport p,#teacherCurriculumPdfExport li{font-size:10.5pt;line-height:1.45;overflow-wrap:anywhere;white-space:normal}'+
+        '#teacherCurriculumPdfExport p,#teacherCurriculumPdfExport li{font-size:10.5pt;line-height:1.45;overflow-wrap:anywhere}'+
         '#teacherCurriculumPdfExport .meta{border:1px solid #cfded9;border-radius:2mm;padding:3mm;margin:4mm 0 5mm;display:grid;grid-template-columns:1fr 1fr;gap:2mm 5mm}'+
         '#teacherCurriculumPdfExport .meta-row{font-size:9.5pt;overflow-wrap:anywhere}'+
         '#teacherCurriculumPdfExport .meta-row strong{color:#075c51}'+
@@ -3824,46 +3791,93 @@ renderCurriculum();renderStudents();renderResults();
         '</style>';
       document.body.appendChild(pdfRoot);
 
-      let documentCount=0;
-      periodRows.forEach(function(row){
-        const meta={...metaBase,week:row.week,period:row.period,topic:row.topic,lesson:row.lesson};
-        [
-          {kind:'LESSON PLAN',type:'Lesson Plan',data:row.plan},
-          {kind:'LESSON NOTE',type:'Lesson Note',data:row.note}
-        ].forEach(function(item){
-          const lessonHtml=curriculumDownloadLessonHtml(item.type,item.data,meta);
-          const lessonDoc=new DOMParser().parseFromString(lessonHtml,'text/html');
-          const page=document.createElement('section');
-          page.className='pdf-lesson-document';
-          page.innerHTML='<div style="font-size:9pt;color:#526171;text-align:center;margin:0 0 2mm;font-weight:700">'+item.kind+' · WEEK '+row.week+' · PERIOD '+row.period+'</div>'+(lessonDoc.body?lessonDoc.body.innerHTML:'');
-          pdfRoot.appendChild(page);
-          documentCount++;
+      let lessonCount=0;
+      let missingLessonRecords=0;
+      // Compile every available week and every period from the selected source,
+      // not only the currently opened period or filtered lesson-list results.
+      selectedCurriculum.forEach(function(week,weekIndex){
+        const periods=Array.isArray(week.periods)?week.periods:[];
+        periods.forEach(function(period,periodIndex){
+          selectedLesson={
+            topic:week.topic||'',
+            subtopic:period.title||'',
+            topicIndex:weekIndex,
+            periodIndex
+          };
+
+          const meta={...metaBase,week:weekIndex+1,period:periodIndex+1,topic:week.topic||'',lesson:period.title||''};
+          const planData=getActiveLessonData('Lesson Plan');
+          const noteData=getActiveLessonData('Lesson Note');
+
+          if(!planData || !noteData) missingLessonRecords++;
+
+          [
+            {kind:'LESSON PLAN',type:'Lesson Plan',data:planData},
+            {kind:'LESSON NOTE',type:'Lesson Note',data:noteData}
+          ].forEach(function(item){
+            const lessonHtml=curriculumDownloadLessonHtml(item.type,item.data||{},meta);
+            const lessonDoc=new DOMParser().parseFromString(lessonHtml,'text/html');
+            const page=document.createElement('section');
+            page.className='pdf-lesson-document';
+            page.innerHTML='<div style="font-size:9pt;color:#526171;text-align:center;margin:0 0 2mm;font-weight:700">'+item.kind+' · WEEK '+(weekIndex+1)+' · PERIOD '+(periodIndex+1)+'</div>'+(lessonDoc.body?lessonDoc.body.innerHTML:lessonHtml);
+            pdfRoot.appendChild(page);
+            lessonCount++;
+          });
         });
       });
 
-      await new Promise(function(resolve){requestAnimationFrame(function(){requestAnimationFrame(resolve);});});
+      if(!lessonCount){
+        alert('No lesson periods were found in the selected curriculum.');
+        return;
+      }
+
+      // Let the browser finish layout before html2canvas captures the complete document.
+      await new Promise(function(resolve){
+        requestAnimationFrame(function(){requestAnimationFrame(resolve);});
+      });
+
       const filename=[school,teacher,selectedClass,selectedSubject,selectedTerm,'Complete Curriculum'].map(curriculumDownloadSafeName).join(' - ')+'.pdf';
       const options={
         margin:[10,10,12,10],
         filename:filename,
         image:{type:'jpeg',quality:0.98},
-        html2canvas:{scale:1.35,useCORS:true,backgroundColor:'#ffffff',scrollX:0,scrollY:0,windowWidth:Math.max(document.documentElement.clientWidth,pdfRoot.scrollWidth),logging:false},
+        html2canvas:{
+          scale:1.5,
+          useCORS:true,
+          backgroundColor:'#ffffff',
+          scrollX:0,
+          scrollY:0,
+          windowWidth:Math.max(document.documentElement.clientWidth,pdfRoot.scrollWidth),
+          logging:false
+        },
         jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
-        pagebreak:{mode:['css','legacy'],before:'.pdf-lesson-document:not(:first-child)',after:'.pdf-lesson-document',avoid:['.meta','h1','h2','h3']}
+        pagebreak:{
+          mode:['css','legacy'],
+          after:['.pdf-lesson-document'],
+          avoid:['.meta','h1','h2','h3']
+        }
       };
 
-      if(button)button.textContent='Rendering A4 PDF pages…';
+      if(button)button.textContent='Generating all A4 pages…';
       const worker=html2pdf().set(options).from(pdfRoot).toPdf();
       const pdf=await worker.get('pdf');
       const pageCount=pdf.internal.getNumberOfPages();
-      if(pageCount<documentCount){
-        throw new Error('PDF page verification failed. Expected at least '+documentCount+' pages for '+documentCount+' lesson documents, but received '+pageCount+'.');
+
+      // Each lesson plan and lesson note starts on its own page; longer notes
+      // may continue to extra pages. Reject blank/truncated output before saving.
+      if(pageCount<lessonCount){
+        throw new Error('PDF page verification failed: expected at least '+lessonCount+' pages for '+lessonCount+' lesson documents, but generated '+pageCount+'.');
       }
+
       pdf.save(filename);
-      alert('PDF compiled successfully: '+selectedCurriculum.length+' curriculum weeks, '+periodRows.length+' periods, '+documentCount+' lesson documents (lesson plans + lesson notes), '+pageCount+' A4 pages. School and teacher details are included; dates are excluded.');
+      const weekCount=selectedCurriculum.length;
+      const periodCount=selectedCurriculum.reduce(function(total,week){
+        return total+(Array.isArray(week.periods)?week.periods.length:0);
+      },0);
+      alert('Complete A4 PDF generated and verified: '+weekCount+' curriculum weeks, '+periodCount+' teaching periods, '+lessonCount+' lesson documents, '+pageCount+' PDF pages. School and teacher details are included; dates are excluded.');
     }catch(error){
-      console.error('Curriculum PDF compilation failed:',error);
-      alert('The complete A4 PDF could not be verified, so it was not downloaded. Please check the curriculum source and try again.\n\n'+(error?.message||''));
+      console.error('Curriculum PDF download failed:',error);
+      alert('The complete PDF could not be verified or generated. No incomplete PDF was downloaded. Please check the browser console and curriculum source, then try again.');
     }finally{
       if(pdfRoot&&pdfRoot.parentNode)pdfRoot.parentNode.removeChild(pdfRoot);
       selectedLesson=originalLessonSelection;
@@ -4981,11 +4995,9 @@ window.viewStudentResult=function(index){
   };
 
   window.startSubscription=async function(){
-    if(window.__msbSubscriptionSubmitting)return;
     const info=selectedSubjectInfo(),sub=info.name;
     const checks=Array.from(document.querySelectorAll('#subscriptionClassChoices input:checked'));
     let classes=checks.map(x=>x.value);
-    const btn=document.getElementById('subscriptionMainAction');
     if(!sub){alert('Please select a subject.');return}
     if(!classes.length){alert('Please select at least one assigned class.');return}
     if(!window.firebaseTeacherUID||!window.teacherFirestore||!window.firebaseFirestoreFns){alert('Please sign in before requesting a subscription.');return}
@@ -4997,78 +5009,49 @@ window.viewStudentResult=function(index){
     const uid=window.firebaseTeacherUID;
     const existing=activeSubs().find(x=>((info.id&&x.subjectId&&String(x.subjectId)===String(info.id))||String(x.subject||'').toLowerCase()===sub.toLowerCase())&&(x.classes||[]).some(c=>classes.includes(c)));
     if(existing){alert('An active subscription already exists for some of these classes. Contact the administrator if you need to add classes.');return}
-
-    // Open a blank tab synchronously to avoid mobile browser popup blocking.
-    // It is navigated to WhatsApp only after Firestore successfully saves the request.
-    const waWindow=window.open('about:blank','_blank');
-    if(!waWindow){alert('Your browser blocked the WhatsApp window. Please allow pop-ups for this site and press Subscribe Now again. No subscription request was saved.');return}
-    try{waWindow.document.title='Saving subscription request…';waWindow.document.body.innerHTML='<p style="font-family:Arial;padding:24px">Saving your subscription request securely. Please wait…</p>';}catch(_){}
-
-    window.__msbSubscriptionSubmitting=true;
-    if(btn){btn.disabled=true;btn.textContent='SAVING REQUEST…'}
+    const teacherEmail=window.teacherFirebaseAuth?.currentUser?.email||'';
+    const teacherName=document.querySelector('[data-teacher-name]')?.textContent?.trim()||window.teacherProfileName||teacherEmail||'Teacher';
+    const amount=fee;
+    const paymentReference='MSB-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,7).toUpperCase();
     try{
-      const teacherEmail=window.teacherFirebaseAuth?.currentUser?.email||'';
-      const teacherName=document.querySelector('[data-teacher-name]')?.textContent?.trim()||window.teacherProfileName||teacherEmail||'Teacher';
-      const amount=fee;
-      const uniqueDocRef=window.firebaseFirestoreFns.doc(
-        window.firebaseFirestoreFns.collection(window.teacherFirestore,'subscriptionRequests')
-      );
-      const referenceId='MSB-SUB-'+uniqueDocRef.id.toUpperCase();
-      const requestDocRef=window.firebaseFirestoreFns.doc(window.teacherFirestore,'subscriptionRequests',referenceId);
-      const selectedClasses=Array.from(new Set(classes));
-      const requestData={
-        referenceId,
-        subscriptionReferenceId:referenceId,
-        requestId:referenceId,
-        teacherUid:uid,
-        teacherFirebaseUid:uid,
-        teacherEmail,
-        teacherName,
-        subject:sub,
-        subjectId:info.id||'',
-        classes:selectedClasses,
-        duration:'1 year',
-        durationYears:1,
-        amount:Number(amount)||1000,
-        status:'pending',
-        paymentStatus:'unpaid',
-        paymentMethod:'bank_transfer',
-        receiptStatus:'awaiting_receipt',
-        paymentReference:'',
-        createdAt:window.firebaseFirestoreFns.serverTimestamp(),
-        requestedAt:new Date().toISOString()
-      };
-
-      // Firestore write must succeed before WhatsApp is opened.
-      await window.firebaseFirestoreFns.setDoc(requestDocRef,requestData);
-
-      const classText=selectedClasses.join(', ');
+      const requestRef=await window.firebaseFirestoreFns.addDoc(window.firebaseFirestoreFns.collection(window.teacherFirestore,'subscriptionRequests'),{
+        teacherUid:uid,teacherEmail,teacherName,subject:sub,subjectId:info.id||'',classes:Array.from(new Set(classes)),amount,
+        paymentReference,requestId:'',status:'pending',createdAt:window.firebaseFirestoreFns.serverTimestamp(),requestedAt:new Date().toISOString(),
+        paymentMethod:'bank_transfer',receiptStatus:'awaiting_receipt'
+      });
+      const classText=Array.from(new Set(classes)).join(', ');
       const moneyText='₦'+Number(amount).toLocaleString('en-NG');
-      const waMessage='Hello MySchoolBook Admin. I want to subscribe now.\n\n'
-        +'Subscription Reference ID: '+referenceId+'\n'
-        +'Teacher: '+teacherName+'\n'
-        +'Email: '+(teacherEmail||'Not provided')+'\n'
-        +'Teacher Firebase UID: '+uid+'\n'
-        +'Subject: '+sub+'\n'
-        +'Class(es): '+classText+'\n'
-        +'Duration: 1 year\n'
-        +'Subscription fee: '+moneyText+'\n\n'
-        +'Please send me the bank transfer details. I will make the payment and send my receipt here. '
-        +'After verifying the payment, please activate my subscription in the Subscription Admin Portal using this Reference ID.';
-      const whatsappUrl='https://wa.me/2348133839892?text='+encodeURIComponent(waMessage);
-      waWindow.location.href=whatsappUrl;
-      const summary=document.getElementById('subscriptionSelectionSummary');
-      if(summary)summary.textContent='Request saved successfully. Reference ID: '+referenceId+'. WhatsApp opened.';
-      if(btn){btn.textContent='REQUEST SAVED — CHECK WHATSAPP';}
-    }catch(e){
-      console.error(e);
-      try{waWindow.close()}catch(_){}
-      alert('Could not save your subscription request in Firebase. WhatsApp was not opened and no request was submitted. Please check your connection and Firestore Rules, then try again.');
-      if(btn){btn.textContent='SUBSCRIBE NOW — ₦1,000 / YEAR';}
-    }finally{
-      window.__msbSubscriptionSubmitting=false;
-      if(btn){btn.disabled=false;if(!btn.textContent.startsWith('REQUEST SAVED'))updateSubscriptionPage();}
-    }
+      const waMessage='Hello MySchoolBook Admin. I have made a subscription payment.\nTeacher: '+teacherName+'\nEmail: '+(teacherEmail||'Not provided')+'\nTeacher UID: '+uid+'\nRequest ID: '+requestRef.id+'\nPayment Reference: '+paymentReference+'\nSubject: '+sub+'\nClasses: '+classText+'\nDuration: 1 year\nAmount Paid: '+moneyText+'\nPlease verify my payment and activate this subscription. I will attach my payment receipt to this WhatsApp message.';
+      const overlay=document.createElement('div');
+      overlay.id='msbPaymentModal';
+      overlay.style.cssText='position:fixed;inset:0;z-index:100000;background:rgba(9,27,35,.65);display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto';
+      overlay.innerHTML=`<div style="width:min(560px,100%);max-height:94vh;overflow:auto;background:#fff;border-radius:18px;padding:20px;color:#17324d;box-shadow:0 20px 60px #0003;font-family:Arial,sans-serif">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h2 style="margin:0;color:#087c60;font-size:22px">Complete Your Subscription</h2><button type="button" id="msbClosePayment" style="background:#eef2f6;border-radius:50%;width:36px;height:36px;font-size:22px">×</button></div>
+        <p style="color:#667085;margin:8px 0 14px">Your request has been recorded. Make the transfer below, then send your receipt.</p>
+        <div style="background:#f2faf6;border:1px solid #d4eee1;border-radius:12px;padding:14px;margin-bottom:14px">
+          <div><b>Teacher:</b> ${String(teacherName).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</div>
+          <div><b>Subject:</b> ${String(sub).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</div>
+          <div><b>Class(es):</b> ${classText}</div><div><b>Duration:</b> 1 year</div>
+          <div style="font-size:21px;font-weight:800;color:#087c60;margin-top:7px">Amount: ${moneyText}</div>
+          <div style="margin-top:8px"><b>Payment Reference:</b> <span style="font-weight:800">${paymentReference}</span></div>
+          <div style="font-size:12px;color:#667085;margin-top:3px">Request ID: ${requestRef.id}</div>
+        </div>
+        <h3 style="margin:0 0 8px">Bank Transfer Details</h3>
+        <div style="border:1px solid #dfe7ef;border-radius:12px;padding:14px;line-height:1.9">
+          <div><b>Bank:</b> OPay Mobile Banking</div><div><b>Account Name:</b> Abubakar Yahaya</div>
+          <div style="font-size:19px;font-weight:800;letter-spacing:.5px"><b>Account Number:</b> 8133839892</div>
+        </div>
+        <div style="background:#fff7e6;border:1px solid #f1dfb6;border-radius:10px;padding:12px;margin:13px 0;font-size:13px">After transferring, press the button below. WhatsApp will open with your reference and subscription details. Attach your bank receipt image before sending.</div>
+        <button type="button" id="msbSendReceipt" style="width:100%;padding:14px;background:#159b56;color:#fff;border-radius:10px;font-weight:800;font-size:15px">📲 SEND RECEIPT ON WHATSAPP</button>
+        <button type="button" id="msbCopyReference" style="width:100%;padding:11px;background:#eef2f6;color:#17324d;border-radius:10px;margin-top:8px;font-weight:700">Copy Payment Reference</button>
+        <p style="font-size:12px;color:#667085;margin:12px 0 0">Your subscription stays pending until the administrator verifies the bank transfer and approves it. WhatsApp does not attach the receipt automatically.</p>
+      </div>`;
+      document.body.appendChild(overlay);
+      overlay.querySelector('#msbClosePayment').onclick=()=>overlay.remove();
+      overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});
+      overlay.querySelector('#msbSendReceipt').onclick=()=>window.open('https://wa.me/2348133839892?text='+encodeURIComponent(waMessage),'_blank','noopener');
+      overlay.querySelector('#msbCopyReference').onclick=async()=>{try{await navigator.clipboard.writeText(paymentReference);alert('Payment reference copied: '+paymentReference)}catch{prompt('Copy this payment reference:',paymentReference)}};
+    }catch(e){console.error(e);alert('Could not submit your subscription request. Please check your connection and Firebase Firestore Rules, then try again.');}
   };
 
     window.openSubjectSubscription=function(){const target=document.querySelectorAll('.topnav-item')[4]||null;showSection('profileView',target);const profilePage=document.querySelector('#profileView .teacher-profile-page'),subscription=document.getElementById('subscriptionView');if(profilePage)profilePage.style.display='block';if(subscription)subscription.style.display='block';renderSubscriptionSubjectOptions();renderSubscriptionClasses();updateSubscriptionPage();window.scrollTo({top:0,behavior:'smooth'});};
@@ -6285,5 +6268,30 @@ if ("serviceWorker" in navigator) {
   });
 }
 </script>
+
+<style id="subscription-button-mobile-fit">
+/* Subscription popup: full-width container and single-line compact action */
+.subscription-confirm-card{
+  width:100%;
+  box-sizing:border-box;
+  display:block;
+  padding:12px 14px;
+  overflow:hidden;
+}
+#subscriptionMainAction.subscription-confirm-button{
+  display:block;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  margin:0;
+  padding:11px 8px;
+  font-size:clamp(11px, 3.4vw, 15px);
+  line-height:1.2;
+  white-space:nowrap;
+  text-align:center;
+  border-radius:12px;
+}
+</style>
+
 </body>
 </html>
