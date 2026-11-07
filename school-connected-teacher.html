@@ -3895,6 +3895,14 @@ renderCurriculum();renderStudents();renderResults();
       else if(all.length) librarySubject.value=all[0].subjectId;
     }
     syncSubjectOptions();
+    // IMPORTANT: refresh the curriculum whenever the teacher changes SUBJECT.
+    // Without this listener, the dropdown changes but the previous subject's
+    // lesson content and subscription message remain on screen.
+    if(librarySubject){
+      librarySubject.addEventListener('change',function(){
+        refreshCurriculumFromSource();
+      });
+    }
     if(cls && libraryClass){cls.addEventListener('change',function(){if(Array.from(libraryClass.options).some(o=>o.value===cls.value))libraryClass.value=cls.value;if(!(typeof window.teacherIsSchoolConnected==='function'&&window.teacherIsSchoolConnected()))syncSubjectOptions();refreshCurriculumFromSource()})}
     if(term && libraryTerm){term.addEventListener('change',function(){if(Array.from(libraryTerm.options).some(o=>o.value===term.value))libraryTerm.value=term.value;refreshCurriculumFromSource()})}
     window.addEventListener('teacherAssignmentsUpdated',function(){syncSubjectOptions();refreshCurriculumFromSource();});
