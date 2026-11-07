@@ -82,26 +82,70 @@
  @page{size:A4;margin:0}
 }
 
-
-
-
-/* Manage My Schools data container: match the full-width report-card results area */
-#page-schools,
-#page-schools > .panel,
-#page-schools #schoolsTable,
+/* Manage My Schools: wide, readable school details table */
+#page-schools > .panel {
+  width: 100%;
+  max-width: none;
+  padding: 18px;
+}
+#page-schools #schoolsTable {
+  width: 100%;
+  max-width: none;
+}
 #page-schools #schoolsTable .table-wrap {
   width: 100%;
   max-width: none;
-  box-sizing: border-box;
-}
-#page-schools #schoolsTable .table-wrap {
-  display: block;
   overflow-x: auto;
+  overflow-y: visible;
+  border-radius: 12px;
 }
 #page-schools #schoolsTable table {
   width: 100%;
-  min-width: 760px;
+  min-width: 1200px;
+  table-layout: auto;
 }
+#page-schools #schoolsTable th,
+#page-schools #schoolsTable td {
+  padding: 16px 20px;
+  font-size: 15px;
+  white-space: nowrap;
+}
+#page-schools #schoolsTable th {
+  font-size: 13px;
+}
+#page-schools #schoolsTable td:nth-child(2) {
+  min-width: 260px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+#page-schools #schoolsTable td:nth-child(3) {
+  min-width: 230px;
+}
+#page-schools #schoolsTable td:nth-child(8) {
+  min-width: 300px;
+}
+@media (max-width: 600px) {
+  #page-schools > .panel {
+    padding: 10px;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  #page-schools #schoolsTable table {
+    min-width: 1300px;
+  }
+  #page-schools #schoolsTable th,
+  #page-schools #schoolsTable td {
+    padding: 16px 22px;
+    font-size: 15px;
+  }
+  #page-schools #schoolsTable td:nth-child(2) {
+    min-width: 280px;
+  }
+  #page-schools #schoolsTable td:nth-child(3) {
+    min-width: 250px;
+  }
+}
+
 
 </style>
 </head>
