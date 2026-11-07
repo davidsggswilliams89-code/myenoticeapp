@@ -82,6 +82,56 @@
  @page{size:A4;margin:0}
 }
 
+/* Overview: make Latest subscription requests (Teacher / Subject & classes) full width */
+#page-overview #latestRequests {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  box-sizing: border-box;
+}
+#page-overview #latestRequests .table-wrap {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  box-sizing: border-box;
+  overflow-x: auto;
+  border-radius: 20px;
+}
+#page-overview #latestRequests table {
+  width: 100%;
+  min-width: 760px;
+  table-layout: auto;
+}
+#page-overview #latestRequests th,
+#page-overview #latestRequests td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  #page-overview #latestRequests {
+    padding: 0;
+  }
+  #page-overview #latestRequests .table-wrap {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    border-radius: 18px;
+  }
+  #page-overview #latestRequests table {
+    min-width: 760px;
+  }
+  #page-overview #latestRequests th,
+  #page-overview #latestRequests td {
+    padding: 16px 18px;
+  }
+}
+
 /* Manage My Schools: full-width, spacious container styled to match the supplied reference */
 #page-schools { width: 100%; }
 #page-schools > .page-title { width: 100%; }
