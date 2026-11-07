@@ -288,6 +288,49 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
   box-sizing: border-box;
 }
 
+
+/* Registrar results/report tables: contained in card, swipe horizontally on narrow screens */
+.registrar-results-scroll{
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;
+  box-sizing:border-box!important;
+  border:1px solid var(--line,#dce5df);
+  border-radius:10px;
+}
+.registrar-results-scroll .registrar-results-table{
+  width:100%!important;
+  min-width:560px!important;
+  max-width:none!important;
+  table-layout:auto;
+  border-collapse:collapse;
+  white-space:nowrap;
+}
+.registrar-results-table th,
+.registrar-results-table td{
+  padding:10px 12px;
+  vertical-align:middle;
+  overflow-wrap:normal;
+}
+.registrar-results-table .registrar-student-name{
+  min-width:150px;
+  max-width:190px;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+#registrarResultsPanel .card,
+#registrarReportCardPanel .card{
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+  box-sizing:border-box;
+}
+
 </style>
 </head>
 <body>
@@ -497,10 +540,10 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 </div>
 <button class="primary" id="loadRegistrarResults" type="button">Load Results</button>
 <p id="registrarResultsStatus" class="table-message muted" aria-live="polite"></p>
-<div class="tablewrap"><table><thead><tr><th>Student</th><th>Admission No.</th><th>Class</th><th>Subject</th><th>Term</th><th>CA1</th><th>CA2</th><th>CA3</th><th>CA /30</th><th>Exam /70</th><th>Total /100</th><th>Grade</th><th>Teacher</th></tr></thead><tbody id="registrarResultsRows"><tr><td colspan="13">Choose filters and load results.</td></tr></tbody></table></div>
+<div class="tablewrap registrar-results-scroll"><table class="registrar-results-table"><thead><tr><th>Student Name</th><th>1st C.A</th><th>2nd C.A</th><th>3rd C.A</th><th>C.A /30</th><th>Exam /70</th><th>Total /100</th><th>Grade</th></tr></thead><tbody id="registrarResultsRows"><tr><td colspan="8">Choose filters and load results.</td></tr></tbody></table></div>
 </div></section>
 <section class="registrar-page-panel page-hidden" data-page-panel="reportcard" id="registrarReportCardPanel">
-<div class="card"><h2>📄 School Report Cards</h2><p class="muted">View submitted results for each student. Select class and term to load report card records.</p><div class="timetable-form"><div><label for="regReportClass">Class</label><select id="regReportClass"><option value="">All classes</option></select></div><div><label for="regReportTerm">Term</label><select id="regReportTerm"><option value="">All terms</option><option>First Term</option><option>Second Term</option><option>Third Term</option></select></div><div><label for="regReportSession">Academic session</label><input id="regReportSession" placeholder="e.g. 2026/2027"></div></div><button class="primary" id="loadRegistrarReportCards" type="button">Load Report Cards</button><p id="registrarReportStatus" class="table-message muted"></p><div class="tablewrap"><table><thead><tr><th>Student</th><th>Admission No.</th><th>Class</th><th>Subject</th><th>Term</th><th>CA /30</th><th>Exam /70</th><th>Total /100</th><th>Grade</th></tr></thead><tbody id="registrarReportRows"><tr><td colspan="9">Select filters and load report cards.</td></tr></tbody></table></div></div>
+<div class="card"><h2>📄 School Report Cards</h2><p class="muted">View submitted results for each student. Select class and term to load report card records.</p><div class="timetable-form"><div><label for="regReportClass">Class</label><select id="regReportClass"><option value="">All classes</option></select></div><div><label for="regReportTerm">Term</label><select id="regReportTerm"><option value="">All terms</option><option>First Term</option><option>Second Term</option><option>Third Term</option></select></div><div><label for="regReportSession">Academic session</label><input id="regReportSession" placeholder="e.g. 2026/2027"></div></div><button class="primary" id="loadRegistrarReportCards" type="button">Load Report Cards</button><p id="registrarReportStatus" class="table-message muted"></p><div class="tablewrap registrar-results-scroll"><table class="registrar-results-table"><thead><tr><th>Student Name</th><th>C.A /30</th><th>Exam /70</th><th>Total /100</th><th>Grade</th></tr></thead><tbody id="registrarReportRows"><tr><td colspan="5">Select filters and load report cards.</td></tr></tbody></table></div></div>
 </section>
 </main><footer>my e-notice app · Headmaster Office</footer>
 <script type="module">
@@ -1400,7 +1443,7 @@ async function loadRegistrarResults(){
   regResultClass.value=classes.includes(oldClass)?oldClass:"";
   const subjects=[...new Set(rows.map(x=>x.subj).filter(Boolean))].sort();
   const old=regResultSubject.value;regResultSubject.innerHTML='<option value="">All subjects</option>'+subjects.map(x=>`<option>${regEsc(x)}</option>`).join("");regResultSubject.value=subjects.includes(old)?old:"";
-  regResultRows.innerHTML=rows.length?rows.map(x=>`<tr><td>${regEsc(x.name)}</td><td>${regEsc(x.adm)}</td><td>${regEsc(x.cls)}</td><td>${regEsc(x.subj)}</td><td>${regEsc(x.trm)}</td><td>${x.ca1}</td><td>${x.ca2}</td><td>${x.ca3}</td><td>${x.ca}</td><td>${x.exam}</td><td><b>${x.total}</b></td><td>${x.grade}</td><td>${regEsc(x.teacher)}</td></tr>`).join(""):'<tr><td colspan="13">No results match the selected filters. Teacher results appear here after the teacher submits them.</td></tr>';
+  regResultRows.innerHTML=rows.length?rows.map(x=>`<tr><td class="registrar-student-name">${regEsc(x.name)}</td><td>${x.ca1}</td><td>${x.ca2}</td><td>${x.ca3}</td><td>${x.ca}</td><td>${x.exam}</td><td><b>${x.total}</b></td><td><b>${x.grade}</b></td></tr>`).join(""):'<tr><td colspan="13">No results match the selected filters. Teacher results appear here after the teacher submits them.</td></tr>';
   regResultStatus.textContent=`Loaded ${rows.length} result record(s) from this school only.`;
  }catch(e){console.error("Registrar results load failed",e);regResultStatus.textContent="Could not load results: "+(e?.message||e);}
 }
@@ -1426,7 +1469,7 @@ async function loadRegistrarReportCards(){
   });
   const classes=[...new Set(rows.map(x=>x.cls).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
   const prev=reportClass.value;reportClass.innerHTML='<option value="">All classes</option>'+classes.map(x=>`<option>${regEsc(x)}</option>`).join("");reportClass.value=classes.includes(prev)?prev:"";
-  reportRows.innerHTML=rows.length?rows.map(x=>`<tr><td>${regEsc(x.student)}</td><td>${regEsc(x.adm)}</td><td>${regEsc(x.cls)}</td><td>${regEsc(x.subject)}</td><td>${regEsc(x.term)}</td><td>${x.ca}</td><td>${x.exam}</td><td><b>${x.total}</b></td><td>${x.grade}</td></tr>`).join(""):'<tr><td colspan="9">No submitted results match these filters.</td></tr>';
+  reportRows.innerHTML=rows.length?rows.map(x=>`<tr><td class="registrar-student-name">${regEsc(x.student)}</td><td>${x.ca}</td><td>${x.exam}</td><td><b>${x.total}</b></td><td><b>${x.grade}</b></td></tr>`).join(""):'<tr><td colspan="9">No submitted results match these filters.</td></tr>';
   reportStatus.textContent=`Loaded ${rows.length} submitted result record(s).`;
  }catch(err){console.error(err);reportStatus.textContent="Could not load report cards: "+(err?.message||err);}
 }
