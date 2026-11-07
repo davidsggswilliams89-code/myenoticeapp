@@ -358,6 +358,35 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
   @page{size:A4 portrait;margin:0}
 }
 
+
+/* Report card action buttons: side-by-side on the same line */
+#registrarReportCardPanel #loadRegistrarReportCards,
+#registrarReportCardPanel #printRegistrarReportCards{
+  display:inline-flex!important;
+  align-items:center;
+  justify-content:center;
+  vertical-align:middle;
+  margin:0!important;
+  width:auto!important;
+  max-width:100%;
+  white-space:nowrap;
+}
+#registrarReportCardPanel .registrar-report-actions{
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  flex-wrap:nowrap;
+  gap:10px;
+  width:100%;
+  max-width:100%;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  margin:8px 0;
+}
+#registrarReportCardPanel .registrar-report-actions button{
+  flex:0 0 auto;
+}
+
 </style>
 </head>
 <body>
@@ -578,8 +607,10 @@ ol{line-height:1.8;color:#445248;font-size:14px}footer{text-align:center;color:v
 <div><label for="regReportTerm">Term</label><select id="regReportTerm"><option>First Term</option><option>Second Term</option><option>Third Term</option></select></div>
 <div><label for="regReportSession">Academic session</label><input id="regReportSession" placeholder="e.g. 2026/2027"></div>
 </div>
+<div class="registrar-report-actions">
 <button class="primary" id="loadRegistrarReportCards" type="button">Load Report Cards</button>
 <button class="primary" id="printRegistrarReportCards" type="button" disabled>Print A4 Report Cards</button>
+</div>
 <p id="registrarReportStatus" class="table-message muted" aria-live="polite"></p>
 <div class="tablewrap registrar-results-scroll"><table class="registrar-results-table"><thead><tr><th>Student Name</th><th>Class</th><th>Subjects</th><th>Aggregate</th><th>Percentage</th><th>Class Position</th><th>Report Card</th></tr></thead><tbody id="registrarReportRows"><tr><td colspan="7">Select a class, term and session, then load report cards.</td></tr></tbody></table></div>
 <div id="registrarReportPrintArea" class="registrar-report-print-area" aria-hidden="true"></div>
